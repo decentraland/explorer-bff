@@ -1,0 +1,21 @@
+name: node
+
+on:
+  push:
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Use Node.js 16.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+          cache: npm
+      - name: install
+        run: npm ci
+      - name: build
+        run: npm run build
+      - name: test
+        run: npm run test
