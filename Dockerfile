@@ -15,6 +15,7 @@ RUN chmod +x /tini
 
 # install dependencies
 COPY package.json /app/package.json
+COPY Makefile /app/Makefile
 COPY package-lock.json /app/package-lock.json
 RUN make install
 

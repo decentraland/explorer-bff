@@ -92,6 +92,7 @@ export async function websocketHandler(context: IHttpServerComponent.DefaultCont
         const rawTopics = topicMessage.getTopics()
         const topics = Buffer.from(rawTopics as string).toString("utf8")
         const set = getTopicList(ws)
+        logger.info("Subscription", { topics })
 
         set.clear()
         topics.split(/\s+/g).forEach(($) => set.add($))
