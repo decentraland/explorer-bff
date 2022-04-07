@@ -12,7 +12,9 @@
     "noImplicitReturns": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true
   },
   "include": [
     "src"

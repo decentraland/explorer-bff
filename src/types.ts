@@ -1,4 +1,4 @@
-import type { IFetchComponent } from "@well-known-components/http-server"
+import type { IFetchComponent, WebSocketServer } from "@well-known-components/http-server"
 import type {
   IConfigComponent,
   ILoggerComponent,
@@ -12,6 +12,10 @@ export type GlobalContext = {
   components: BaseComponents
 }
 
+export type WebSocketComponent = IBaseComponent & {
+  ws: WebSocketServer
+}
+
 // components used in every environment
 export type BaseComponents = {
   config: IConfigComponent
@@ -19,6 +23,7 @@ export type BaseComponents = {
   server: IHttpServerComponent<GlobalContext>
   fetch: IFetchComponent
   metrics: IMetricsComponent<keyof typeof metricDeclarations>
+  ws: WebSocketComponent
 }
 
 // components used in runtime
