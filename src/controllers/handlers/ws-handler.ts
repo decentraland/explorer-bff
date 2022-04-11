@@ -3,24 +3,26 @@ import { IHttpServerComponent } from "@well-known-components/interfaces"
 import { WebSocket } from "ws"
 import { GlobalContext } from "../../types"
 import * as proto from "../proto/broker"
+import { Category, DataHeader, PositionData, ProfileData } from "../proto/comms"
+import { Subscription } from "nats"
 
 const connections = new Set<WebSocket>()
+const subscriptionsPerConnection = new WeakMap<WebSocket, Set<Subscription>>()
 
-const topicsPerConnection = new WeakMap<WebSocket, Set<string>>()
 let connectionCounter = 0
 
 const aliasToUserId = new Map<number, string>()
 
-function getTopicList(socket: WebSocket): Set<string> {
-  let set = topicsPerConnection.get(socket)
+function getSubscriptionsList(socket: WebSocket): Set<Subscription> {
+  let set = subscriptionsPerConnection.get(socket)
   if (!set) {
     set = new Set()
-    topicsPerConnection.set(socket, set)
+    subscriptionsPerConnection.set(socket, set)
   }
   return set
 }
-
 export async function websocketHandler(context: IHttpServerComponent.DefaultContext<GlobalContext>) {
+  const messageBroker = context.components.messageBroker
   const logger = context.components.logs.getLogger("Websocket Handler")
   logger.info("Websocket")
 
@@ -38,6 +40,12 @@ export async function websocketHandler(context: IHttpServerComponent.DefaultCont
     aliasToUserId.set(alias, userId)
 
     connections.add(ws)
+
+    const subscription = messageBroker.subscribe("island", (topicData: any) => {
+      ws.send(topicData)
+    })
+    const subscriptionList = getSubscriptionsList(ws)
+    subscriptionList.add(subscription)
 
     ws.on("message", (message) => {
       const data = message as Buffer
@@ -57,14 +65,7 @@ export async function websocketHandler(context: IHttpServerComponent.DefaultCont
 
         const topicData = topicFwMessage.serializeBinary()
 
-        // Reliable/unreliable data
-        connections.forEach(($) => {
-          if (ws !== $) {
-            if (getTopicList($).has(topic)) {
-              $.send(topicData)
-            }
-          }
-        })
+        messageBroker.publish("island", topicData)
       } else if (msgType === proto.MessageType.TOPIC_IDENTITY) {
         const topicMessage = proto.TopicIdentityMessage.deserializeBinary(data)
 
@@ -79,23 +80,7 @@ export async function websocketHandler(context: IHttpServerComponent.DefaultCont
 
         const topicData = topicFwMessage.serializeBinary()
 
-        // Reliable/unreliable data
-        connections.forEach(($) => {
-          if (ws !== $) {
-            if (getTopicList($).has(topic)) {
-              $.send(topicData)
-            }
-          }
-        })
-      } else if (msgType === proto.MessageType.SUBSCRIPTION) {
-        const topicMessage = proto.SubscriptionMessage.deserializeBinary(data)
-        const rawTopics = topicMessage.getTopics()
-        const topics = Buffer.from(rawTopics as string).toString("utf8")
-        const set = getTopicList(ws)
-        logger.info("Subscription", { topics })
-
-        set.clear()
-        topics.split(/\s+/g).forEach(($) => set.add($))
+        messageBroker.publish("island", topicData)
       }
     })
 
@@ -110,11 +95,19 @@ export async function websocketHandler(context: IHttpServerComponent.DefaultCont
 
     ws.on("error", (error) => {
       logger.error(error)
+
+      const subscriptionList = getSubscriptionsList(ws)
+      subscriptionList.forEach((subscription: Subscription) => subscription.unsubscribe())
+
       ws.close()
       connections.delete(ws)
     })
 
     ws.on("close", () => {
+      logger.info("Unsubscribed from topics")
+      const subscriptionList = getSubscriptionsList(ws)
+      subscriptionList.forEach((subscription: Subscription) => subscription.unsubscribe())
+
       logger.info("Websocket closed")
       connections.delete(ws)
     })

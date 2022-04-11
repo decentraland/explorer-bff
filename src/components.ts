@@ -6,6 +6,7 @@ import { createMetricsComponent } from "@well-known-components/metrics"
 import { AppComponents, GlobalContext } from "./types"
 import { metricDeclarations } from "./metrics"
 import { createWsComponent } from "./ports/ws"
+import { createMessageBrokerComponent } from "./ports/message-broker"
 
 // Initialize all the components of the app
 export async function initComponents(): Promise<AppComponents> {
@@ -24,6 +25,7 @@ export async function initComponents(): Promise<AppComponents> {
   const statusChecks = await createStatusCheckComponent({ server, config })
   const fetch = await createFetchComponent()
   const metrics = await createMetricsComponent(metricDeclarations, { server, config })
+  const messageBroker = await createMessageBrokerComponent({ config, logs })
 
   return {
     config,
@@ -33,5 +35,6 @@ export async function initComponents(): Promise<AppComponents> {
     fetch,
     metrics,
     ws,
+    messageBroker,
   }
 }
