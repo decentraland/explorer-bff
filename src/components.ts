@@ -13,7 +13,14 @@ export async function initComponents(): Promise<AppComponents> {
 
   const logs = createLogComponent()
   const ws = await createWsComponent({ logs })
-  const server = await createServerComponent<GlobalContext>({ config, logs, ws: ws.ws }, {})
+  const server = await createServerComponent<GlobalContext>(
+    { config, logs, ws: ws.ws },
+    {
+      cors: {
+        maxAge: 36000,
+      },
+    }
+  )
   const statusChecks = await createStatusCheckComponent({ server, config })
   const fetch = await createFetchComponent()
   const metrics = await createMetricsComponent(metricDeclarations, { server, config })
@@ -25,6 +32,6 @@ export async function initComponents(): Promise<AppComponents> {
     statusChecks,
     fetch,
     metrics,
-    ws
+    ws,
   }
 }
