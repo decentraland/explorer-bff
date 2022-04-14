@@ -4,6 +4,7 @@ import { pingHandler } from "./handlers/ping-handler"
 import { statusHandler } from "./handlers/status-handler"
 import { websocketHandler } from "./handlers/ws-handler"
 import { websocketRoomsHandler } from "./handlers/ws-rooms-handler"
+import { websocketRoomHandler } from "./handlers/ws-room-handler"
 
 // We return the entire router because it will be easier to test than a whole server
 export async function setupRouter(globalContext: GlobalContext): Promise<Router<GlobalContext>> {
@@ -14,6 +15,7 @@ export async function setupRouter(globalContext: GlobalContext): Promise<Router<
   router.get("/status", statusHandler)
   router.get("/ws", websocketHandler)
   router.get("/ws-rooms", websocketRoomsHandler)
+  router.get("/ws-rooms/:roomId", websocketRoomHandler)
 
   return router
 }
