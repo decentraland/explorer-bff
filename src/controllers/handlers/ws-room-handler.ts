@@ -2,9 +2,16 @@ import { upgradeWebSocketResponse } from "@well-known-components/http-server/dis
 import { IHttpServerComponent } from "@well-known-components/interfaces"
 import { WebSocket } from "ws"
 import { GlobalContext } from "../../types"
-import * as proto from "../proto/broker"
+import {
+  MessageType,
+  MessageHeader,
+  MessageTypeMap,
+  SystemMessage,
+  IdentityMessage
+} from "../proto/ws_pb"
 
 const connectionsPerRoom = new Map<string, Set<WebSocket>>()
+
 function getConnectionsList(roomId: string): Set<WebSocket> {
   let set = connectionsPerRoom.get(roomId)
   if (!set) {
@@ -41,65 +48,76 @@ export async function websocketRoomHandler(
 
     ws.on("message", (message) => {
       const data = message as Buffer
-      const msgType = proto.CoordinatorMessage.deserializeBinary(data).getType()
 
-      if (msgType === proto.MessageType.PING) {
-        ws.send(data)
-      } else if (msgType === proto.MessageType.TOPIC) {
-        const topicMessage = proto.TopicMessage.deserializeBinary(data)
-
-        const topicFwMessage = new proto.TopicFWMessage()
-        topicFwMessage.setType(proto.MessageType.TOPIC_FW)
-        topicFwMessage.setFromAlias(alias)
-        topicFwMessage.setBody(topicMessage.getBody_asU8())
-
-        const topicData = topicFwMessage.serializeBinary()
-
-        // Reliable/unreliable data
-        connections.forEach(($) => {
-          if (ws !== $) {
-            $.send(topicData)
-          }
-        })
-      } else if (msgType === proto.MessageType.TOPIC_IDENTITY) {
-        const topicMessage = proto.TopicIdentityMessage.deserializeBinary(data)
-
-        const topicFwMessage = new proto.TopicIdentityFWMessage()
-        topicFwMessage.setType(proto.MessageType.TOPIC_IDENTITY_FW)
-        topicFwMessage.setFromAlias(alias)
-        topicFwMessage.setIdentity(aliasToUserId.get(alias)!)
-        topicFwMessage.setRole(proto.Role.CLIENT)
-        topicFwMessage.setBody(topicMessage.getBody_asU8())
-
-        const topicData = topicFwMessage.serializeBinary()
-
-        // Reliable/unreliable data
-        connections.forEach(($) => {
-          if (ws !== $) {
-            $.send(topicData)
-          }
-        })
+      let msgType = MessageType.UNKNOWN_MESSAGE_TYPE as MessageTypeMap[keyof MessageTypeMap]
+      try {
+        msgType = MessageHeader.deserializeBinary(data).getType()
+      } catch (err) {
+        logger.error('cannot deserialize message header')
+        return
       }
-    })
 
-    setTimeout(() => {
-      const welcome = new proto.WelcomeMessage()
-      welcome.setType(proto.MessageType.WELCOME)
-      welcome.setAlias(alias)
-      const data = welcome.serializeBinary()
+      switch (msgType) {
+        case MessageType.UNKNOWN_MESSAGE_TYPE: {
+          logger.log('unsupported message')
+          break
+        }
+        case MessageType.SYSTEM: {
+          try {
+            const message = SystemMessage.deserializeBinary(data)
+            message.setFromAlias(alias)
 
-      ws.send(data)
-    }, 100)
+            // Reliable/unreliable data
+            connections.forEach(($) => {
+              if (ws !== $) {
+                $.send(message.serializeBinary())
+              }
+            })
+          } catch (e) {
+            logger.error(`cannot process system message ${e}`)
+          }
+          break
+        }
+        case MessageType.IDENTITY: {
+          try {
+            const message = IdentityMessage.deserializeBinary(data)
+            message.setFromAlias(alias)
+            message.setIdentity(userId)
 
-    ws.on("error", (error) => {
-      logger.error(error)
-      ws.close()
-      connections.delete(ws)
-    })
+            // Reliable/unreliable data
+            connections.forEach(($) => {
+              if (ws !== $) {
+                $.send(message.serializeBinary())
+              }
+            })
+          } catch (e) {
+            logger.error(`cannot process identity message ${e}`)
+          }
+          break
+        }
+        default: {
+          logger.log(`ignoring msgType ${msgType}`)
+          break
+        }
+      }
 
-    ws.on("close", () => {
-      logger.info("Websocket closed")
-      connections.delete(ws)
+
+      ws.on("error", (error) => {
+        logger.error(error)
+        ws.close()
+        const room = connectionsPerRoom.get(roomId)
+        if (room) {
+          room.delete(ws)
+        }
+      })
+
+      ws.on("close", () => {
+        logger.info("Websocket closed")
+        const room = connectionsPerRoom.get(roomId)
+        if (room) {
+          room.delete(ws)
+        }
+      })
     })
   })
 }
