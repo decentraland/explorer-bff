@@ -5,7 +5,6 @@ import { GlobalContext } from "../../types"
 import * as proto from "../proto/broker"
 
 const connectionsPerRoom = new Map<string, Set<WebSocket>>()
-
 function getConnectionsList(roomId: string): Set<WebSocket> {
   let set = connectionsPerRoom.get(roomId)
   if (!set) {
@@ -15,7 +14,13 @@ function getConnectionsList(roomId: string): Set<WebSocket> {
   return set
 }
 
-export async function websocketRoomHandler(context: IHttpServerComponent.PathAwareContext<GlobalContext>) {
+let connectionCounter = 0
+
+const aliasToUserId = new Map<number, string>()
+
+export async function websocketRoomHandler(
+  context: IHttpServerComponent.DefaultContext<GlobalContext> & IHttpServerComponent.PathAwareContext<GlobalContext>
+) {
   const logger = context.components.logs.getLogger("Websocket Room Handler")
   logger.info("Websocket")
   const roomId = context.params.roomId || "I1" // TODO: Validate params
@@ -25,15 +30,66 @@ export async function websocketRoomHandler(context: IHttpServerComponent.PathAwa
     logger.info("Websocket connected")
     // TODO fix ws types
     const ws = socket as any as WebSocket
+
     connections.add(ws)
 
+    const alias = ++connectionCounter
+
+    const query = context.url.searchParams
+    const userId = query.get("identity") as string
+    aliasToUserId.set(alias, userId)
+
     ws.on("message", (message) => {
-      connections.forEach(($) => {
-        if (ws !== $) {
-          $.send(message)
-        }
-      })
+      const data = message as Buffer
+      const msgType = proto.CoordinatorMessage.deserializeBinary(data).getType()
+
+      if (msgType === proto.MessageType.PING) {
+        ws.send(data)
+      } else if (msgType === proto.MessageType.TOPIC) {
+        const topicMessage = proto.TopicMessage.deserializeBinary(data)
+
+        const topicFwMessage = new proto.TopicFWMessage()
+        topicFwMessage.setType(proto.MessageType.TOPIC_FW)
+        topicFwMessage.setFromAlias(alias)
+        topicFwMessage.setBody(topicMessage.getBody_asU8())
+
+        const topicData = topicFwMessage.serializeBinary()
+
+        // Reliable/unreliable data
+        connections.forEach(($) => {
+          if (ws !== $) {
+            $.send(topicData)
+          }
+        })
+      } else if (msgType === proto.MessageType.TOPIC_IDENTITY) {
+        const topicMessage = proto.TopicIdentityMessage.deserializeBinary(data)
+
+        const topicFwMessage = new proto.TopicIdentityFWMessage()
+        topicFwMessage.setType(proto.MessageType.TOPIC_IDENTITY_FW)
+        topicFwMessage.setFromAlias(alias)
+        topicFwMessage.setIdentity(aliasToUserId.get(alias)!)
+        topicFwMessage.setRole(proto.Role.CLIENT)
+        topicFwMessage.setBody(topicMessage.getBody_asU8())
+
+        const topicData = topicFwMessage.serializeBinary()
+
+        // Reliable/unreliable data
+        connections.forEach(($) => {
+          if (ws !== $) {
+            $.send(topicData)
+          }
+        })
+      }
     })
+
+    setTimeout(() => {
+      const welcome = new proto.WelcomeMessage()
+      welcome.setType(proto.MessageType.WELCOME)
+      welcome.setAlias(alias)
+      const data = welcome.serializeBinary()
+
+      ws.send(data)
+    }, 100)
 
     ws.on("error", (error) => {
       logger.error(error)
