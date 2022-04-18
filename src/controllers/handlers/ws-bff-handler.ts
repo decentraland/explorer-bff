@@ -12,6 +12,7 @@ let connectionCounter = 0
 const aliasToUserId = new Map<number, string>()
 
 export async function websocketBFFHandler(context: IHttpServerComponent.DefaultContext<GlobalContext>) {
+  const messageBroker = context.components.messageBroker
   const logger = context.components.logs.getLogger("Websocket BFF Handler")
   logger.info("Websocket")
 
@@ -41,6 +42,26 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
       switch (msgType) {
         case MessageType.UNKNOWN_MESSAGE_TYPE: {
           logger.log("unsupported message")
+          break
+        }
+        case MessageType.HEARTBEAT: {
+          try {
+            const message = HeartBeatMessage.deserializeBinary(data)
+            const worldPositionData = WorldPositionData.deserializeBinary(message.getData_asU8())
+            const worldPosition = [
+              worldPositionData.getPositionX(),
+              worldPositionData.getPositionY(),
+              worldPositionData.getPositionZ(),
+            ]
+            const peerPositionChange = {
+              id: aliasToUserId.get(alias),
+              position: worldPosition,
+            }
+            logger.info(`Heartbeat: ${JSON.stringify(peerPositionChange)}`)
+            messageBroker.publish("heartbeat", peerPositionChange)
+          } catch (e) {
+            logger.error(`cannot process system message ${e}`)
+          }
           break
         }
         default: {
