@@ -2,13 +2,7 @@ import { upgradeWebSocketResponse } from "@well-known-components/http-server/dis
 import { IHttpServerComponent } from "@well-known-components/interfaces"
 import { WebSocket } from "ws"
 import { GlobalContext } from "../../types"
-import {
-  MessageType,
-  MessageHeader,
-  MessageTypeMap,
-  SystemMessage,
-  IdentityMessage
-} from "../proto/ws_pb"
+import { MessageType, MessageHeader, MessageTypeMap, SystemMessage, IdentityMessage } from "../proto/ws_pb"
 
 const connectionsPerRoom = new Map<string, Set<WebSocket>>()
 
@@ -53,13 +47,13 @@ export async function websocketRoomHandler(
       try {
         msgType = MessageHeader.deserializeBinary(data).getType()
       } catch (err) {
-        logger.error('cannot deserialize message header')
+        logger.error("cannot deserialize message header")
         return
       }
 
       switch (msgType) {
         case MessageType.UNKNOWN_MESSAGE_TYPE: {
-          logger.log('unsupported message')
+          logger.log("unsupported message")
           break
         }
         case MessageType.SYSTEM: {
@@ -100,24 +94,23 @@ export async function websocketRoomHandler(
           break
         }
       }
+    })
 
+    ws.on("error", (error) => {
+      logger.error(error)
+      ws.close()
+      const room = connectionsPerRoom.get(roomId)
+      if (room) {
+        room.delete(ws)
+      }
+    })
 
-      ws.on("error", (error) => {
-        logger.error(error)
-        ws.close()
-        const room = connectionsPerRoom.get(roomId)
-        if (room) {
-          room.delete(ws)
-        }
-      })
-
-      ws.on("close", () => {
-        logger.info("Websocket closed")
-        const room = connectionsPerRoom.get(roomId)
-        if (room) {
-          room.delete(ws)
-        }
-      })
+    ws.on("close", () => {
+      logger.info("Websocket closed")
+      const room = connectionsPerRoom.get(roomId)
+      if (room) {
+        room.delete(ws)
+      }
     })
   })
 }
