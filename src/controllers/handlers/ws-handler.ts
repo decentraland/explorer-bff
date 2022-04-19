@@ -100,12 +100,16 @@ export async function websocketHandler(context: IHttpServerComponent.DefaultCont
     })
 
     setTimeout(() => {
-      const welcome = new proto.WelcomeMessage()
-      welcome.setType(proto.MessageType.WELCOME)
-      welcome.setAlias(alias)
-      const data = welcome.serializeBinary()
+      try {
+        const welcome = new proto.WelcomeMessage()
+        welcome.setType(proto.MessageType.WELCOME)
+        welcome.setAlias(alias)
+        const data = welcome.serializeBinary()
 
-      ws.send(data)
+        ws.send(data)
+      } catch (err: any) {
+        logger.error(err)
+      }
     }, 100)
 
     ws.on("error", (error) => {
