@@ -30,6 +30,8 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
     const userId = query.get("identity") as string
     aliasToUserId.set(alias, userId)
 
+    messageBroker.publish("peer_connect", userId)
+
     // Island Changes
     // TODO implement types
     // TODO implement disconnect
@@ -99,12 +101,14 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
     ws.on("error", (error) => {
       logger.error(error)
       ws.close()
+      messageBroker.publish("peer_disconnect", userId)
       islandChangesSubscription.unsubscribe()
       connections.delete(ws)
     })
 
     ws.on("close", () => {
       logger.info("Websocket closed")
+      messageBroker.publish("peer_disconnect", userId)
       islandChangesSubscription.unsubscribe()
       connections.delete(ws)
     })
