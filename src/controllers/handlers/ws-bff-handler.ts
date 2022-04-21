@@ -46,11 +46,10 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
         const message = islandChanges[userId]
         if (message.action === "changeTo") {
           const islandId = message.islandId
-          logger.info(`Peer ${userId} moved to island ${islandId}`)
+          logger.info(`Peer ${userId} moved to island ${islandId} using ${message.connStr}`)
           const msg = new IslandChangesMessage()
           msg.setType(MessageType.ISLAND_CHANGES)
-          msg.setTransport("pubsub")
-          msg.setTopic(islandId)
+          msg.setConnStr(message.connStr)
           ws.send(msg.serializeBinary())
         }
       })
