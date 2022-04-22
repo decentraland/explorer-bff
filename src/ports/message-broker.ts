@@ -1,5 +1,5 @@
 import { IBaseComponent, IConfigComponent, ILoggerComponent } from "@well-known-components/interfaces"
-import { connect, JSONCodec, StringCodec, NatsConnection, Subscription } from "nats"
+import { connect, JSONCodec, StringCodec, NatsConnection } from "nats"
 import { BaseComponents } from "../types"
 
 export declare type IMessageBrokerComponent = {
@@ -8,6 +8,10 @@ export declare type IMessageBrokerComponent = {
 
   start(): Promise<void>
   stop(): Promise<void>
+}
+
+export interface Subscription {
+  unsubscribe(): void
 }
 
 export async function createMessageBrokerComponent(
