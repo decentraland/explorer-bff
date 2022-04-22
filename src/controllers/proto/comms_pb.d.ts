@@ -278,6 +278,38 @@ export namespace ChatData {
   }
 }
 
+export class SceneData extends jspb.Message {
+  getCategory(): CategoryMap[keyof CategoryMap];
+  setCategory(value: CategoryMap[keyof CategoryMap]): void;
+
+  getTime(): number;
+  setTime(value: number): void;
+
+  getSceneId(): string;
+  setSceneId(value: string): void;
+
+  getData(): string;
+  setData(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SceneData.AsObject;
+  static toObject(includeInstance: boolean, msg: SceneData): SceneData.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: SceneData, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SceneData;
+  static deserializeBinaryFromReader(message: SceneData, reader: jspb.BinaryReader): SceneData;
+}
+
+export namespace SceneData {
+  export type AsObject = {
+    category: CategoryMap[keyof CategoryMap],
+    time: number,
+    sceneId: string,
+    data: string,
+  }
+}
+
 export interface CategoryMap {
   UNKNOWN: 0;
   POSITION: 1;

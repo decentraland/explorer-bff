@@ -8,6 +8,10 @@ enum MessageType {
   SUBSCRIPTION = 2;
   TOPIC = 3;
   ISLAND_CHANGES = 4;
+  OPEN = 5;
+  VALIDATION = 6;
+  VALIDATION_FAILURE = 7;
+  VALIDATION_OK = 8;
 }
 
 message MessageHeader {
@@ -25,7 +29,20 @@ message IslandChangesMessage {
   string conn_str = 2;
 }
 
-// NOTE: topics is a space separated string in the format specified by Format
+message OpenMessage {
+    MessageType type = 1;
+    string payload = 2;
+}
+
+message ValidationMessage {
+    MessageType type = 1;
+    string encoded_payload = 2;
+}
+
+message ValidationResultMessage {
+    MessageType type = 1;
+}
+
 message SubscriptionMessage {
     MessageType type = 1;
     bytes topics = 2;
@@ -33,7 +50,7 @@ message SubscriptionMessage {
 
 message TopicMessage {
     MessageType type = 1;
-    uint64 from_alias = 2;
+    string peer_id = 2;
     string topic = 3;
     bytes body = 4;
 }
