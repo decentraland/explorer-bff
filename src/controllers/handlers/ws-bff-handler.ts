@@ -30,8 +30,6 @@ function getTopicList(peer: Peer): Set<string> {
   return set
 }
 
-// let connectionCounter = 0
-
 export async function websocketBFFHandler(context: IHttpServerComponent.DefaultContext<GlobalContext>) {
   const messageBroker = context.components.messageBroker
   const logger = context.components.logs.getLogger("Websocket BFF Handler")
@@ -49,8 +47,6 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
 
     connections.add(peer)
 
-    // const alias = ++connectionCounter
-
     const welcome = new OpenMessage()
     welcome.setType(MessageType.OPEN)
     welcome.setPayload(welcomeMessage)
@@ -62,9 +58,12 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
     // TODO implement disconnect
     // TODO eventually we will island change per peer 
     const islandChangesSubscription = messageBroker.subscribe("island_changes", (data: any) => {
+      logger.info(`Island change message}`)
       const jsonCodec = JSONCodec()
       const islandChanges = jsonCodec.decode(data) as any
-      for (const [islandChangePeerId, change] of islandChanges.entries()) {
+
+      Object.keys(islandChanges).forEach((islandChangePeerId) => {
+        const change = islandChanges[islandChangePeerId]
         if (peer.peerId !== islandChangePeerId) {
           return
         }
@@ -76,7 +75,7 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
           msg.setConnStr(change.connStr)
           peer.ws.send(msg.serializeBinary())
         }
-      }
+      })
     })
 
     peer.ws.on("message", (message) => {
