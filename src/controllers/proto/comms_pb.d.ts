@@ -310,6 +310,36 @@ export namespace SceneData {
   }
 }
 
+export class VoiceData extends jspb.Message {
+  getCategory(): CategoryMap[keyof CategoryMap];
+  setCategory(value: CategoryMap[keyof CategoryMap]): void;
+
+  getEncodedSamples(): Uint8Array | string;
+  getEncodedSamples_asU8(): Uint8Array;
+  getEncodedSamples_asB64(): string;
+  setEncodedSamples(value: Uint8Array | string): void;
+
+  getIndex(): number;
+  setIndex(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): VoiceData.AsObject;
+  static toObject(includeInstance: boolean, msg: VoiceData): VoiceData.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: VoiceData, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): VoiceData;
+  static deserializeBinaryFromReader(message: VoiceData, reader: jspb.BinaryReader): VoiceData;
+}
+
+export namespace VoiceData {
+  export type AsObject = {
+    category: CategoryMap[keyof CategoryMap],
+    encodedSamples: Uint8Array | string,
+    index: number,
+  }
+}
+
 export interface CategoryMap {
   UNKNOWN: 0;
   POSITION: 1;
@@ -319,6 +349,7 @@ export interface CategoryMap {
   PROF_REQ: 5;
   PROF_RES: 6;
   WORLD_POSITION: 7;
+  VOICE: 8;
 }
 
 export const Category: CategoryMap;

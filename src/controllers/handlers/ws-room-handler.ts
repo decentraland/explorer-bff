@@ -3,6 +3,7 @@ import { IHttpServerComponent } from "@well-known-components/interfaces"
 import { WebSocket } from "ws"
 import { GlobalContext } from "../../types"
 import { MessageType, MessageHeader, MessageTypeMap, SystemMessage, IdentityMessage } from "../proto/ws_pb"
+import { verify } from 'jsonwebtoken'
 
 const connectionsPerRoom = new Map<string, Set<WebSocket>>()
 
@@ -27,6 +28,12 @@ export async function websocketRoomHandler(
   const roomId = context.params.roomId || "I1" // TODO: Validate params
   const connections = getConnectionsList(roomId)
 
+  const secret = process.env.WS_ROOM_SERVICE_SECRET
+
+  if (!secret) {
+    throw new Error('Missing ws room service auth secret')
+  }
+
   return upgradeWebSocketResponse((socket) => {
     logger.info("Websocket connected")
     // TODO fix ws types
@@ -37,7 +44,19 @@ export async function websocketRoomHandler(
     const alias = ++connectionCounter
 
     const query = context.url.searchParams
-    const userId = query.get("identity") as string
+    const token = query.get("access_token") as string
+
+    let userId: string
+    try {
+      // TODO: validate audience
+      const decodedToken = verify(token, secret) as any
+      userId = decodedToken['peerId'] as string
+    } catch (err) {
+      logger.error(err as Error)
+      ws.close()
+      return
+    }
+
     aliasToUserId.set(alias, userId)
 
     ws.on("message", (message) => {

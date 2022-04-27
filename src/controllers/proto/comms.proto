@@ -18,6 +18,7 @@ enum Category {
      PROF_REQ = 5;
      PROF_RES = 6;
      WORLD_POSITION= 7;
+     VOICE = 8;
 }
 
 message DataHeader {
@@ -81,4 +82,10 @@ message SceneData {
     double time = 2;
     string scene_id = 3;
     string data = 4;
+}
+
+message VoiceData {
+    Category category = 1;
+    bytes encoded_samples = 2;
+    uint32 index = 3;
 }

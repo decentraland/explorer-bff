@@ -648,7 +648,7 @@ proto.protocol.IdentityMessage.toObject = function(includeInstance, msg) {
   var f, obj = {
     type: jspb.Message.getFieldWithDefault(msg, 1, 0),
     fromAlias: jspb.Message.getFieldWithDefault(msg, 2, 0),
-    identity: msg.getIdentity_asB64(),
+    identity: jspb.Message.getFieldWithDefault(msg, 3, ""),
     body: msg.getBody_asB64()
   };
 
@@ -695,7 +695,7 @@ proto.protocol.IdentityMessage.deserializeBinaryFromReader = function(msg, reade
       msg.setFromAlias(value);
       break;
     case 3:
-      var value = /** @type {!Uint8Array} */ (reader.readBytes());
+      var value = /** @type {string} */ (reader.readString());
       msg.setIdentity(value);
       break;
     case 4:
@@ -745,9 +745,9 @@ proto.protocol.IdentityMessage.serializeBinaryToWriter = function(message, write
       f
     );
   }
-  f = message.getIdentity_asU8();
+  f = message.getIdentity();
   if (f.length > 0) {
-    writer.writeBytes(
+    writer.writeString(
       3,
       f
     );
@@ -799,44 +799,20 @@ proto.protocol.IdentityMessage.prototype.setFromAlias = function(value) {
 
 
 /**
- * optional bytes identity = 3;
- * @return {!(string|Uint8Array)}
- */
-proto.protocol.IdentityMessage.prototype.getIdentity = function() {
-  return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
-};
-
-
-/**
- * optional bytes identity = 3;
- * This is a type-conversion wrapper around `getIdentity()`
+ * optional string identity = 3;
  * @return {string}
  */
-proto.protocol.IdentityMessage.prototype.getIdentity_asB64 = function() {
-  return /** @type {string} */ (jspb.Message.bytesAsB64(
-      this.getIdentity()));
+proto.protocol.IdentityMessage.prototype.getIdentity = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
 };
 
 
 /**
- * optional bytes identity = 3;
- * Note that Uint8Array is not supported on all browsers.
- * @see http://caniuse.com/Uint8Array
- * This is a type-conversion wrapper around `getIdentity()`
- * @return {!Uint8Array}
- */
-proto.protocol.IdentityMessage.prototype.getIdentity_asU8 = function() {
-  return /** @type {!Uint8Array} */ (jspb.Message.bytesAsU8(
-      this.getIdentity()));
-};
-
-
-/**
- * @param {!(string|Uint8Array)} value
+ * @param {string} value
  * @return {!proto.protocol.IdentityMessage} returns this
  */
 proto.protocol.IdentityMessage.prototype.setIdentity = function(value) {
-  return jspb.Message.setProto3BytesField(this, 3, value);
+  return jspb.Message.setProto3StringField(this, 3, value);
 };
 
 

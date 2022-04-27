@@ -27,6 +27,6 @@ message SystemMessage {
 message IdentityMessage {
   MessageType type = 1;
   uint64 from_alias = 2;
-  bytes identity = 3;
+  string identity = 3;
   bytes body = 4;
 }

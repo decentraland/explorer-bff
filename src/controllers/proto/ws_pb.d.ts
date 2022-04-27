@@ -84,10 +84,8 @@ export class IdentityMessage extends jspb.Message {
   getFromAlias(): number;
   setFromAlias(value: number): void;
 
-  getIdentity(): Uint8Array | string;
-  getIdentity_asU8(): Uint8Array;
-  getIdentity_asB64(): string;
-  setIdentity(value: Uint8Array | string): void;
+  getIdentity(): string;
+  setIdentity(value: string): void;
 
   getBody(): Uint8Array | string;
   getBody_asU8(): Uint8Array;
@@ -108,7 +106,7 @@ export namespace IdentityMessage {
   export type AsObject = {
     type: MessageTypeMap[keyof MessageTypeMap],
     fromAlias: number,
-    identity: Uint8Array | string,
+    identity: string,
     body: Uint8Array | string,
   }
 }
