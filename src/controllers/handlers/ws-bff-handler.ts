@@ -17,7 +17,7 @@ import {
   MessageTypeMap,
 } from "../proto/bff_pb"
 import { WorldPositionData } from "../proto/comms_pb"
-import { HeartbeatMessage, PeerDisconnectMessage, IslandChangedMessage } from "../proto/nats_pb"
+import { HeartbeatMessage, IslandChangedMessage } from "../proto/nats_pb"
 import { Subscription } from "../../ports/message-broker"
 
 const connections = new Set<Peer>()
@@ -68,24 +68,21 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
     // Island Changes
     // TODO implement island leave message
     const subscribeToIslandChanges = () => {
-      peer.islandChangesSubscription = messageBroker.subscribe(
-        `peer.${peer.peerId}.island_changed`,
-        (data: Uint8Array) => {
-          try {
-            const brokerMessage = IslandChangedMessage.deserializeBinary(data)
-            const islandId = brokerMessage.getIslandId()
-            const connStr = brokerMessage.getConnStr()
-            logger.info(`Peer ${peer.peerId} moved to island ${islandId} using ${connStr}`)
+      peer.islandChangesSubscription = messageBroker.subscribe(`peer.${peer.peerId}.island_changed`, ({ data }) => {
+        try {
+          const brokerMessage = IslandChangedMessage.deserializeBinary(data)
+          const islandId = brokerMessage.getIslandId()
+          const connStr = brokerMessage.getConnStr()
+          logger.info(`Peer ${peer.peerId} moved to island ${islandId} using ${connStr}`)
 
-            const wsMessage = new IslandChangesMessage()
-            wsMessage.setType(MessageType.ISLAND_CHANGES)
-            wsMessage.setConnStr(connStr)
-            peer.ws.send(wsMessage.serializeBinary())
-          } catch (e) {
-            logger.error(`cannot process island_changes message ${e}`)
-          }
+          const wsMessage = new IslandChangesMessage()
+          wsMessage.setType(MessageType.ISLAND_CHANGES)
+          wsMessage.setConnStr(connStr)
+          peer.ws.send(wsMessage.serializeBinary())
+        } catch (e) {
+          logger.error(`cannot process island_changes message ${e}`)
         }
-      )
+      })
     }
 
     peer.ws.on("message", (message) => {
@@ -136,7 +133,6 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
             ]
 
             const heartbeatMessage = new HeartbeatMessage()
-            heartbeatMessage.setId(peer.peerId)
             heartbeatMessage.setPositionList(worldPosition)
 
             messageBroker.publish(`peer.${peer.peerId}.heartbeat`, heartbeatMessage.serializeBinary())
@@ -185,9 +181,7 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
       logger.error(error)
       peer.ws.close()
       if (peer.peerId) {
-        const message = new PeerDisconnectMessage()
-        message.setPeerId(peer.peerId)
-        messageBroker.publish(`peer.${peer.peerId}.disconnect`, message.serializeBinary())
+        messageBroker.publish(`peer.${peer.peerId}.disconnect`)
       }
       peer.islandChangesSubscription?.unsubscribe()
       connections.delete(peer)
@@ -196,9 +190,7 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
     peer.ws.on("close", () => {
       logger.info("Websocket closed")
       if (peer.peerId) {
-        const message = new PeerDisconnectMessage()
-        message.setPeerId(peer.peerId)
-        messageBroker.publish(`peer.${peer.peerId}.disconnect`, message.serializeBinary())
+        messageBroker.publish(`peer.${peer.peerId}.disconnect`)
       }
       peer.islandChangesSubscription?.unsubscribe()
       connections.delete(peer)

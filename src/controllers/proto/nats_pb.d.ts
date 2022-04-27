@@ -4,9 +4,6 @@
 import * as jspb from "google-protobuf";
 
 export class HeartbeatMessage extends jspb.Message {
-  getId(): string;
-  setId(value: string): void;
-
   clearPositionList(): void;
   getPositionList(): Array<number>;
   setPositionList(value: Array<number>): void;
@@ -24,48 +21,7 @@ export class HeartbeatMessage extends jspb.Message {
 
 export namespace HeartbeatMessage {
   export type AsObject = {
-    id: string,
     positionList: Array<number>,
-  }
-}
-
-export class PeerConnectMessage extends jspb.Message {
-  getPeerId(): string;
-  setPeerId(value: string): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): PeerConnectMessage.AsObject;
-  static toObject(includeInstance: boolean, msg: PeerConnectMessage): PeerConnectMessage.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: PeerConnectMessage, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): PeerConnectMessage;
-  static deserializeBinaryFromReader(message: PeerConnectMessage, reader: jspb.BinaryReader): PeerConnectMessage;
-}
-
-export namespace PeerConnectMessage {
-  export type AsObject = {
-    peerId: string,
-  }
-}
-
-export class PeerDisconnectMessage extends jspb.Message {
-  getPeerId(): string;
-  setPeerId(value: string): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): PeerDisconnectMessage.AsObject;
-  static toObject(includeInstance: boolean, msg: PeerDisconnectMessage): PeerDisconnectMessage.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: PeerDisconnectMessage, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): PeerDisconnectMessage;
-  static deserializeBinaryFromReader(message: PeerDisconnectMessage, reader: jspb.BinaryReader): PeerDisconnectMessage;
-}
-
-export namespace PeerDisconnectMessage {
-  export type AsObject = {
-    peerId: string,
   }
 }
 

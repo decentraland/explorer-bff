@@ -1,10 +1,22 @@
-import { IBaseComponent, IConfigComponent, ILoggerComponent } from "@well-known-components/interfaces"
+import { IBaseComponent } from "@well-known-components/interfaces"
 import { connect, NatsConnection } from "nats"
 import { BaseComponents } from "../types"
 
+export type Message = {
+  data: Uint8Array
+  topic: Topic
+}
+
+class Topic {
+  constructor(private readonly topic: string) {}
+  getLevel(level: number): string {
+    return this.topic.split(".")[level]
+  }
+}
+
 export type IMessageBrokerComponent = {
-  publish(topic: string, message: Uint8Array): void
-  subscribe(topic: string, handler: Function): Subscription
+  publish(topic: string, message?: Uint8Array): void
+  subscribe(topic: string, handler: (message: Message) => Promise<void> | void): Subscription
 
   start(): Promise<void>
   stop(): Promise<void>
@@ -25,24 +37,15 @@ export async function createMessageBrokerComponent(
   const natsConfig = { servers: `${natsUrl}` }
   let natsConnection: NatsConnection
 
-  function publish(topic: string, message: Uint8Array): void {
+  function publish(topic: string, message?: Uint8Array): void {
     natsConnection.publish(topic, message)
   }
 
-  function subscribe(topic: string, handler: Function): Subscription {
+  function subscribe(topic: string, handler: (_: Message) => Promise<void>): Subscription {
     const subscription = natsConnection.subscribe(topic)
     ;(async () => {
       for await (const message of subscription) {
-        try {
-          if (message.data.length) {
-            const data = message.data
-            const payload = await handler(data)
-          } else {
-            const payload = await handler()
-          }
-        } catch (err: any) {
-          logger.error(err)
-        }
+        await handler({ data: message.data, topic: new Topic(message.subject) })
       }
     })()
     return subscription
