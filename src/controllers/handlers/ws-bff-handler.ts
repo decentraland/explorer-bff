@@ -1,24 +1,37 @@
-import { httpProviderForNetwork } from '@dcl/catalyst-contracts'
-import { AuthChain, Authenticator } from 'dcl-crypto'
+import { httpProviderForNetwork } from "@dcl/catalyst-contracts"
+import { AuthChain, Authenticator } from "dcl-crypto"
 import { upgradeWebSocketResponse } from "@well-known-components/http-server/dist/ws"
 import { IHttpServerComponent } from "@well-known-components/interfaces"
 import { WebSocket } from "ws"
 import { GlobalContext } from "../../types"
-import { ValidationResultMessage, TopicMessage, OpenMessage, HeartBeatMessage, ValidationMessage, SubscriptionMessage, IslandChangesMessage, MessageHeader, MessageType, MessageTypeMap } from "../proto/bff_pb"
+import {
+  ValidationResultMessage,
+  TopicMessage,
+  OpenMessage,
+  HeartBeatMessage,
+  IslandChangesMessage,
+  ValidationMessage,
+  SubscriptionMessage,
+  MessageHeader,
+  MessageType,
+  MessageTypeMap,
+} from "../proto/bff_pb"
 import { WorldPositionData } from "../proto/comms_pb"
-import { JSONCodec } from "nats"
+import { HeartbeatMessage, PeerDisconnectMessage, IslandChangedMessage } from "../proto/nats_pb"
+import { Subscription } from "../../ports/message-broker"
 
 const connections = new Set<Peer>()
 const topicsPerConnection = new WeakMap<Peer, Set<string>>()
 
-const DEFAULT_ETH_NETWORK = 'ropsten'
+const DEFAULT_ETH_NETWORK = "ropsten"
 const CURRENT_ETH_NETWORK = process.env.ETH_NETWORK ?? DEFAULT_ETH_NETWORK
 
 const ethProvider = httpProviderForNetwork(CURRENT_ETH_NETWORK)
 
 type Peer = {
-  ws: WebSocket,
+  ws: WebSocket
   peerId: string | null
+  islandChangesSubscription?: Subscription
 }
 
 function getTopicList(peer: Peer): Set<string> {
@@ -42,7 +55,7 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
     const welcomeMessage = Math.random().toString(36).substring(2)
     const peer = {
       ws: socket as any as WebSocket,
-      peerId: null
+      peerId: null,
     } as Peer
 
     connections.add(peer)
@@ -52,31 +65,28 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
     welcome.setPayload(welcomeMessage)
     peer.ws.send(welcome.serializeBinary())
 
-
     // Island Changes
-    // TODO implement types
-    // TODO implement disconnect
-    // TODO eventually we will island change per peer 
-    const islandChangesSubscription = messageBroker.subscribe("island_changes", (data: any) => {
-      logger.info(`Island change message}`)
-      const jsonCodec = JSONCodec()
-      const islandChanges = jsonCodec.decode(data) as any
+    // TODO implement island leave message
+    const subscribeToIslandChanges = () => {
+      peer.islandChangesSubscription = messageBroker.subscribe(
+        `peer.${peer.peerId}.island_changed`,
+        (data: Uint8Array) => {
+          try {
+            const brokerMessage = IslandChangedMessage.deserializeBinary(data)
+            const islandId = brokerMessage.getIslandId()
+            const connStr = brokerMessage.getConnStr()
+            logger.info(`Peer ${peer.peerId} moved to island ${islandId} using ${connStr}`)
 
-      Object.keys(islandChanges).forEach((islandChangePeerId) => {
-        const change = islandChanges[islandChangePeerId]
-        if (peer.peerId !== islandChangePeerId) {
-          return
+            const wsMessage = new IslandChangesMessage()
+            wsMessage.setType(MessageType.ISLAND_CHANGES)
+            wsMessage.setConnStr(connStr)
+            peer.ws.send(wsMessage.serializeBinary())
+          } catch (e) {
+            logger.error(`cannot process island_changes message ${e}`)
+          }
         }
-        if (change.action === "changeTo") {
-          const islandId = change.islandId
-          logger.info(`Peer ${peer.peerId} moved to island ${islandId} using ${change.connStr}`)
-          const msg = new IslandChangesMessage()
-          msg.setType(MessageType.ISLAND_CHANGES)
-          msg.setConnStr(change.connStr)
-          peer.ws.send(msg.serializeBinary())
-        }
-      })
-    })
+      )
+    }
 
     peer.ws.on("message", (message) => {
       const data = message as Buffer
@@ -96,19 +106,19 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
         case MessageType.VALIDATION: {
           const validationMessage = ValidationMessage.deserializeBinary(data)
           const payload = JSON.parse(validationMessage.getEncodedPayload()) as AuthChain
-          Authenticator.validateSignature(welcomeMessage, payload, ethProvider)
-            .then((result) => {
-              const validationResultMessage = new ValidationResultMessage()
-              if (result.ok) {
-                peer.peerId = payload[0].payload
-                logger.log(`Successful validation for ${peer.peerId}`)
-                validationResultMessage.setType(MessageType.VALIDATION_OK)
-              } else {
-                logger.log('Failed validation ${result.message}')
-                validationResultMessage.setType(MessageType.VALIDATION_FAILURE)
-              }
-              peer.ws.send(validationResultMessage.serializeBinary())
-            })
+          Authenticator.validateSignature(welcomeMessage, payload, ethProvider).then((result) => {
+            const validationResultMessage = new ValidationResultMessage()
+            if (result.ok) {
+              peer.peerId = payload[0].payload
+              logger.log(`Successful validation for ${peer.peerId}`)
+              validationResultMessage.setType(MessageType.VALIDATION_OK)
+              subscribeToIslandChanges()
+            } else {
+              logger.log("Failed validation ${result.message}")
+              validationResultMessage.setType(MessageType.VALIDATION_FAILURE)
+            }
+            peer.ws.send(validationResultMessage.serializeBinary())
+          })
           break
         }
         case MessageType.HEARTBEAT: {
@@ -124,12 +134,12 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
               worldPositionData.getPositionY(),
               worldPositionData.getPositionZ(),
             ]
-            const peerPositionChange = {
-              id: peer.peerId,
-              position: worldPosition,
-            }
-            logger.info(`Heartbeat: ${JSON.stringify(peerPositionChange)}`)
-            messageBroker.publish("heartbeat", peerPositionChange)
+
+            const heartbeatMessage = new HeartbeatMessage()
+            heartbeatMessage.setId(peer.peerId)
+            heartbeatMessage.setPositionList(worldPosition)
+
+            messageBroker.publish(`peer.${peer.peerId}.heartbeat`, heartbeatMessage.serializeBinary())
           } catch (e) {
             logger.error(`cannot process system message ${e}`)
           }
@@ -175,18 +185,22 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
       logger.error(error)
       peer.ws.close()
       if (peer.peerId) {
-        messageBroker.publish("peer_disconnect", peer.peerId)
+        const message = new PeerDisconnectMessage()
+        message.setPeerId(peer.peerId)
+        messageBroker.publish(`peer.${peer.peerId}.disconnect`, message.serializeBinary())
       }
-      islandChangesSubscription.unsubscribe()
+      peer.islandChangesSubscription?.unsubscribe()
       connections.delete(peer)
     })
 
     peer.ws.on("close", () => {
       logger.info("Websocket closed")
       if (peer.peerId) {
-        messageBroker.publish("peer_disconnect", peer.peerId)
+        const message = new PeerDisconnectMessage()
+        message.setPeerId(peer.peerId)
+        messageBroker.publish(`peer.${peer.peerId}.disconnect`, message.serializeBinary())
       }
-      islandChangesSubscription.unsubscribe()
+      peer.islandChangesSubscription?.unsubscribe()
       connections.delete(peer)
     })
   })
