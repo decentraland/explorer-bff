@@ -5,19 +5,16 @@ import { IHttpServerComponent } from "@well-known-components/interfaces"
 import { WebSocket } from "ws"
 import { GlobalContext } from "../../types"
 import {
-  ValidationResultMessage,
+  ValidationOKMessage,
+  ValidationFailureMessage,
   TopicMessage,
   OpenMessage,
-  HeartBeatMessage,
-  IslandChangesMessage,
   ValidationMessage,
   SubscriptionMessage,
   MessageHeader,
   MessageType,
   MessageTypeMap,
 } from "../proto/bff_pb"
-import { WorldPositionData } from "../proto/comms_pb"
-import { HeartbeatMessage, IslandChangedMessage } from "../proto/nats_pb"
 import { Subscription } from "../../ports/message-broker"
 
 const connections = new Set<Peer>()
@@ -34,6 +31,10 @@ type Peer = {
   islandChangesSubscription?: Subscription
 }
 
+type IdentifierPeer = Peer & {
+  peerId: string
+}
+
 function getTopicList(peer: Peer): Set<string> {
   let set = topicsPerConnection.get(peer)
   if (!set) {
@@ -41,6 +42,51 @@ function getTopicList(peer: Peer): Set<string> {
     topicsPerConnection.set(peer, set)
   }
   return set
+}
+
+function broadcastTopicMessage(topicMessage: TopicMessage, fromPeer?: IdentifierPeer) {
+  if (fromPeer) {
+    topicMessage.setPeerId(fromPeer.peerId)
+  }
+
+  const topicData = topicMessage.serializeBinary()
+
+  const topic = topicMessage.getTopic()
+  connections.forEach(($) => {
+    if (!fromPeer || fromPeer !== $) {
+      if (getTopicList($).has(topic)) {
+        $.ws.send(topicData)
+      }
+    }
+  })
+}
+
+
+export async function setupArchipelagoSubscriptions(context: GlobalContext) {
+  const messageBroker = context.components.messageBroker
+  const logger = context.components.logs.getLogger("Websocket BFF Handler")
+
+  messageBroker.subscribe(`island.*.peer_left`, ({ data, topic }) => {
+    const topicMessage = new TopicMessage()
+    topicMessage.setType(MessageType.TOPIC)
+    topicMessage.setTopic(topic.getFullTopic())
+    topicMessage.setBody(data)
+    broadcastTopicMessage(topicMessage)
+    logger.info('Sending peer left message')
+  })
+
+  messageBroker.subscribe(`island.*.peer_join`, ({ data, topic }) => {
+    const topicMessage = new TopicMessage()
+    topicMessage.setType(MessageType.TOPIC)
+    topicMessage.setTopic(topic.getFullTopic())
+    topicMessage.setBody(data)
+    broadcastTopicMessage(topicMessage)
+    logger.info('Sending peer join message')
+  })
+}
+
+export async function teardownArchipelagoSubscriptions(context: IHttpServerComponent.DefaultContext<GlobalContext>) {
+  // subscription.unsubscribe()
 }
 
 export async function websocketBFFHandler(context: IHttpServerComponent.DefaultContext<GlobalContext>) {
@@ -65,24 +111,18 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
     welcome.setPayload(welcomeMessage)
     peer.ws.send(welcome.serializeBinary())
 
-    // Island Changes
-    // TODO implement island leave message
     const subscribeToIslandChanges = () => {
       peer.islandChangesSubscription = messageBroker.subscribe(`peer.${peer.peerId}.island_changed`, ({ data }) => {
-        try {
-          const brokerMessage = IslandChangedMessage.deserializeBinary(data)
-          const islandId = brokerMessage.getIslandId()
-          const connStr = brokerMessage.getConnStr()
-          logger.info(`Peer ${peer.peerId} moved to island ${islandId} using ${connStr}`)
-
-          const wsMessage = new IslandChangesMessage()
-          wsMessage.setType(MessageType.ISLAND_CHANGES)
-          wsMessage.setConnStr(connStr)
-          peer.ws.send(wsMessage.serializeBinary())
-        } catch (e) {
-          logger.error(`cannot process island_changes message ${e}`)
-        }
+        // TODO: maybe check if the peer is subscribed to the topic
+        console.log("SENDING ISLAND CHANGED")
+        const topicMessage = new TopicMessage()
+        topicMessage.setType(MessageType.TOPIC)
+        topicMessage.setTopic(`peer.${peer.peerId}.island_changed`)
+        topicMessage.setBody(data)
+        peer.ws.send(topicMessage.serializeBinary())
       })
+
+      // peer.islandChangesSubscription = messageBroker.subscribe(`peer.${peer.peerId}.island_changed`, ({ data }) => {
     }
 
     peer.ws.on("message", (message) => {
@@ -104,70 +144,45 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
           const validationMessage = ValidationMessage.deserializeBinary(data)
           const payload = JSON.parse(validationMessage.getEncodedPayload()) as AuthChain
           Authenticator.validateSignature(welcomeMessage, payload, ethProvider).then((result) => {
-            const validationResultMessage = new ValidationResultMessage()
             if (result.ok) {
               peer.peerId = payload[0].payload
               logger.log(`Successful validation for ${peer.peerId}`)
+              const validationResultMessage = new ValidationOKMessage()
               validationResultMessage.setType(MessageType.VALIDATION_OK)
+              validationResultMessage.setPeerId(peer.peerId)
+              peer.ws.send(validationResultMessage.serializeBinary())
               subscribeToIslandChanges()
             } else {
               logger.log("Failed validation ${result.message}")
+              const validationResultMessage = new ValidationFailureMessage()
               validationResultMessage.setType(MessageType.VALIDATION_FAILURE)
+              peer.ws.send(validationResultMessage.serializeBinary())
             }
-            peer.ws.send(validationResultMessage.serializeBinary())
           })
           break
         }
-        case MessageType.HEARTBEAT: {
-          if (!peer.peerId) {
-            break
-          }
-
-          try {
-            const message = HeartBeatMessage.deserializeBinary(data)
-            const worldPositionData = WorldPositionData.deserializeBinary(message.getData_asU8())
-            const worldPosition = [
-              worldPositionData.getPositionX(),
-              worldPositionData.getPositionY(),
-              worldPositionData.getPositionZ(),
-            ]
-
-            const heartbeatMessage = new HeartbeatMessage()
-            heartbeatMessage.setPositionList(worldPosition)
-
-            messageBroker.publish(`peer.${peer.peerId}.heartbeat`, heartbeatMessage.serializeBinary())
-          } catch (e) {
-            logger.error(`cannot process system message ${e}`)
-          }
-          break
-        }
         case MessageType.SUBSCRIPTION: {
-          const topicMessage = SubscriptionMessage.deserializeBinary(data)
-          const rawTopics = topicMessage.getTopics()
-          const topics = Buffer.from(rawTopics as string).toString("utf8")
-          const set = getTopicList(peer)
-          logger.info("Subscription", { topics })
+          const subscriptionMessage = SubscriptionMessage.deserializeBinary(data)
+          const topics = subscriptionMessage.getTopicsList()
+          logger.info(`Subscription ${topics}`)
 
+          const set = getTopicList(peer)
           set.clear()
-          topics.split(/\s+/g).forEach(($) => set.add($))
+          topics.forEach(($) => set.add($))
           break
         }
         case MessageType.TOPIC: {
           if (!peer.peerId) {
-            break
+            break;
           }
+          const heartbeatTopic = `peer.${peer.peerId}.heartbeat`
           const topicMessage = TopicMessage.deserializeBinary(data)
-          topicMessage.setPeerId(peer.peerId)
-          const topicData = topicMessage.serializeBinary()
+          if (topicMessage.getTopic() === heartbeatTopic) {
+            messageBroker.publish(heartbeatTopic, topicMessage.getBody_asU8())
+          } else {
+            broadcastTopicMessage(topicMessage, peer as IdentifierPeer)
+          }
 
-          const topic = topicMessage.getTopic()
-          connections.forEach(($) => {
-            if (peer !== $) {
-              if (getTopicList($).has(topic)) {
-                $.ws.send(topicData)
-              }
-            }
-          })
           break
         }
         default: {

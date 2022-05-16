@@ -8,9 +8,13 @@ export type Message = {
 }
 
 class Topic {
-  constructor(private readonly topic: string) {}
+  constructor(private readonly topic: string) { }
   getLevel(level: number): string {
     return this.topic.split(".")[level]
+  }
+
+  getFullTopic(): string {
+    return this.topic
   }
 }
 
@@ -35,7 +39,7 @@ export async function createMessageBrokerComponent(
   // config
   const natsUrl = (await config.getString("NATS_URL")) || "nats.decentraland.zone:4222"
   const natsConfig = { servers: `${natsUrl}` }
-  let natsConnection: NatsConnection
+  let natsConnection = await connect(natsConfig)
 
   function publish(topic: string, message?: Uint8Array): void {
     natsConnection.publish(topic, message)
@@ -43,17 +47,16 @@ export async function createMessageBrokerComponent(
 
   function subscribe(topic: string, handler: (_: Message) => Promise<void>): Subscription {
     const subscription = natsConnection.subscribe(topic)
-    ;(async () => {
-      for await (const message of subscription) {
-        await handler({ data: message.data, topic: new Topic(message.subject) })
-      }
-    })()
+      ; (async () => {
+        for await (const message of subscription) {
+          await handler({ data: message.data, topic: new Topic(message.subject) })
+        }
+      })()
     return subscription
   }
 
   async function start() {
     try {
-      natsConnection = await connect(natsConfig)
       logger.info(`Connected to NATS: ${natsUrl}`)
     } catch (error) {
       logger.error(`An error occurred trying to connect to the NATS server: ${natsUrl}`)
