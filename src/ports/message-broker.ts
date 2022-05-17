@@ -51,7 +51,7 @@ export async function createMessageBrokerComponent(
       for await (const message of subscription) {
         await handler({ data: message.data, topic: new Topic(message.subject) })
       }
-    })()
+    })().catch((err: any) => logger.error(`error processing subscription message; ${err.toString()}`))
     return subscription
   }
 

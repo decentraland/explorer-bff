@@ -116,7 +116,7 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
       })
     }
 
-    peer.ws.on('message', (message) => {
+    peer.ws.on('message', async (message) => {
       const data = message as Buffer
       let msgType = MessageType.UNKNOWN_MESSAGE_TYPE as MessageTypeMap[keyof MessageTypeMap]
       try {
@@ -134,22 +134,21 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
         case MessageType.VALIDATION: {
           const validationMessage = ValidationMessage.deserializeBinary(data)
           const payload = JSON.parse(validationMessage.getEncodedPayload()) as AuthChain
-          Authenticator.validateSignature(welcomeMessage, payload, ethProvider).then((result) => {
-            if (result.ok) {
-              peer.peerId = payload[0].payload
-              logger.log(`Successful validation for ${peer.peerId}`)
-              const validationResultMessage = new ValidationOKMessage()
-              validationResultMessage.setType(MessageType.VALIDATION_OK)
-              validationResultMessage.setPeerId(peer.peerId)
-              peer.ws.send(validationResultMessage.serializeBinary())
-              subscribeToIslandChanges()
-            } else {
-              logger.log('Failed validation ${result.message}')
-              const validationResultMessage = new ValidationFailureMessage()
-              validationResultMessage.setType(MessageType.VALIDATION_FAILURE)
-              peer.ws.send(validationResultMessage.serializeBinary())
-            }
-          })
+          const result = await Authenticator.validateSignature(welcomeMessage, payload, ethProvider)
+          if (result.ok) {
+            peer.peerId = payload[0].payload
+            logger.log(`Successful validation for ${peer.peerId}`)
+            const validationResultMessage = new ValidationOKMessage()
+            validationResultMessage.setType(MessageType.VALIDATION_OK)
+            validationResultMessage.setPeerId(peer.peerId)
+            peer.ws.send(validationResultMessage.serializeBinary())
+            subscribeToIslandChanges()
+          } else {
+            logger.log('Failed validation ${result.message}')
+            const validationResultMessage = new ValidationFailureMessage()
+            validationResultMessage.setType(MessageType.VALIDATION_FAILURE)
+            peer.ws.send(validationResultMessage.serializeBinary())
+          }
           break
         }
         case MessageType.SUBSCRIPTION: {
