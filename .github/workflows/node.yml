@@ -4,10 +4,10 @@ on:
   push:
 
 jobs:
-  install:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
       - name: Use Node.js 16.x
         uses: actions/setup-node@v1
         with:
@@ -21,3 +21,33 @@ jobs:
         run: make test
       - name: lint
         run: make lint
+
+  validations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js 16.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+          cache: npm
+      - name: install
+        run: make install
+      - name: lint
+        run: make lint
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js 16.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+          cache: npm
+      - name: install
+        run: make install
+      - name: build
+        run: make build
+      - name: test
+        run: make test
