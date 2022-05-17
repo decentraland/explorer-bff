@@ -37,7 +37,7 @@ export async function createMessageBrokerComponent(
   const logger = logs.getLogger('MessageBroker')
 
   // config
-  const natsUrl = (await config.getString('NATS_URL')) || 'nats.decentraland.zone:4222'
+  const natsUrl = await config.getString('NATS_URL')
   const natsConfig = { servers: `${natsUrl}` }
   let natsConnection: NatsConnection
 
