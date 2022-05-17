@@ -54,4 +54,7 @@ build:
 	@$(BUILD_PROTO)
 	@./node_modules/.bin/tsc -p tsconfig.json
 
+lint:
+	@node_modules/.bin/eslint . --ext .ts
+
 .PHONY: build test codegen
