@@ -17,10 +17,6 @@ jobs:
         run: make install
       - name: build
         run: make build
-      - name: test
-        run: make test
-      - name: lint
-        run: make lint
 
   validations:
     runs-on: ubuntu-latest
