@@ -84,10 +84,6 @@ export async function setupArchipelagoSubscriptions(context: GlobalContext) {
   })
 }
 
-export async function teardownArchipelagoSubscriptions(context: IHttpServerComponent.DefaultContext<GlobalContext>) {
-  // subscription.unsubscribe()
-}
-
 export async function websocketBFFHandler(context: IHttpServerComponent.DefaultContext<GlobalContext>) {
   const messageBroker = context.components.messageBroker
   const logger = context.components.logs.getLogger("Websocket BFF Handler")
