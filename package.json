@@ -31,7 +31,7 @@
     "@types/jsonwebtoken": "^8.5.8",
     "@types/ws": "^8.5.3",
     "@well-known-components/env-config-provider": "^1.1.1",
-    "@well-known-components/http-server": "^1.1.2-20220207145800.commit-236cfbb",
+    "@well-known-components/http-server": "^1.1.2-20220213212735.commit-e147aed",
     "@well-known-components/interfaces": "^1.1.1",
     "@well-known-components/logger": "^1.1.0",
     "@well-known-components/metrics": "^1.1.3",
