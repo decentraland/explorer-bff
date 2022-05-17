@@ -1,0 +1,8 @@
+test/
+dist/
+*.js
+*.d.ts
+*.json
+
+src/proto
+src/controllers/proto

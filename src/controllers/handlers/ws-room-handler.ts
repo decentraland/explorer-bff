@@ -1,8 +1,8 @@
-import { upgradeWebSocketResponse } from "@well-known-components/http-server/dist/ws"
-import { IHttpServerComponent } from "@well-known-components/interfaces"
-import { WebSocket } from "ws"
-import { GlobalContext } from "../../types"
-import { MessageType, MessageHeader, MessageTypeMap, SystemMessage, IdentityMessage } from "../proto/ws_pb"
+import { upgradeWebSocketResponse } from '@well-known-components/http-server/dist/ws'
+import { IHttpServerComponent } from '@well-known-components/interfaces'
+import { WebSocket } from 'ws'
+import { GlobalContext } from '../../types'
+import { MessageType, MessageHeader, MessageTypeMap, SystemMessage, IdentityMessage } from '../proto/ws_pb'
 import { verify } from 'jsonwebtoken'
 
 const connectionsPerRoom = new Map<string, Set<WebSocket>>()
@@ -23,9 +23,9 @@ const aliasToUserId = new Map<number, string>()
 export async function websocketRoomHandler(
   context: IHttpServerComponent.DefaultContext<GlobalContext> & IHttpServerComponent.PathAwareContext<GlobalContext>
 ) {
-  const logger = context.components.logs.getLogger("Websocket Room Handler")
-  logger.info("Websocket")
-  const roomId = context.params.roomId || "I1" // TODO: Validate params
+  const logger = context.components.logs.getLogger('Websocket Room Handler')
+  logger.info('Websocket')
+  const roomId = context.params.roomId || 'I1' // TODO: Validate params
   const connections = getConnectionsList(roomId)
 
   const secret = process.env.WS_ROOM_SERVICE_SECRET
@@ -35,7 +35,7 @@ export async function websocketRoomHandler(
   }
 
   return upgradeWebSocketResponse((socket) => {
-    logger.info("Websocket connected")
+    logger.info('Websocket connected')
     // TODO fix ws types
     const ws = socket as any as WebSocket
 
@@ -44,7 +44,7 @@ export async function websocketRoomHandler(
     const alias = ++connectionCounter
 
     const query = context.url.searchParams
-    const token = query.get("access_token") as string
+    const token = query.get('access_token') as string
 
     let userId: string
     try {
@@ -59,20 +59,20 @@ export async function websocketRoomHandler(
 
     aliasToUserId.set(alias, userId)
 
-    ws.on("message", (message) => {
+    ws.on('message', (message) => {
       const data = message as Buffer
 
       let msgType = MessageType.UNKNOWN_MESSAGE_TYPE as MessageTypeMap[keyof MessageTypeMap]
       try {
         msgType = MessageHeader.deserializeBinary(data).getType()
       } catch (err) {
-        logger.error("cannot deserialize message header")
+        logger.error('cannot deserialize message header')
         return
       }
 
       switch (msgType) {
         case MessageType.UNKNOWN_MESSAGE_TYPE: {
-          logger.log("unsupported message")
+          logger.log('unsupported message')
           break
         }
         case MessageType.SYSTEM: {
@@ -115,7 +115,7 @@ export async function websocketRoomHandler(
       }
     })
 
-    ws.on("error", (error) => {
+    ws.on('error', (error) => {
       logger.error(error)
       ws.close()
       const room = connectionsPerRoom.get(roomId)
@@ -124,8 +124,8 @@ export async function websocketRoomHandler(
       }
     })
 
-    ws.on("close", () => {
-      logger.info("Websocket closed")
+    ws.on('close', () => {
+      logger.info('Websocket closed')
       const room = connectionsPerRoom.get(roomId)
       if (room) {
         room.delete(ws)

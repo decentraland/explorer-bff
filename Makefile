@@ -54,4 +54,10 @@ build:
 	@$(BUILD_PROTO)
 	@./node_modules/.bin/tsc -p tsconfig.json
 
-.PHONY: build test codegen
+lint:
+	@node_modules/.bin/eslint . --ext .ts
+
+lint-fix: ## Fix bad formatting on all .ts and .tsx files
+	@node_modules/.bin/eslint . --ext .ts --fix
+
+.PHONY: build test codegen lint lint-fix

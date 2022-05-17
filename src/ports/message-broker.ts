@@ -1,6 +1,6 @@
-import { IBaseComponent } from "@well-known-components/interfaces"
-import { connect, NatsConnection } from "nats"
-import { BaseComponents } from "../types"
+import { IBaseComponent } from '@well-known-components/interfaces'
+import { connect, NatsConnection } from 'nats'
+import { BaseComponents } from '../types'
 
 export type Message = {
   data: Uint8Array
@@ -10,7 +10,11 @@ export type Message = {
 class Topic {
   constructor(private readonly topic: string) {}
   getLevel(level: number): string {
-    return this.topic.split(".")[level]
+    return this.topic.split('.')[level]
+  }
+
+  getFullTopic(): string {
+    return this.topic
   }
 }
 
@@ -27,13 +31,13 @@ export interface Subscription {
 }
 
 export async function createMessageBrokerComponent(
-  components: Pick<BaseComponents, "config" | "logs">
+  components: Pick<BaseComponents, 'config' | 'logs'>
 ): Promise<IMessageBrokerComponent & IBaseComponent> {
   const { config, logs } = components
-  const logger = logs.getLogger("MessageBroker")
+  const logger = logs.getLogger('MessageBroker')
 
   // config
-  const natsUrl = (await config.getString("NATS_URL")) || "nats.decentraland.zone:4222"
+  const natsUrl = (await config.getString('NATS_URL')) || 'nats.decentraland.zone:4222'
   const natsConfig = { servers: `${natsUrl}` }
   let natsConnection: NatsConnection
 
@@ -73,6 +77,6 @@ export async function createMessageBrokerComponent(
     publish,
     subscribe,
     start,
-    stop,
+    stop
   }
 }

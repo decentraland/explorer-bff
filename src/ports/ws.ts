@@ -1,18 +1,17 @@
-import { WebSocketServer } from "ws"
+import { WebSocketServer } from 'ws'
 
-import { BaseComponents, WebSocketComponent } from "../types"
+import { BaseComponents, WebSocketComponent } from '../types'
+
 /**
  * Creates a http-server component
  * @public
  */
-export async function createWsComponent(
-  components: Pick<BaseComponents, 'logs'>
-): Promise<WebSocketComponent> {
+export async function createWsComponent(components: Pick<BaseComponents, 'logs'>): Promise<WebSocketComponent> {
   const { logs } = components
-  const logger = logs.getLogger("ws")
+  const logger = logs.getLogger('ws')
   let wss: WebSocketServer | undefined
 
-  async function start () {
+  async function start() {
     if (wss) return
 
     wss = new WebSocketServer({ noServer: true })
@@ -32,7 +31,7 @@ export async function createWsComponent(
     wss = undefined
   }
 
-  start()
+  await start()
 
   return {
     start,

@@ -1,8 +1,8 @@
-import { upgradeWebSocketResponse } from "@well-known-components/http-server/dist/ws"
-import { IHttpServerComponent } from "@well-known-components/interfaces"
-import { WebSocket } from "ws"
-import { GlobalContext } from "../../types"
-import * as proto from "../proto/broker"
+import { upgradeWebSocketResponse } from '@well-known-components/http-server/dist/ws'
+import { IHttpServerComponent } from '@well-known-components/interfaces'
+import { WebSocket } from 'ws'
+import { GlobalContext } from '../../types'
+import * as proto from '../proto/broker'
 
 const connections = new Set<WebSocket>()
 
@@ -21,11 +21,11 @@ function getTopicList(socket: WebSocket): Set<string> {
 }
 
 export async function websocketHandler(context: IHttpServerComponent.DefaultContext<GlobalContext>) {
-  const logger = context.components.logs.getLogger("Websocket Handler")
-  logger.info("Websocket")
+  const logger = context.components.logs.getLogger('Websocket Handler')
+  logger.info('Websocket')
 
   return upgradeWebSocketResponse((socket) => {
-    logger.info("Websocket connected")
+    logger.info('Websocket connected')
     // TODO fix ws types
     const ws = socket as any as WebSocket
 
@@ -34,12 +34,12 @@ export async function websocketHandler(context: IHttpServerComponent.DefaultCont
     const alias = ++connectionCounter
 
     const query = context.url.searchParams
-    const userId = query.get("identity") as string
+    const userId = query.get('identity') as string
     aliasToUserId.set(alias, userId)
 
     connections.add(ws)
 
-    ws.on("message", (message) => {
+    ws.on('message', (message) => {
       const data = message as Buffer
       const msgType = proto.CoordinatorMessage.deserializeBinary(data).getType()
 
@@ -90,9 +90,9 @@ export async function websocketHandler(context: IHttpServerComponent.DefaultCont
       } else if (msgType === proto.MessageType.SUBSCRIPTION) {
         const topicMessage = proto.SubscriptionMessage.deserializeBinary(data)
         const rawTopics = topicMessage.getTopics()
-        const topics = Buffer.from(rawTopics as string).toString("utf8")
+        const topics = Buffer.from(rawTopics as string).toString('utf8')
         const set = getTopicList(ws)
-        logger.info("Subscription", { topics })
+        logger.info('Subscription', { topics })
 
         set.clear()
         topics.split(/\s+/g).forEach(($) => set.add($))
@@ -112,14 +112,14 @@ export async function websocketHandler(context: IHttpServerComponent.DefaultCont
       }
     }, 100)
 
-    ws.on("error", (error) => {
+    ws.on('error', (error) => {
       logger.error(error)
       ws.close()
       connections.delete(ws)
     })
 
-    ws.on("close", () => {
-      logger.info("Websocket closed")
+    ws.on('close', () => {
+      logger.info('Websocket closed')
       connections.delete(ws)
     })
   })
