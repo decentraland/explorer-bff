@@ -27,14 +27,14 @@ const server = createRpcServer({
     const challenge = Math.random().toString(36)
 
     registerService(port, BffAuthenticationServiceDefinition, async () => ({
-      async getChallenge(req) {
+      async getChallenge(_req) {
         return {
           alreadyConnected: false,
           challengeToSign: challenge
         }
       },
       async authenticate(req) {
-        console.log({req})
+        console.log({ req })
         const payload = JSON.parse(req.authChainJson) as AuthChain
         const address = payload[0].payload
         const result = await Authenticator.validateSignature(challenge, payload, ethProvider)
@@ -66,18 +66,18 @@ function registerAuthenticatedConnectionModules(address: string, port: RpcServer
   connections.set(address, peer)
 
   registerService(port, CommsServiceDefinition, async () => ({
-    async publishToTopic(topicMessage) {
+    async publishToTopic(_topicMessage) {
       console.log('Publish to topic works')
       return {}
     },
-    async * subscribeToTopic(subscription) {
+    async *subscribeToTopic(_subscription) {
       console.log('Subscribe to topic works')
       return
     }
   }))
 }
 
-export async function websocketRpcHandler(context: IHttpServerComponent.DefaultContext<GlobalContext>) {
+export async function websocketRpcHandler(_context: IHttpServerComponent.DefaultContext<GlobalContext>) {
   return upgradeWebSocketResponse((socket) => {
     const transport = WebSocketTransport(socket)
     server.attachTransport(transport)
