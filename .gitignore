@@ -3,10 +3,6 @@ node_modules/
 **/.DS_Store
 coverage
 
-src/proto/service_pb_client.ts
-src/proto/service_pb_server.ts
-src/proto/service_pb.d.ts
-src/proto/service_pb.js
 protoc3
 
 .env

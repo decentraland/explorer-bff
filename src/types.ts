@@ -8,6 +8,7 @@ import type {
 } from '@well-known-components/interfaces'
 import { metricDeclarations } from './metrics'
 import { IMessageBrokerComponent } from './ports/message-broker'
+import { WebSocket } from 'ws'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -37,6 +38,11 @@ export type AppComponents = BaseComponents & {
 export type TestComponents = BaseComponents & {
   // A fetch component that only hits the test server
   localFetch: IFetchComponent
+  createLocalWebSocket: IWsTestComponent
+}
+
+export type IWsTestComponent = {
+  createWs(relativeUrl: string): WebSocket
 }
 
 // this type simplifies the typings of http handlers

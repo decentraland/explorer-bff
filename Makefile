@@ -13,13 +13,6 @@ else
 PROTOBUF_ZIP = protoc-$(PROTOBUF_VERSION)-linux-x86_64.zip
 endif
 
-
-BUILD_PROTO =	${PROTOC} \
-		"-I=$(PWD)/src/proto" \
-		"--js_out=import_style=commonjs,binary:$(PWD)/src/proto" \
-		"--dcl_out=$(PWD)/src/proto" \
-		"$(PWD)/src/proto/service.proto"
-
 install_compiler:
 	@# remove local folder
 	rm -rf protoc3 || true
@@ -41,17 +34,29 @@ install: install_compiler
 	npm i -S @types/google-protobuf@latest
 
 test: build
-	$(BUILD_PROTO)
-	node_modules/.bin/jest --forceExit --detectOpenHandles --coverage --verbose
+	node_modules/.bin/jest --forceExit --detectOpenHandles --coverage --verbose $(TESTARGS)
 
 test-watch:
-	$(BUILD_PROTO)
 	node_modules/.bin/jest --detectOpenHandles --colors --runInBand --watch $(TESTARGS) --coverage
+
+rpc:
+	${PROTOC} \
+		--plugin=./node_modules/.bin/protoc-gen-ts_proto \
+		--ts_proto_opt=esModuleInterop=true,returnObservable=false,outputServices=generic-definitions \
+		--ts_proto_out="$(PWD)/src/controllers/bff-proto" \
+		-I="$(PWD)/src/controllers/bff-proto" \
+		"$(PWD)/src/controllers/bff-proto/comms-service.proto"
+	${PROTOC} \
+		--plugin=./node_modules/.bin/protoc-gen-ts_proto \
+		--ts_proto_opt=esModuleInterop=true,returnObservable=false,outputServices=generic-definitions \
+		--ts_proto_out="$(PWD)/src/controllers/bff-proto" \
+		-I="$(PWD)/src/controllers/bff-proto" \
+		"$(PWD)/src/controllers/bff-proto/authentication-service.proto"
 
 build:
 	@rm -rf dist || true
 	@mkdir -p dist
-	@$(BUILD_PROTO)
+	@$(MAKE) rpc
 	@./node_modules/.bin/tsc -p tsconfig.json
 
 lint:

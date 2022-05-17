@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+message TopicSubscriptionResultElem {
+  bytes payload = 1;
+  string sender = 2;
+}
+
+message PublishToTopicRequest {
+  string topic = 1;
+  bytes payload = 2;
+}
+
+message TopicSubscriptionRequest {
+  string topic = 1;
+}
+
+message PublishToTopicResult {}
+
+service CommsService {
+  // subscribe to a topic, stream all the messages
+  rpc SubscribeToTopic(TopicSubscriptionRequest) returns (stream TopicSubscriptionResultElem) {}
+  // send a message to a topic
+  rpc PublishToTopic(PublishToTopicRequest) returns (PublishToTopicResult) {}
+}
+
