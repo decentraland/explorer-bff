@@ -1,9 +1,9 @@
-import { httpProviderForNetwork } from "@dcl/catalyst-contracts"
-import { AuthChain, Authenticator } from "dcl-crypto"
-import { upgradeWebSocketResponse } from "@well-known-components/http-server/dist/ws"
-import { IHttpServerComponent } from "@well-known-components/interfaces"
-import { WebSocket } from "ws"
-import { GlobalContext } from "../../types"
+import { httpProviderForNetwork } from '@dcl/catalyst-contracts'
+import { AuthChain, Authenticator } from 'dcl-crypto'
+import { upgradeWebSocketResponse } from '@well-known-components/http-server/dist/ws'
+import { IHttpServerComponent } from '@well-known-components/interfaces'
+import { WebSocket } from 'ws'
+import { GlobalContext } from '../../types'
 import {
   ValidationOKMessage,
   ValidationFailureMessage,
@@ -13,14 +13,14 @@ import {
   SubscriptionMessage,
   MessageHeader,
   MessageType,
-  MessageTypeMap,
-} from "../proto/bff_pb"
-import { Subscription } from "../../ports/message-broker"
+  MessageTypeMap
+} from '../proto/bff_pb'
+import { Subscription } from '../../ports/message-broker'
 
 const connections = new Set<Peer>()
 const topicsPerConnection = new WeakMap<Peer, Set<string>>()
 
-const DEFAULT_ETH_NETWORK = "ropsten"
+const DEFAULT_ETH_NETWORK = 'ropsten'
 const CURRENT_ETH_NETWORK = process.env.ETH_NETWORK ?? DEFAULT_ETH_NETWORK
 
 const ethProvider = httpProviderForNetwork(CURRENT_ETH_NETWORK)
@@ -63,7 +63,7 @@ function broadcastTopicMessage(topicMessage: TopicMessage, fromPeer?: Identifier
 
 export async function setupArchipelagoSubscriptions(context: GlobalContext) {
   const messageBroker = context.components.messageBroker
-  const logger = context.components.logs.getLogger("Websocket BFF Handler")
+  const logger = context.components.logs.getLogger('Websocket BFF Handler')
 
   messageBroker.subscribe(`island.*.peer_left`, ({ data, topic }) => {
     const topicMessage = new TopicMessage()
@@ -71,7 +71,7 @@ export async function setupArchipelagoSubscriptions(context: GlobalContext) {
     topicMessage.setTopic(topic.getFullTopic())
     topicMessage.setBody(data)
     broadcastTopicMessage(topicMessage)
-    logger.info("Sending peer left message")
+    logger.info('Sending peer left message')
   })
 
   messageBroker.subscribe(`island.*.peer_join`, ({ data, topic }) => {
@@ -80,23 +80,23 @@ export async function setupArchipelagoSubscriptions(context: GlobalContext) {
     topicMessage.setTopic(topic.getFullTopic())
     topicMessage.setBody(data)
     broadcastTopicMessage(topicMessage)
-    logger.info("Sending peer join message")
+    logger.info('Sending peer join message')
   })
 }
 
 export async function websocketBFFHandler(context: IHttpServerComponent.DefaultContext<GlobalContext>) {
   const messageBroker = context.components.messageBroker
-  const logger = context.components.logs.getLogger("Websocket BFF Handler")
-  logger.info("Websocket")
+  const logger = context.components.logs.getLogger('Websocket BFF Handler')
+  logger.info('Websocket')
 
   return upgradeWebSocketResponse((socket) => {
-    logger.info("Websocket connected")
+    logger.info('Websocket connected')
     // TODO fix ws types
 
     const welcomeMessage = Math.random().toString(36).substring(2)
     const peer = {
       ws: socket as any as WebSocket,
-      peerId: null,
+      peerId: null
     } as Peer
 
     connections.add(peer)
@@ -116,19 +116,19 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
       })
     }
 
-    peer.ws.on("message", (message) => {
+    peer.ws.on('message', (message) => {
       const data = message as Buffer
       let msgType = MessageType.UNKNOWN_MESSAGE_TYPE as MessageTypeMap[keyof MessageTypeMap]
       try {
         msgType = MessageHeader.deserializeBinary(data).getType()
       } catch (err) {
-        logger.error("cannot deserialize message header")
+        logger.error('cannot deserialize message header')
         return
       }
 
       switch (msgType) {
         case MessageType.UNKNOWN_MESSAGE_TYPE: {
-          logger.log("unsupported message")
+          logger.log('unsupported message')
           break
         }
         case MessageType.VALIDATION: {
@@ -144,7 +144,7 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
               peer.ws.send(validationResultMessage.serializeBinary())
               subscribeToIslandChanges()
             } else {
-              logger.log("Failed validation ${result.message}")
+              logger.log('Failed validation ${result.message}')
               const validationResultMessage = new ValidationFailureMessage()
               validationResultMessage.setType(MessageType.VALIDATION_FAILURE)
               peer.ws.send(validationResultMessage.serializeBinary())
@@ -183,7 +183,7 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
       }
     })
 
-    peer.ws.on("error", (error) => {
+    peer.ws.on('error', (error) => {
       logger.error(error)
       peer.ws.close()
       if (peer.peerId) {
@@ -193,8 +193,8 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
       connections.delete(peer)
     })
 
-    peer.ws.on("close", () => {
-      logger.info("Websocket closed")
+    peer.ws.on('close', () => {
+      logger.info('Websocket closed')
       if (peer.peerId) {
         messageBroker.publish(`peer.${peer.peerId}.disconnect`)
       }

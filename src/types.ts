@@ -1,13 +1,13 @@
-import type { IFetchComponent, WebSocketServer } from "@well-known-components/http-server"
+import type { IFetchComponent, WebSocketServer } from '@well-known-components/http-server'
 import type {
   IConfigComponent,
   ILoggerComponent,
   IHttpServerComponent,
   IBaseComponent,
-  IMetricsComponent,
-} from "@well-known-components/interfaces"
-import { metricDeclarations } from "./metrics"
-import { IMessageBrokerComponent } from "./ports/message-broker"
+  IMetricsComponent
+} from '@well-known-components/interfaces'
+import { metricDeclarations } from './metrics'
+import { IMessageBrokerComponent } from './ports/message-broker'
 
 export type GlobalContext = {
   components: BaseComponents

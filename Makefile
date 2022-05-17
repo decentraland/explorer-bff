@@ -57,4 +57,7 @@ build:
 lint:
 	@node_modules/.bin/eslint . --ext .ts
 
-.PHONY: build test codegen
+lint-fix: ## Fix bad formatting on all .ts and .tsx files
+	@node_modules/.bin/eslint . --ext .ts --fix
+
+.PHONY: build test codegen lint lint-fix
