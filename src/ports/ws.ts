@@ -31,7 +31,7 @@ export async function createWsComponent(components: Pick<BaseComponents, 'logs'>
     wss = undefined
   }
 
-  start()
+  await start()
 
   return {
     start,

@@ -22,5 +22,5 @@ export async function main(program: Lifecycle.EntryPointParameters<AppComponents
   // start ports: db, listeners, synchronizations, etc
   await startComponents()
 
-  setupArchipelagoSubscriptions(globalContext)
+  await setupArchipelagoSubscriptions(globalContext)
 }
