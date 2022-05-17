@@ -61,7 +61,6 @@ function broadcastTopicMessage(topicMessage: TopicMessage, fromPeer?: Identifier
   })
 }
 
-
 export async function setupArchipelagoSubscriptions(context: GlobalContext) {
   const messageBroker = context.components.messageBroker
   const logger = context.components.logs.getLogger("Websocket BFF Handler")
@@ -72,7 +71,7 @@ export async function setupArchipelagoSubscriptions(context: GlobalContext) {
     topicMessage.setTopic(topic.getFullTopic())
     topicMessage.setBody(data)
     broadcastTopicMessage(topicMessage)
-    logger.info('Sending peer left message')
+    logger.info("Sending peer left message")
   })
 
   messageBroker.subscribe(`island.*.peer_join`, ({ data, topic }) => {
@@ -81,7 +80,7 @@ export async function setupArchipelagoSubscriptions(context: GlobalContext) {
     topicMessage.setTopic(topic.getFullTopic())
     topicMessage.setBody(data)
     broadcastTopicMessage(topicMessage)
-    logger.info('Sending peer join message')
+    logger.info("Sending peer join message")
   })
 }
 
@@ -113,16 +112,12 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
 
     const subscribeToIslandChanges = () => {
       peer.islandChangesSubscription = messageBroker.subscribe(`peer.${peer.peerId}.island_changed`, ({ data }) => {
-        // TODO: maybe check if the peer is subscribed to the topic
-        console.log("SENDING ISLAND CHANGED")
         const topicMessage = new TopicMessage()
         topicMessage.setType(MessageType.TOPIC)
         topicMessage.setTopic(`peer.${peer.peerId}.island_changed`)
         topicMessage.setBody(data)
         peer.ws.send(topicMessage.serializeBinary())
       })
-
-      // peer.islandChangesSubscription = messageBroker.subscribe(`peer.${peer.peerId}.island_changed`, ({ data }) => {
     }
 
     peer.ws.on("message", (message) => {
@@ -173,7 +168,7 @@ export async function websocketBFFHandler(context: IHttpServerComponent.DefaultC
         }
         case MessageType.TOPIC: {
           if (!peer.peerId) {
-            break;
+            break
           }
           const heartbeatTopic = `peer.${peer.peerId}.heartbeat`
           const topicMessage = TopicMessage.deserializeBinary(data)
