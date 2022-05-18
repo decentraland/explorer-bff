@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@dcl/catalyst-contracts": "^1.0.2",
-    "@dcl/rpc": "^1.0.0-20220517212651.commit-48cc4a7",
+    "@dcl/rpc": "^1.0.0-20220518155828.commit-ef4a9e3",
     "@types/google-protobuf": "^3.15.6",
     "@types/jsonwebtoken": "^8.5.8",
     "@types/ws": "^8.5.3",

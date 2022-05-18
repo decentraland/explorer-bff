@@ -9,10 +9,14 @@ import type {
 import { metricDeclarations } from './metrics'
 import { IMessageBrokerComponent } from './ports/message-broker'
 import { WebSocket } from 'ws'
+import { HttpProvider } from 'web3x/providers'
+import { RpcServer, RpcServerPort } from '@dcl/rpc'
 
 export type GlobalContext = {
   components: BaseComponents
 }
+
+export type RpcContext = GlobalContext
 
 export type WebSocketComponent = IBaseComponent & {
   ws: WebSocketServer
@@ -27,6 +31,19 @@ export type BaseComponents = {
   metrics: IMetricsComponent<keyof typeof metricDeclarations>
   ws: WebSocketComponent
   messageBroker: IMessageBrokerComponent
+  // TODO: deprecate web3x and use ethersjs
+  ethereumProvider: HttpProvider
+  
+  rpcServer: RpcServer<RpcContext>
+
+  rpcSessions: {
+    sessions: Map<string, RpcSession>
+  }
+}
+
+export type RpcSession = {
+  port: RpcServerPort<RpcContext>
+  address: string
 }
 
 // components used in runtime

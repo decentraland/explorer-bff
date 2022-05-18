@@ -5,7 +5,7 @@ import { statusHandler } from './handlers/status-handler'
 import { websocketHandler } from './handlers/ws-handler'
 import { websocketBFFHandler } from './handlers/ws-bff-handler'
 import { websocketRoomHandler } from './handlers/ws-room-handler'
-import { websocketRpcHandler } from './bff-proto/rpc-handler'
+import { websocketRpcHandler } from './handlers/rpc-handler'
 
 // We return the entire router because it will be easier to test than a whole server
 export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContext>> {

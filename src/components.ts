@@ -7,6 +7,10 @@ import { AppComponents, GlobalContext } from './types'
 import { metricDeclarations } from './metrics'
 import { createWsComponent } from './ports/ws'
 import { createMessageBrokerComponent } from './ports/message-broker'
+import { createRpcServer } from '@dcl/rpc'
+import { httpProviderForNetwork } from '@dcl/catalyst-contracts'
+
+const DEFAULT_ETH_NETWORK = 'ropsten'
 
 // Initialize all the components of the app
 export async function initComponents(): Promise<AppComponents> {
@@ -22,10 +26,18 @@ export async function initComponents(): Promise<AppComponents> {
       }
     }
   )
+  const rpcLogger = logs.getLogger('rpc-server')
+  const rpcServer = createRpcServer<GlobalContext>({
+    logger: rpcLogger
+  })
   const statusChecks = await createStatusCheckComponent({ server, config })
   const fetch = await createFetchComponent()
   const metrics = await createMetricsComponent(metricDeclarations, { server, config })
   const messageBroker = await createMessageBrokerComponent({ config, logs })
+
+  // TODO: deprecate web3x and use ethersjs
+  const CURRENT_ETH_NETWORK = (await config.getString('ETH_NETWORK')) ?? DEFAULT_ETH_NETWORK
+  const ethereumProvider = httpProviderForNetwork(CURRENT_ETH_NETWORK)
 
   return {
     config,
@@ -35,6 +47,11 @@ export async function initComponents(): Promise<AppComponents> {
     fetch,
     metrics,
     ws,
-    messageBroker
+    messageBroker,
+    ethereumProvider,
+    rpcServer,
+    rpcSessions: {
+      sessions: new Map()
+    }
   }
 }
