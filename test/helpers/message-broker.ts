@@ -25,14 +25,13 @@ export async function createLocalMessageBrokerComponent(
   }
 
   async function* subscribeGenerator(pattern: string): AsyncGenerator<StreamMessage> {
-    const channel = pushableChannel<Uint8Array>(() => deferCloseChannel)
-    const send = (topic: string, payload: Uint8Array) => {
+    const channel = pushableChannel<Uint8Array>(function deferCloseChannel() {
+      messages.off('*', send)
+    })
+    function send(topic: string, payload: Uint8Array) {
       if (matchesNatsWildcards(pattern, topic)) {
         channel.push(payload)
       }
-    }
-    function deferCloseChannel() {
-      messages.off('*', send)
     }
     messages.on('*', send)
 
