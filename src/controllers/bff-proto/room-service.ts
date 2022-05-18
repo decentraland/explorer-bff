@@ -4,36 +4,36 @@ import * as _m0 from 'protobufjs/minimal'
 
 export const protobufPackage = ''
 
-export interface TopicSubscriptionResultElem {
+export interface RoomMessage {
   payload: Uint8Array
-  topic: string
+  room: string
   sender: string
 }
 
-export interface PublishToTopicRequest {
-  topic: string
+export interface PublishRoomMessage {
   payload: Uint8Array
+  room: string
 }
 
-export interface TopicSubscriptionRequest {
-  topic: string
+export interface RoomSubscriptionMessage {
+  room: string
 }
 
-export interface PublishToTopicResult {
+export interface EmptyResult {
   ok: boolean
 }
 
-function createBaseTopicSubscriptionResultElem(): TopicSubscriptionResultElem {
-  return { payload: new Uint8Array(), topic: '', sender: '' }
+function createBaseRoomMessage(): RoomMessage {
+  return { payload: new Uint8Array(), room: '', sender: '' }
 }
 
-export const TopicSubscriptionResultElem = {
-  encode(message: TopicSubscriptionResultElem, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const RoomMessage = {
+  encode(message: RoomMessage, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.payload.length !== 0) {
       writer.uint32(10).bytes(message.payload)
     }
-    if (message.topic !== '') {
-      writer.uint32(18).string(message.topic)
+    if (message.room !== '') {
+      writer.uint32(18).string(message.room)
     }
     if (message.sender !== '') {
       writer.uint32(26).string(message.sender)
@@ -41,10 +41,10 @@ export const TopicSubscriptionResultElem = {
     return writer
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): TopicSubscriptionResultElem {
+  decode(input: _m0.Reader | Uint8Array, length?: number): RoomMessage {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input)
     let end = length === undefined ? reader.len : reader.pos + length
-    const message = createBaseTopicSubscriptionResultElem()
+    const message = createBaseRoomMessage()
     while (reader.pos < end) {
       const tag = reader.uint32()
       switch (tag >>> 3) {
@@ -52,7 +52,7 @@ export const TopicSubscriptionResultElem = {
           message.payload = reader.bytes()
           break
         case 2:
-          message.topic = reader.string()
+          message.room = reader.string()
           break
         case 3:
           message.sender = reader.string()
@@ -65,60 +65,60 @@ export const TopicSubscriptionResultElem = {
     return message
   },
 
-  fromJSON(object: any): TopicSubscriptionResultElem {
+  fromJSON(object: any): RoomMessage {
     return {
       payload: isSet(object.payload) ? bytesFromBase64(object.payload) : new Uint8Array(),
-      topic: isSet(object.topic) ? String(object.topic) : '',
+      room: isSet(object.room) ? String(object.room) : '',
       sender: isSet(object.sender) ? String(object.sender) : ''
     }
   },
 
-  toJSON(message: TopicSubscriptionResultElem): unknown {
+  toJSON(message: RoomMessage): unknown {
     const obj: any = {}
     message.payload !== undefined &&
       (obj.payload = base64FromBytes(message.payload !== undefined ? message.payload : new Uint8Array()))
-    message.topic !== undefined && (obj.topic = message.topic)
+    message.room !== undefined && (obj.room = message.room)
     message.sender !== undefined && (obj.sender = message.sender)
     return obj
   },
 
-  fromPartial<I extends Exact<DeepPartial<TopicSubscriptionResultElem>, I>>(object: I): TopicSubscriptionResultElem {
-    const message = createBaseTopicSubscriptionResultElem()
+  fromPartial<I extends Exact<DeepPartial<RoomMessage>, I>>(object: I): RoomMessage {
+    const message = createBaseRoomMessage()
     message.payload = object.payload ?? new Uint8Array()
-    message.topic = object.topic ?? ''
+    message.room = object.room ?? ''
     message.sender = object.sender ?? ''
     return message
   }
 }
 
-function createBasePublishToTopicRequest(): PublishToTopicRequest {
-  return { topic: '', payload: new Uint8Array() }
+function createBasePublishRoomMessage(): PublishRoomMessage {
+  return { payload: new Uint8Array(), room: '' }
 }
 
-export const PublishToTopicRequest = {
-  encode(message: PublishToTopicRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.topic !== '') {
-      writer.uint32(10).string(message.topic)
-    }
+export const PublishRoomMessage = {
+  encode(message: PublishRoomMessage, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.payload.length !== 0) {
-      writer.uint32(18).bytes(message.payload)
+      writer.uint32(10).bytes(message.payload)
+    }
+    if (message.room !== '') {
+      writer.uint32(18).string(message.room)
     }
     return writer
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): PublishToTopicRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): PublishRoomMessage {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input)
     let end = length === undefined ? reader.len : reader.pos + length
-    const message = createBasePublishToTopicRequest()
+    const message = createBasePublishRoomMessage()
     while (reader.pos < end) {
       const tag = reader.uint32()
       switch (tag >>> 3) {
         case 1:
-          message.topic = reader.string()
-          break
-        case 2:
           message.payload = reader.bytes()
           break
+        case 2:
+          message.room = reader.string()
+          break
         default:
           reader.skipType(tag & 7)
           break
@@ -127,50 +127,50 @@ export const PublishToTopicRequest = {
     return message
   },
 
-  fromJSON(object: any): PublishToTopicRequest {
+  fromJSON(object: any): PublishRoomMessage {
     return {
-      topic: isSet(object.topic) ? String(object.topic) : '',
-      payload: isSet(object.payload) ? bytesFromBase64(object.payload) : new Uint8Array()
+      payload: isSet(object.payload) ? bytesFromBase64(object.payload) : new Uint8Array(),
+      room: isSet(object.room) ? String(object.room) : ''
     }
   },
 
-  toJSON(message: PublishToTopicRequest): unknown {
+  toJSON(message: PublishRoomMessage): unknown {
     const obj: any = {}
-    message.topic !== undefined && (obj.topic = message.topic)
     message.payload !== undefined &&
       (obj.payload = base64FromBytes(message.payload !== undefined ? message.payload : new Uint8Array()))
+    message.room !== undefined && (obj.room = message.room)
     return obj
   },
 
-  fromPartial<I extends Exact<DeepPartial<PublishToTopicRequest>, I>>(object: I): PublishToTopicRequest {
-    const message = createBasePublishToTopicRequest()
-    message.topic = object.topic ?? ''
+  fromPartial<I extends Exact<DeepPartial<PublishRoomMessage>, I>>(object: I): PublishRoomMessage {
+    const message = createBasePublishRoomMessage()
     message.payload = object.payload ?? new Uint8Array()
+    message.room = object.room ?? ''
     return message
   }
 }
 
-function createBaseTopicSubscriptionRequest(): TopicSubscriptionRequest {
-  return { topic: '' }
+function createBaseRoomSubscriptionMessage(): RoomSubscriptionMessage {
+  return { room: '' }
 }
 
-export const TopicSubscriptionRequest = {
-  encode(message: TopicSubscriptionRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.topic !== '') {
-      writer.uint32(10).string(message.topic)
+export const RoomSubscriptionMessage = {
+  encode(message: RoomSubscriptionMessage, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.room !== '') {
+      writer.uint32(10).string(message.room)
     }
     return writer
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): TopicSubscriptionRequest {
+  decode(input: _m0.Reader | Uint8Array, length?: number): RoomSubscriptionMessage {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input)
     let end = length === undefined ? reader.len : reader.pos + length
-    const message = createBaseTopicSubscriptionRequest()
+    const message = createBaseRoomSubscriptionMessage()
     while (reader.pos < end) {
       const tag = reader.uint32()
       switch (tag >>> 3) {
         case 1:
-          message.topic = reader.string()
+          message.room = reader.string()
           break
         default:
           reader.skipType(tag & 7)
@@ -180,41 +180,41 @@ export const TopicSubscriptionRequest = {
     return message
   },
 
-  fromJSON(object: any): TopicSubscriptionRequest {
+  fromJSON(object: any): RoomSubscriptionMessage {
     return {
-      topic: isSet(object.topic) ? String(object.topic) : ''
+      room: isSet(object.room) ? String(object.room) : ''
     }
   },
 
-  toJSON(message: TopicSubscriptionRequest): unknown {
+  toJSON(message: RoomSubscriptionMessage): unknown {
     const obj: any = {}
-    message.topic !== undefined && (obj.topic = message.topic)
+    message.room !== undefined && (obj.room = message.room)
     return obj
   },
 
-  fromPartial<I extends Exact<DeepPartial<TopicSubscriptionRequest>, I>>(object: I): TopicSubscriptionRequest {
-    const message = createBaseTopicSubscriptionRequest()
-    message.topic = object.topic ?? ''
+  fromPartial<I extends Exact<DeepPartial<RoomSubscriptionMessage>, I>>(object: I): RoomSubscriptionMessage {
+    const message = createBaseRoomSubscriptionMessage()
+    message.room = object.room ?? ''
     return message
   }
 }
 
-function createBasePublishToTopicResult(): PublishToTopicResult {
+function createBaseEmptyResult(): EmptyResult {
   return { ok: false }
 }
 
-export const PublishToTopicResult = {
-  encode(message: PublishToTopicResult, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const EmptyResult = {
+  encode(message: EmptyResult, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.ok === true) {
       writer.uint32(8).bool(message.ok)
     }
     return writer
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): PublishToTopicResult {
+  decode(input: _m0.Reader | Uint8Array, length?: number): EmptyResult {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input)
     let end = length === undefined ? reader.len : reader.pos + length
-    const message = createBasePublishToTopicResult()
+    const message = createBaseEmptyResult()
     while (reader.pos < end) {
       const tag = reader.uint32()
       switch (tag >>> 3) {
@@ -229,45 +229,43 @@ export const PublishToTopicResult = {
     return message
   },
 
-  fromJSON(object: any): PublishToTopicResult {
+  fromJSON(object: any): EmptyResult {
     return {
       ok: isSet(object.ok) ? Boolean(object.ok) : false
     }
   },
 
-  toJSON(message: PublishToTopicResult): unknown {
+  toJSON(message: EmptyResult): unknown {
     const obj: any = {}
     message.ok !== undefined && (obj.ok = message.ok)
     return obj
   },
 
-  fromPartial<I extends Exact<DeepPartial<PublishToTopicResult>, I>>(object: I): PublishToTopicResult {
-    const message = createBasePublishToTopicResult()
+  fromPartial<I extends Exact<DeepPartial<EmptyResult>, I>>(object: I): EmptyResult {
+    const message = createBaseEmptyResult()
     message.ok = object.ok ?? false
     return message
   }
 }
 
-export type CommsServiceDefinition = typeof CommsServiceDefinition
-export const CommsServiceDefinition = {
-  name: 'CommsService',
-  fullName: 'CommsService',
+export type RoomServiceDefinition = typeof RoomServiceDefinition
+export const RoomServiceDefinition = {
+  name: 'RoomService',
+  fullName: 'RoomService',
   methods: {
-    /** subscribe to a topic, stream all the messages */
-    subscribeToTopic: {
-      name: 'SubscribeToTopic',
-      requestType: TopicSubscriptionRequest,
+    getAllMessages: {
+      name: 'GetAllMessages',
+      requestType: RoomSubscriptionMessage,
       requestStream: false,
-      responseType: TopicSubscriptionResultElem,
+      responseType: RoomMessage,
       responseStream: true,
       options: {}
     },
-    /** send a message to a topic */
-    publishToTopic: {
-      name: 'PublishToTopic',
-      requestType: PublishToTopicRequest,
+    publishMessage: {
+      name: 'PublishMessage',
+      requestType: PublishRoomMessage,
       requestStream: false,
-      responseType: PublishToTopicResult,
+      responseType: EmptyResult,
       responseStream: false,
       options: {}
     }

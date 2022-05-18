@@ -7,6 +7,11 @@ export type Message = {
   topic: Topic
 }
 
+export type StreamMessage = {
+  data: Uint8Array
+  subject: string
+}
+
 class Topic {
   constructor(private readonly topic: string) {}
   getLevel(level: number): string {
@@ -21,6 +26,8 @@ class Topic {
 export type IMessageBrokerComponent = {
   publish(topic: string, message?: Uint8Array): void
   subscribe(topic: string, handler: (message: Message) => Promise<void> | void): Subscription
+
+  subscribeGenerator(topic: string): AsyncGenerator<StreamMessage>
 
   start(): Promise<void>
   stop(): Promise<void>
@@ -55,6 +62,13 @@ export async function createMessageBrokerComponent(
     return subscription
   }
 
+  async function* subscribeGenerator(topic: string): AsyncGenerator<StreamMessage> {
+    // TODO: test that closing the stream actually closes the subscription
+    for await (const message of natsConnection.subscribe(topic)) {
+      yield { data: message.data, subject: message.subject }
+    }
+  }
+
   async function start() {
     try {
       natsConnection = await connect(natsConfig)
@@ -77,6 +91,7 @@ export async function createMessageBrokerComponent(
     publish,
     subscribe,
     start,
-    stop
+    stop,
+    subscribeGenerator
   }
 }

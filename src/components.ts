@@ -9,6 +9,7 @@ import { createWsComponent } from './ports/ws'
 import { createMessageBrokerComponent } from './ports/message-broker'
 import { createRpcServer } from '@dcl/rpc'
 import { httpProviderForNetwork } from '@dcl/catalyst-contracts'
+import mitt from 'mitt'
 
 const DEFAULT_ETH_NETWORK = 'ropsten'
 
@@ -50,6 +51,7 @@ export async function initComponents(): Promise<AppComponents> {
     messageBroker,
     ethereumProvider,
     rpcServer,
+    roomsMessages: mitt(),
     rpcSessions: {
       sessions: new Map()
     }

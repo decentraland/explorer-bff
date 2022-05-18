@@ -52,6 +52,12 @@ rpc:
 		--ts_proto_out="$(PWD)/src/controllers/bff-proto" \
 		-I="$(PWD)/src/controllers/bff-proto" \
 		"$(PWD)/src/controllers/bff-proto/authentication-service.proto"
+	${PROTOC} \
+		--plugin=./node_modules/.bin/protoc-gen-ts_proto \
+		--ts_proto_opt=esModuleInterop=true,returnObservable=false,outputServices=generic-definitions \
+		--ts_proto_out="$(PWD)/src/controllers/bff-proto" \
+		-I="$(PWD)/src/controllers/bff-proto" \
+		"$(PWD)/src/controllers/bff-proto/room-service.proto"
 
 build:
 	@rm -rf dist || true

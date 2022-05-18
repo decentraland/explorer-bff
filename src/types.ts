@@ -11,12 +11,13 @@ import { IMessageBrokerComponent } from './ports/message-broker'
 import { WebSocket } from 'ws'
 import { HttpProvider } from 'web3x/providers'
 import { RpcServer, RpcServerPort } from '@dcl/rpc'
+import { Emitter } from 'mitt'
 
 export type GlobalContext = {
   components: BaseComponents
 }
 
-export type RpcContext = GlobalContext
+export type RpcContext = GlobalContext & { peer?: RpcSession }
 
 export type WebSocketComponent = IBaseComponent & {
   ws: WebSocketServer
@@ -33,12 +34,19 @@ export type BaseComponents = {
   messageBroker: IMessageBrokerComponent
   // TODO: deprecate web3x and use ethersjs
   ethereumProvider: HttpProvider
-  
+
   rpcServer: RpcServer<RpcContext>
+  roomsMessages: Emitter<Record<string /* roomId */, RoomMessage>>
 
   rpcSessions: {
     sessions: Map<string, RpcSession>
   }
+}
+
+export type RoomMessage = {
+  room: string
+  sender: string
+  payload: Uint8Array
 }
 
 export type RpcSession = {
