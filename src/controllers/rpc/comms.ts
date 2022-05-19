@@ -1,6 +1,6 @@
 import { RpcServerModule } from '@dcl/rpc/dist/codegen'
 import { RpcContext } from '../../types'
-import { CommsServiceDefinition } from './comms-service'
+import { CommsServiceDefinition } from '../bff-proto/comms-service'
 
 export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = {
   async publishToTopic(topicMessage, context) {

@@ -4,11 +4,10 @@ import { EthAddress } from '@dcl/schemas'
 import { AuthChain, Authenticator } from 'dcl-crypto'
 import { normalizeAddress } from '../../logic/address'
 import { RpcContext, RpcSession } from '../../types'
-import { BffAuthenticationServiceDefinition } from './authentication-service'
+import { BffAuthenticationServiceDefinition } from '../bff-proto/authentication-service'
 import { commsModule } from './comms'
-import { CommsServiceDefinition } from './comms-service'
-import { RoomServiceDefinition } from './room-service'
-import { roomsModule } from './rooms'
+import { CommsServiceDefinition } from '../bff-proto/comms-service'
+// import { roomsModule } from './rooms'
 
 // TODO: use proper component-based loggers
 
@@ -106,5 +105,5 @@ async function registerAuthenticatedConnectionModules(
 
   // register all the modules
   registerService(port, CommsServiceDefinition, async () => commsModule)
-  registerService(port, RoomServiceDefinition, async () => roomsModule)
+  // registerService(port, RoomServiceDefinition, async () => roomsModule)
 }
