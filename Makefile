@@ -1,6 +1,10 @@
 PROTOBUF_VERSION = 3.19.1
 PROTOC ?= protoc
 UNAME := $(shell uname)
+
+PROTO_FILES := $(wildcard src/controllers/bff-proto/*.proto)
+PBS_TS = $(PROTO_FILES:src/controllers/bff-proto/%.proto=src/controllers/bff-proto/%.ts)
+
 export PATH := node_modules/.bin:/usr/local/include/:protoc3/bin:$(PATH)
 
 ifneq ($(CI), true)
@@ -34,29 +38,23 @@ install: install_compiler
 	npm i -S @types/google-protobuf@latest
 
 test: build
+	touch .env
 	node_modules/.bin/jest --forceExit --detectOpenHandles --coverage --verbose $(TESTARGS)
 
 test-watch:
 	node_modules/.bin/jest --detectOpenHandles --colors --runInBand --watch $(TESTARGS) --coverage
 
-rpc:
+src/controllers/bff-proto/%.ts: src/controllers/bff-proto/%.proto
 	${PROTOC} \
 		--plugin=./node_modules/.bin/protoc-gen-ts_proto \
 		--ts_proto_opt=esModuleInterop=true,returnObservable=false,outputServices=generic-definitions \
 		--ts_proto_out="$(PWD)/src/controllers/bff-proto" \
 		-I="$(PWD)/src/controllers/bff-proto" \
-		"$(PWD)/src/controllers/bff-proto/comms-service.proto"
-	${PROTOC} \
-		--plugin=./node_modules/.bin/protoc-gen-ts_proto \
-		--ts_proto_opt=esModuleInterop=true,returnObservable=false,outputServices=generic-definitions \
-		--ts_proto_out="$(PWD)/src/controllers/bff-proto" \
-		-I="$(PWD)/src/controllers/bff-proto" \
-		"$(PWD)/src/controllers/bff-proto/authentication-service.proto"
+		"$(PWD)/src/controllers/bff-proto/$*.proto"
 
-build:
+build: ${PBS_TS}
 	@rm -rf dist || true
 	@mkdir -p dist
-	@$(MAKE) rpc
 	@./node_modules/.bin/tsc -p tsconfig.json
 
 lint:

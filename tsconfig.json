@@ -14,7 +14,8 @@
     "noImplicitThis": true,
     "forceConsistentCasingInFileNames": true,
     "allowJs": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
   },
   "include": [
     "src"

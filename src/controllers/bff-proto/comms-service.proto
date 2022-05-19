@@ -2,7 +2,8 @@ syntax = "proto3";
 
 message TopicSubscriptionResultElem {
   bytes payload = 1;
-  string sender = 2;
+  string topic = 2;
+  string sender = 3;
 }
 
 message PublishToTopicRequest {
@@ -14,7 +15,9 @@ message TopicSubscriptionRequest {
   string topic = 1;
 }
 
-message PublishToTopicResult {}
+message PublishToTopicResult {
+  bool ok = 1;
+}
 
 service CommsService {
   // subscribe to a topic, stream all the messages
