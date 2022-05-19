@@ -48,7 +48,7 @@ export async function getModuleFuture<Service extends TsProtoServiceDefinition>(
   rpc: ReturnType<typeof createAndAuthenticateIdentity>,
   moduleDefinition: Service
 ) {
-  const fut = future<RpcServerModule<Service>>()
+  const fut = future<RpcServerModule<Service, void>>()
 
   it('load module ' + moduleDefinition.fullName + ' for ' + rpc.identity.address, async () => {
     fut.resolve(await loadService(rpc.port, moduleDefinition))

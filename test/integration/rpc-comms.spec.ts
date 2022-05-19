@@ -2,6 +2,7 @@ import { test } from '../components'
 import { createAndAuthenticateIdentity, getModuleFuture, takeAsync } from '../helpers/rpc'
 import { delay } from '../helpers/delay'
 import { CommsServiceDefinition, TopicSubscriptionResultElem } from '../../src/controllers/bff-proto/comms-service'
+import { saltTopic } from '../../src/controllers/rpc/comms'
 
 test('rpc: RoomService sanity integration receive message', function ({ components, stubComponents }) {
   const connection1 = createAndAuthenticateIdentity('connection1', components)
@@ -14,7 +15,7 @@ test('rpc: RoomService sanity integration receive message', function ({ componen
     const msg1 = new Uint8Array([1, 2, 3])
 
     async function fn() {
-      for await (const msg of sender.subscribeToTopic({ topic: topic }, {})) {
+      for await (const msg of sender.subscribeToTopic({ topic })) {
         return msg
       }
     }
@@ -23,7 +24,7 @@ test('rpc: RoomService sanity integration receive message', function ({ componen
 
     await delay(100)
 
-    messageBroker.publish(topic, msg1)
+    messageBroker.publish(saltTopic(topic), msg1)
 
     expect(await finished).toEqual({ payload: msg1, sender: '0x0', topic })
 
@@ -35,7 +36,7 @@ test('rpc: RoomService sanity integration receive message', function ({ componen
     const sender = await roomServiceFuture1
     const topic = 'abc'
 
-    const stream = sender.subscribeToTopic({ topic }, {})[Symbol.asyncIterator]()
+    const stream = sender.subscribeToTopic({ topic })[Symbol.asyncIterator]()
     const finished = takeAsync<TopicSubscriptionResultElem>(stream, 2)
 
     const msg1 = new Uint8Array([1, 2, 3])
@@ -44,9 +45,9 @@ test('rpc: RoomService sanity integration receive message', function ({ componen
 
     await delay(100)
 
-    messageBroker.publish(topic, msg1)
-    messageBroker.publish('another-topic', msg2)
-    messageBroker.publish(topic, msg3)
+    messageBroker.publish(saltTopic(topic), msg1)
+    messageBroker.publish(saltTopic('another-topic'), msg2)
+    messageBroker.publish(saltTopic(topic), msg3)
 
     expect(await finished).toEqual([
       { payload: msg1, sender: '0x0', topic },
@@ -67,7 +68,7 @@ test('rpc: RoomService integration', function ({ components, stubComponents }) {
     const topic = 'abc'
 
     async function fn() {
-      for await (const msg of receiver.subscribeToTopic({ topic }, {})) {
+      for await (const msg of receiver.subscribeToTopic({ topic })) {
         return msg
       }
     }
@@ -75,7 +76,7 @@ test('rpc: RoomService integration', function ({ components, stubComponents }) {
     const finished = fn()
 
     await delay(100)
-    await sender.publishToTopic({ payload: new Uint8Array([1, 2, 3]), topic }, {})
+    await sender.publishToTopic({ payload: new Uint8Array([1, 2, 3]), topic })
 
     expect(await finished).toEqual({
       topic,

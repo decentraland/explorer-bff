@@ -38,6 +38,7 @@ install: install_compiler
 	npm i -S @types/google-protobuf@latest
 
 test: build
+	touch .env
 	node_modules/.bin/jest --forceExit --detectOpenHandles --coverage --verbose $(TESTARGS)
 
 test-watch:
