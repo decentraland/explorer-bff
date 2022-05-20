@@ -23,6 +23,7 @@ const aliasToUserId = new Map<number, string>()
 export async function websocketRoomHandler(
   context: IHttpServerComponent.DefaultContext<GlobalContext> & IHttpServerComponent.PathAwareContext<GlobalContext>
 ) {
+  const metrics = context.components.metrics
   const logger = context.components.logs.getLogger('Websocket Room Handler')
   logger.info('Websocket')
   const roomId = context.params.roomId || 'I1' // TODO: Validate params
@@ -35,6 +36,8 @@ export async function websocketRoomHandler(
   }
 
   return upgradeWebSocketResponse((socket) => {
+    metrics.increment('dcl_ws_rooms_connections')
+
     logger.info('Websocket connected')
     // TODO fix ws types
     const ws = socket as any as WebSocket
@@ -54,6 +57,7 @@ export async function websocketRoomHandler(
     } catch (err) {
       logger.error(err as Error)
       ws.close()
+      metrics.decrement('dcl_ws_rooms_connections')
       return
     }
 
@@ -61,6 +65,8 @@ export async function websocketRoomHandler(
 
     ws.on('message', (message) => {
       const data = message as Buffer
+      metrics.increment('dcl_ws_rooms_in_messages')
+      metrics.increment('dcl_ws_rooms_in_bytes', {}, data.byteLength)
 
       let msgType = MessageType.UNKNOWN_MESSAGE_TYPE as MessageTypeMap[keyof MessageTypeMap]
       try {
@@ -83,7 +89,10 @@ export async function websocketRoomHandler(
             // Reliable/unreliable data
             connections.forEach(($) => {
               if (ws !== $) {
-                $.send(message.serializeBinary())
+                const serializedMessage = message.serializeBinary()
+                $.send(serializedMessage)
+                metrics.increment('dcl_ws_rooms_out_messages')
+                metrics.increment('dcl_ws_rooms_out_bytes', {}, serializedMessage.byteLength)
               }
             })
           } catch (e) {
@@ -100,7 +109,10 @@ export async function websocketRoomHandler(
             // Reliable/unreliable data
             connections.forEach(($) => {
               if (ws !== $) {
-                $.send(message.serializeBinary())
+                const serializedMessage = message.serializeBinary()
+                $.send(serializedMessage)
+                metrics.increment('dcl_ws_rooms_out_messages')
+                metrics.increment('dcl_ws_rooms_out_bytes', {}, serializedMessage.byteLength)
               }
             })
           } catch (e) {
@@ -118,6 +130,7 @@ export async function websocketRoomHandler(
     ws.on('error', (error) => {
       logger.error(error)
       ws.close()
+      metrics.decrement('dcl_ws_rooms_connections')
       const room = connectionsPerRoom.get(roomId)
       if (room) {
         room.delete(ws)
@@ -125,6 +138,7 @@ export async function websocketRoomHandler(
     })
 
     ws.on('close', () => {
+      metrics.decrement('dcl_ws_rooms_connections')
       logger.info('Websocket closed')
       const room = connectionsPerRoom.get(roomId)
       if (room) {
