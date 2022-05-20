@@ -19,9 +19,18 @@ message PublishToTopicResult {
   bool ok = 1;
 }
 
+message TopicUnsubscriptionRequest {
+  string topic = 1;
+}
+
+message TopicUnsubscriptionResult {
+  bool ok = 1;
+}
+
 service CommsService {
   // subscribe to a topic, stream all the messages
   rpc SubscribeToTopic(TopicSubscriptionRequest) returns (stream TopicSubscriptionResultElem) {}
+  rpc UnsubscribeToTopic(TopicUnsubscriptionRequest) returns (TopicUnsubscriptionResult) {}
   // send a message to a topic
   rpc PublishToTopic(PublishToTopicRequest) returns (PublishToTopicResult) {}
 }

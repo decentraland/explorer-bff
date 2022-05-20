@@ -1,6 +1,6 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { connect, NatsConnection } from 'nats'
-import { BaseComponents } from '../types'
+import { Subscription, BaseComponents } from '../types'
 
 export type Message = {
   data: Uint8Array
@@ -25,16 +25,10 @@ class Topic {
 
 export type IMessageBrokerComponent = {
   publish(topic: string, message?: Uint8Array): void
-  subscribe(topic: string, handler: (message: Message) => Promise<void> | void): Subscription
-
-  subscribeGenerator(topic: string): AsyncGenerator<StreamMessage>
+  subscribe(topic: string): Subscription
 
   start(): Promise<void>
   stop(): Promise<void>
-}
-
-export interface Subscription {
-  unsubscribe(): void
 }
 
 export async function createMessageBrokerComponent(
@@ -52,21 +46,8 @@ export async function createMessageBrokerComponent(
     natsConnection.publish(topic, message)
   }
 
-  function subscribe(topic: string, handler: (_: Message) => Promise<void>): Subscription {
-    const subscription = natsConnection.subscribe(topic)
-    ;(async () => {
-      for await (const message of subscription) {
-        await handler({ data: message.data, topic: new Topic(message.subject) })
-      }
-    })().catch((err: any) => logger.error(`error processing subscription message; ${err.toString()}`))
-    return subscription
-  }
-
-  async function* subscribeGenerator(topic: string): AsyncGenerator<StreamMessage> {
-    // TODO: test that closing the stream actually closes the subscription
-    for await (const message of natsConnection.subscribe(topic)) {
-      yield { data: message.data, subject: message.subject }
-    }
+  function subscribe(topic: string): Subscription {
+    return natsConnection.subscribe(topic)
   }
 
   async function start() {
@@ -91,7 +72,6 @@ export async function createMessageBrokerComponent(
     publish,
     subscribe,
     start,
-    stop,
-    subscribeGenerator
+    stop
   }
 }

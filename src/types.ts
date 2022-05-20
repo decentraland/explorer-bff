@@ -12,6 +12,7 @@ import { WebSocket } from 'ws'
 import { HttpProvider } from 'web3x/providers'
 import { RpcServer, RpcServerPort } from '@dcl/rpc'
 import { Emitter } from 'mitt'
+import { Msg } from 'nats'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -49,9 +50,14 @@ export type RoomMessage = {
   payload: Uint8Array
 }
 
+export interface Subscription extends AsyncIterable<Msg> {
+  unsubscribe(): void
+}
+
 export type RpcSession = {
   port: RpcServerPort<RpcContext>
   address: string
+  subscriptions?: Map<string, Subscription>
 }
 
 // components used in runtime
