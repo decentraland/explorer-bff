@@ -6,6 +6,10 @@ export const metricDeclarations = {
     help: 'Count calls to ping',
     type: IMetricsComponent.CounterType,
     labelNames: ['pathname']
+  },
+  dcl_ws_rooms_connections: {
+    help: 'Number of peer connections',
+    type: IMetricsComponent.GaugeType
   }
 }
 
