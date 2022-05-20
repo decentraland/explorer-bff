@@ -65,6 +65,8 @@ export async function websocketRoomHandler(
 
     ws.on('message', (message) => {
       const data = message as Buffer
+      metrics.increment('dcl_ws_rooms_in_messages')
+      metrics.increment('dcl_ws_rooms_in_bytes', {}, data.byteLength)
 
       let msgType = MessageType.UNKNOWN_MESSAGE_TYPE as MessageTypeMap[keyof MessageTypeMap]
       try {
@@ -87,7 +89,10 @@ export async function websocketRoomHandler(
             // Reliable/unreliable data
             connections.forEach(($) => {
               if (ws !== $) {
-                $.send(message.serializeBinary())
+                const serializedMessage = message.serializeBinary()
+                $.send(serializedMessage)
+                metrics.increment('dcl_ws_rooms_out_messages')
+                metrics.increment('dcl_ws_rooms_out_bytes', {}, serializedMessage.byteLength)
               }
             })
           } catch (e) {
@@ -104,7 +109,10 @@ export async function websocketRoomHandler(
             // Reliable/unreliable data
             connections.forEach(($) => {
               if (ws !== $) {
-                $.send(message.serializeBinary())
+                const serializedMessage = message.serializeBinary()
+                $.send(serializedMessage)
+                metrics.increment('dcl_ws_rooms_out_messages')
+                metrics.increment('dcl_ws_rooms_out_bytes', {}, serializedMessage.byteLength)
               }
             })
           } catch (e) {
