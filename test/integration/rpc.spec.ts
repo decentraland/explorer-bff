@@ -25,8 +25,7 @@ test('test RPC sanity check', function ({ components, stubComponents }) {
     auth = loadService(port, BffAuthenticationServiceDefinition)
     const challenge = await auth.getChallenge({ address: identity.address })
     authResponse = await auth.authenticate({
-      authChainJson: JSON.stringify(await identity.sign(challenge.challengeToSign)),
-      challengeToSign: challenge.challengeToSign
+      authChainJson: JSON.stringify(await identity.sign(challenge.challengeToSign))
     })
     expect(authResponse.peerId).toEqual(normalizeAddress(identity.address))
   })
