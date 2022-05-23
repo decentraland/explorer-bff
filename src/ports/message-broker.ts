@@ -2,27 +2,6 @@ import { IBaseComponent } from '@well-known-components/interfaces'
 import { connect, NatsConnection } from 'nats'
 import { Subscription, BaseComponents } from '../types'
 
-export type Message = {
-  data: Uint8Array
-  topic: Topic
-}
-
-export type StreamMessage = {
-  data: Uint8Array
-  subject: string
-}
-
-class Topic {
-  constructor(private readonly topic: string) {}
-  getLevel(level: number): string {
-    return this.topic.split('.')[level]
-  }
-
-  getFullTopic(): string {
-    return this.topic
-  }
-}
-
 export type IMessageBrokerComponent = {
   publish(topic: string, message?: Uint8Array): void
   subscribe(topic: string): Subscription

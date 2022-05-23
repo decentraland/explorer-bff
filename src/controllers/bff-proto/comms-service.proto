@@ -4,14 +4,20 @@ message TopicSubscriptionRequest {
   string topic = 1;
 }
 
-message TopicSubscriptionResultElem {
+message PeerTopicSubscriptionResultElem {
   bytes payload = 1;
   string topic = 2;
-  optional string sender = 3;
+  string sender = 3;
+}
+
+message SystemTopicSubscriptionResultElem {
+  bytes payload = 1;
+  string topic = 2;
 }
 
 message TopicUnsubscriptionRequest {
   string topic = 1;
+  bool system = 2;
 }
 
 message TopicUnsubscriptionResult {
@@ -29,7 +35,8 @@ message PublishToTopicResult {
 
 service CommsService {
   // subscribe to a topic, stream all the messages
-  rpc SubscribeToTopic(TopicSubscriptionRequest) returns (stream TopicSubscriptionResultElem) {}
+  rpc SubscribeToPeerTopic(TopicSubscriptionRequest) returns (stream PeerTopicSubscriptionResultElem) {}
+  rpc SubscribeToSystemTopic(TopicSubscriptionRequest) returns (stream SystemTopicSubscriptionResultElem) {}
   rpc UnsubscribeToTopic(TopicUnsubscriptionRequest) returns (TopicUnsubscriptionResult) {}
   // send a message to a topic
   rpc PublishToTopic(PublishToTopicRequest) returns (PublishToTopicResult) {}
