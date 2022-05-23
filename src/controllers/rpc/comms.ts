@@ -9,6 +9,21 @@ const topicRegex = /^[^\.]+(\.[^\.]+)*$/
 const saltedPrefix = 'client-proto.'
 const peerPrefix = `${saltedPrefix}peer.`
 
+export async function onPeerConnected({ components, peer }: RpcContext) {
+  if (!peer) {
+    throw new Error('onPeerConnected for a non registered peer')
+  }
+  components.messageBroker.publish(`peer.${peer.address}.connect`)
+}
+
+export async function onPeerDisconnected({ components, peer }: RpcContext) {
+  if (!peer) {
+    throw new Error('onPeerDisconnected for a non registered peer')
+  }
+
+  components.messageBroker.publish(`peer.${peer.address}.disconnect`)
+}
+
 export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = {
   async publishToTopic({ topic, payload }, { peer, components }) {
     if (!peer) {

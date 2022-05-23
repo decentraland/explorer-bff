@@ -5,7 +5,7 @@ import { AuthChain, Authenticator } from 'dcl-crypto'
 import { normalizeAddress } from '../../logic/address'
 import { RpcContext, RpcSession } from '../../types'
 import { BffAuthenticationServiceDefinition } from '../bff-proto/authentication-service'
-import { commsModule } from './comms'
+import { commsModule, onPeerConnected, onPeerDisconnected } from './comms'
 import { CommsServiceDefinition } from '../bff-proto/comms-service'
 // import { roomsModule } from './rooms'
 
@@ -93,15 +93,17 @@ async function registerAuthenticatedConnectionModules(
     previousSession.port.close()
   }
 
+  context.components.rpcSessions.sessions.set(address, peer)
+
+  onPeerConnected(context)
   // Remove the port from the rpcSessions if present.
   // TODO: write a test for this
   port.on('close', () => {
     if (context.components.rpcSessions.sessions.get(address)?.port === port) {
       context.components.rpcSessions.sessions.delete(address)
     }
+    onPeerDisconnected(context)
   })
-
-  context.components.rpcSessions.sessions.set(address, peer)
 
   // register all the modules
   registerService(port, CommsServiceDefinition, async () => commsModule)
