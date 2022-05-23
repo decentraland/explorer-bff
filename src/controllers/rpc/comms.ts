@@ -2,6 +2,7 @@ import { RpcServerModule } from '@dcl/rpc/dist/codegen'
 import { RpcContext, Subscription } from '../../types'
 import { CommsServiceDefinition } from '../bff-proto/comms-service'
 
+const topicRegex = /^[^\.]+(\.[^\.]+)*$/
 // the message topics for this service are prefixed to prevent
 // users "hacking" the NATS messages
 const saltedPrefix = 'client-proto.'
@@ -12,7 +13,11 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
       throw new Error('trying to publish from a peer that has not been registered')
     }
 
-    const realTopic = saltTopic(`${peer.address}.${topic}`)
+    if (!topicRegex.test(topic)) {
+      throw new Error(`Invalid topic ${topic}`)
+    }
+
+    const realTopic = saltTopic(`peer.${peer.address}.${topic}`)
     components.messageBroker.publish(realTopic, payload)
     return {
       ok: true
@@ -23,26 +28,28 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
       throw new Error('trying to subscribe a peer that has not been registered')
     }
 
-    const realTopic = saltTopic(topic)
+    if (!topicRegex.test(topic)) {
+      throw new Error(`Invalid topic ${topic}`)
+    }
 
+    const realTopic = saltTopic(topic)
     const subscription = components.messageBroker.subscribe(realTopic)
 
     if (!peer.subscriptions) {
       peer.subscriptions = new Map<string, Subscription>()
     }
-    peer.subscriptions.set(realTopic, subscription)
+    peer.subscriptions.set(topic, subscription)
 
     for await (const message of subscription) {
       yield { payload: message.data, topic: unsaltTopic(message.subject), sender: '0x0' }
     }
   },
-  async unsubscribeToTopic({ topic }, { components, peer }) {
+  async unsubscribeToTopic({ topic }, { peer }) {
     if (!peer) {
       throw new Error('trying to unsubscribe a peer that has not been registered')
     }
 
-    const realTopic = saltTopic(topic)
-    const subscription = peer.subscriptions && peer.subscriptions.get(realTopic)
+    const subscription = peer.subscriptions && peer.subscriptions.get(topic)
     if (subscription) {
       subscription.unsubscribe()
     }

@@ -4,7 +4,7 @@
 import { createRunner, createLocalFetchCompoment } from '@well-known-components/test-helpers'
 
 import { main } from '../src/service'
-import { IWsTestComponent, TestComponents } from '../src/types'
+import { TestComponents } from '../src/types'
 import { initComponents as originalInitComponents } from '../src/components'
 import { createLocalMessageBrokerComponent } from './helpers/message-broker'
 import { URL } from 'url'
