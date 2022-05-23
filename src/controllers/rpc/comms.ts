@@ -58,7 +58,7 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
       throw new Error(`Invalid topic ${topic}`)
     }
 
-    const realTopic = saltTopic(topic)
+    const realTopic = `${saltedPrefix}${topic}`
     const subscription = components.messageBroker.subscribe(realTopic)
 
     const subscriptions = peer.subscriptions ?? new Map<string, Subscription>()
@@ -82,17 +82,4 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
       ok: true
     }
   }
-}
-
-// adds a prefix
-export function saltTopic(topic: string) {
-  return saltedPrefix + topic
-}
-
-// // removes a prefix
-export function unsaltTopic(topic: string) {
-  if (topic.startsWith(saltedPrefix)) {
-    return topic.substring(saltedPrefix.length)
-  }
-  return topic
 }
