@@ -4,6 +4,8 @@ UNAME := $(shell uname)
 PROTO_FILES := $(wildcard src/controllers/bff-proto/*.proto)
 PBS_TS = $(PROTO_FILES:src/controllers/bff-proto/%.proto=src/controllers/bff-proto/%.ts)
 
+WS_PBS_TS = src/controllers/proto/ws.ts
+
 export PATH := node_modules/.bin:/usr/local/include/:protoc3/bin:$(PATH)
 
 ifneq ($(CI), true)
@@ -51,7 +53,16 @@ src/controllers/bff-proto/%.ts: protoc3/bin/protoc src/controllers/bff-proto/%.p
 		-I="$(PWD)/src/controllers/bff-proto" \
 		"$(PWD)/src/controllers/bff-proto/$*.proto"
 
-build: ${PBS_TS}
+src/controllers/proto/ws.ts: protoc3/bin/protoc src/controllers/proto/ws.proto
+	protoc3/bin/protoc \
+		--plugin=./node_modules/.bin/protoc-gen-ts_proto \
+		--ts_proto_opt=esModuleInterop=true,oneof=unions \
+		--ts_proto_out="$(PWD)/src/controllers/proto" \
+		-I="$(PWD)/src/controllers/proto" \
+		"$(PWD)/src/controllers/proto/ws.proto"
+
+
+build: ${PBS_TS} $(WS_PBS_TS)
 	@rm -rf dist || true
 	@mkdir -p dist
 	@./node_modules/.bin/tsc -p tsconfig.json

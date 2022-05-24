@@ -21,6 +21,10 @@ export async function onPeerDisconnected({ components, peer }: RpcContext) {
     throw new Error('onPeerDisconnected for a non registered peer')
   }
 
+  if (peer.subscriptions) {
+    // TODO
+  }
+
   components.messageBroker.publish(`peer.${peer.address}.disconnect`)
 }
 
