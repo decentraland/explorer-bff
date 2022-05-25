@@ -85,7 +85,6 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
     }
 
     for await (const message of subscription.generator()) {
-      console.log('GOT', message)
       yield { payload: message.data, topic: message.subject.substring(saltedPrefix.length) }
     }
   },
