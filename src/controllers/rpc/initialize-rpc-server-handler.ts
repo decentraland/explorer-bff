@@ -98,14 +98,14 @@ async function registerAuthenticatedConnectionModules(
 
   context.components.rpcSessions.sessions.set(address, peer)
 
-  onPeerConnected(context)
+  await onPeerConnected(context)
   // Remove the port from the rpcSessions if present.
   // TODO: write a test for this
-  port.on('close', () => {
+  port.on('close', async () => {
     if (context.components.rpcSessions.sessions.get(address)?.port === port) {
       context.components.rpcSessions.sessions.delete(address)
     }
-    onPeerDisconnected(context)
+    await onPeerDisconnected(context)
   })
 
   // register all the modules
