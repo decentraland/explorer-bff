@@ -26,8 +26,7 @@ export function createAndAuthenticateIdentity(
     const auth = loadService(port, BffAuthenticationServiceDefinition)
     const challenge = await auth.getChallenge({ address: identity.address })
     await auth.authenticate({
-      authChainJson: JSON.stringify(await identity.sign(challenge.challengeToSign)),
-      challengeToSign: challenge.challengeToSign
+      authChainJson: JSON.stringify(await identity.sign(challenge.challengeToSign))
     })
   })
 
@@ -57,7 +56,6 @@ export async function getModuleFuture<Service extends TsProtoServiceDefinition>(
   return fut
 }
 
-
 // async Array.from(generator*) with support for max elements
 export async function takeAsync<T>(iter: AsyncGenerator<T>, max?: number) {
   let r: T[] = []
@@ -65,7 +63,7 @@ export async function takeAsync<T>(iter: AsyncGenerator<T>, max?: number) {
   for await (const $ of iter) {
     r.push($)
     counter++
-    if (typeof max == "number" && counter == max) break
+    if (typeof max == 'number' && counter == max) break
   }
   return r
 }

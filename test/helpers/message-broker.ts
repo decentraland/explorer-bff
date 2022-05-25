@@ -1,21 +1,45 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
-import { StreamMessage } from '../../src/ports/message-broker'
 import { IMessageBrokerComponent } from '../../src/ports/message-broker'
-import { BaseComponents, Subscription } from '../../src/types'
-import mitt from 'mitt'
+import { BaseComponents, NatsMsg, Subscription } from '../../src/types'
+import { pushableChannel } from '@dcl/rpc/dist/push-channel'
+
+type PushableChannel = {
+  push(msg: NatsMsg): void
+}
 
 export async function createLocalMessageBrokerComponent(
-  components: Pick<BaseComponents, 'config' | 'logs'>
+  _: Pick<BaseComponents, 'config' | 'logs'>
 ): Promise<IMessageBrokerComponent & IBaseComponent> {
-  const messages = mitt<Record<string, Uint8Array>>()
+  const channels = new Map<string, PushableChannel>()
 
-  function publish(topic: string, message: Uint8Array): void {
-    messages.emit(topic, message)
+  function publish(topic: string, data: Uint8Array): void {
+    channels.forEach((ch, pattern) => {
+      const sPattern = pattern.split('.')
+      const sTopic = topic.split('.')
+
+      if (sPattern.length !== sTopic.length) {
+        return
+      }
+
+      for (let i = 0; i < sTopic.length; i++) {
+        if (sPattern[i] !== '*' && sPattern[i] !== sTopic[i]) {
+          return
+        }
+      }
+
+      ch.push({ subject: topic, data })
+    })
   }
 
-  function subscribe(_: string): Subscription {
-    const unsubscribe = () => {}
-    return { unsubscribe }
+  function subscribe(pattern: string): Subscription {
+    const channel = pushableChannel<NatsMsg>(function deferCloseChannel() {
+      channels.delete(pattern)
+    })
+    channels.set(pattern, channel)
+    return {
+      unsubscribe: () => channel.close(),
+      generator: () => channel.iterable
+    }
   }
 
   async function start() {}

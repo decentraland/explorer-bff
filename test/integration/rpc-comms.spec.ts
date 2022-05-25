@@ -1,10 +1,22 @@
 import { test } from '../components'
 import { createAndAuthenticateIdentity, getModuleFuture, takeAsync } from '../helpers/rpc'
 import { delay } from '../helpers/delay'
-import { CommsServiceDefinition, TopicSubscriptionResultElem } from '../../src/controllers/bff-proto/comms-service'
-import { saltTopic } from '../../src/controllers/rpc/comms'
+import {
+  CommsServiceDefinition,
+  SystemTopicSubscriptionResultElem,
+  PeerTopicSubscriptionResultElem
+} from '../../src/controllers/bff-proto/comms-service'
+import { saltedPrefix, peerPrefix } from '../../src/controllers/rpc/comms'
 
-test('rpc: RoomService sanity integration receive message', function ({ components, stubComponents }) {
+function saltSystemTopic(topic: string) {
+  return `${saltedPrefix}${topic}`
+}
+
+function saltPeerTopic(peerId: string, topic: string) {
+  return `${peerPrefix}${peerId}.${topic}`
+}
+
+test('rpc: RoomService sanity integration receive system message', function ({ components }) {
   const connection1 = createAndAuthenticateIdentity('connection1', components)
   const roomServiceFuture1 = getModuleFuture(connection1, CommsServiceDefinition)
 
@@ -15,7 +27,8 @@ test('rpc: RoomService sanity integration receive message', function ({ componen
     const msg1 = new Uint8Array([1, 2, 3])
 
     async function fn() {
-      for await (const msg of sender.subscribeToTopic({ topic })) {
+      const { id } = await sender.subscribe({ topic, fromPeers: false })
+      for await (const msg of sender.getSystemMessages({ id })) {
         return msg
       }
     }
@@ -24,9 +37,9 @@ test('rpc: RoomService sanity integration receive message', function ({ componen
 
     await delay(100)
 
-    messageBroker.publish(saltTopic(topic), msg1)
+    messageBroker.publish(saltSystemTopic(topic), msg1)
 
-    expect(await finished).toEqual({ payload: msg1, sender: '0x0', topic })
+    expect(await finished).toEqual({ payload: msg1, topic })
 
     await delay(100)
   })
@@ -34,10 +47,11 @@ test('rpc: RoomService sanity integration receive message', function ({ componen
   it('emiting a message makes the message arrive', async () => {
     const { messageBroker } = components
     const sender = await roomServiceFuture1
-    const topic = 'abc'
+    const topic = 'abcd'
 
-    const stream = sender.subscribeToTopic({ topic })[Symbol.asyncIterator]()
-    const finished = takeAsync<TopicSubscriptionResultElem>(stream, 2)
+    const { id } = await sender.subscribe({ topic, fromPeers: false })
+    const stream = sender.getSystemMessages({ id })[Symbol.asyncIterator]()
+    const finished = takeAsync<SystemTopicSubscriptionResultElem>(stream, 2)
 
     const msg1 = new Uint8Array([1, 2, 3])
     const msg2 = new Uint8Array([1])
@@ -45,13 +59,69 @@ test('rpc: RoomService sanity integration receive message', function ({ componen
 
     await delay(100)
 
-    messageBroker.publish(saltTopic(topic), msg1)
-    messageBroker.publish(saltTopic('another-topic'), msg2)
-    messageBroker.publish(saltTopic(topic), msg3)
+    messageBroker.publish(saltSystemTopic(topic), msg1)
+    messageBroker.publish(saltSystemTopic('another-topic'), msg2)
+    messageBroker.publish(saltSystemTopic(topic), msg3)
 
     expect(await finished).toEqual([
-      { payload: msg1, sender: '0x0', topic },
-      { payload: msg3, sender: '0x0', topic }
+      { payload: msg1, topic },
+      { payload: msg3, topic }
+    ])
+  })
+})
+
+test('rpc: RoomService sanity integration receive peer message', function ({ components }) {
+  const connection1 = createAndAuthenticateIdentity('connection1', components)
+  const roomServiceFuture1 = getModuleFuture(connection1, CommsServiceDefinition)
+
+  it('emits a message and cuts the stream', async () => {
+    const { messageBroker } = components
+    const sender = await roomServiceFuture1
+    const fromPeerId = 'peer1'
+    const topic = 'abc'
+    const msg1 = new Uint8Array([1, 2, 3])
+
+    async function fn() {
+      const { id } = await sender.subscribe({ topic, fromPeers: true })
+      for await (const msg of sender.getPeerMessages({ id })) {
+        return msg
+      }
+    }
+
+    const finished = fn()
+
+    await delay(100)
+
+    messageBroker.publish(saltPeerTopic(fromPeerId, topic), msg1)
+
+    expect(await finished).toEqual({ payload: msg1, topic, sender: fromPeerId })
+
+    await delay(100)
+  })
+
+  it('emiting a message makes the message arrive', async () => {
+    const { messageBroker } = components
+    const sender = await roomServiceFuture1
+    const fromPeerId = 'peer1'
+    const topic = 'abcd'
+
+    const { id } = await sender.subscribe({ topic, fromPeers: true })
+    const stream = sender.getPeerMessages({ id })[Symbol.asyncIterator]()
+    const finished = takeAsync<PeerTopicSubscriptionResultElem>(stream, 2)
+
+    const msg1 = new Uint8Array([1, 2, 3])
+    const msg2 = new Uint8Array([1])
+    const msg3 = new Uint8Array([3, 3, 3])
+
+    await delay(100)
+
+    messageBroker.publish(saltPeerTopic(fromPeerId, topic), msg1)
+    messageBroker.publish(saltPeerTopic(fromPeerId, 'another-topic'), msg2)
+    messageBroker.publish(saltPeerTopic(fromPeerId, topic), msg3)
+
+    expect(await finished).toEqual([
+      { payload: msg1, topic, sender: fromPeerId },
+      { payload: msg3, topic, sender: fromPeerId }
     ])
   })
 })
@@ -68,7 +138,8 @@ test('rpc: RoomService integration', function ({ components, stubComponents }) {
     const topic = 'abc'
 
     async function fn() {
-      for await (const msg of receiver.subscribeToTopic({ topic })) {
+      const { id } = await receiver.subscribe({ topic, fromPeers: true })
+      for await (const msg of receiver.getPeerMessages({ id })) {
         return msg
       }
     }
@@ -80,7 +151,7 @@ test('rpc: RoomService integration', function ({ components, stubComponents }) {
 
     expect(await finished).toEqual({
       topic,
-      sender: '0x0', // FIXME
+      sender: connection1.identity.address.toLowerCase(),
       payload: new Uint8Array([1, 2, 3])
     })
   })

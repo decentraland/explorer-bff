@@ -27,14 +27,13 @@ export async function createMessageBrokerComponent(
 
   function subscribe(topic: string): Subscription {
     const sub = natsConnection.subscribe(topic)
-    sub.closed
-      .then(() => {
-        logger.log('subscription closed')
-      })
-      .catch((err) => {
-        logger.error(`subscription closed with an error ${err.message}`)
-      })
-    return sub
+    sub.closed.catch((err) => {
+      logger.error(`subscription closed with an error ${err.message}`)
+    })
+    return {
+      unsubscribe: () => sub.unsubscribe,
+      generator: () => sub
+    }
   }
 
   async function start() {

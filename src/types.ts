@@ -12,7 +12,6 @@ import { WebSocket } from 'ws'
 import { HttpProvider } from 'web3x/providers'
 import { RpcServer, RpcServerPort } from '@dcl/rpc'
 import { Emitter } from 'mitt'
-import { Msg } from 'nats'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -50,7 +49,13 @@ export type RoomMessage = {
   payload: Uint8Array
 }
 
-export interface Subscription extends AsyncIterable<Msg> {
+export type NatsMsg = {
+  subject: string
+  data: Uint8Array
+}
+
+export interface Subscription {
+  generator(): AsyncIterable<NatsMsg>
   unsubscribe(): void
 }
 

@@ -2,12 +2,12 @@ import { RpcServerModule } from '@dcl/rpc/dist/codegen'
 import { RpcContext, Subscription } from '../../types'
 import { CommsServiceDefinition } from '../bff-proto/comms-service'
 
-const topicRegex = /^[^\.]+(\.[^\.]+)*$/
+export const topicRegex = /^[^\.]+(\.[^\.]+)*$/
 
 // the message topics for this service are prefixed to prevent
 // users "hacking" the NATS messages
-const saltedPrefix = 'client-proto.'
-const peerPrefix = `${saltedPrefix}peer.`
+export const saltedPrefix = 'client-proto.'
+export const peerPrefix = `${saltedPrefix}peer.`
 
 export async function onPeerConnected({ components, peer }: RpcContext) {
   if (!peer) {
@@ -81,10 +81,11 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
 
     const subscription = peer.systemSubscriptions.get(id)
     if (!subscription) {
-      return
+      throw new Error(`No subscription with id ${id}`)
     }
 
-    for await (const message of subscription) {
+    for await (const message of subscription.generator()) {
+      console.log('GOT', message)
       yield { payload: message.data, topic: message.subject.substring(saltedPrefix.length) }
     }
   },
@@ -95,10 +96,10 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
 
     const subscription = peer.peerSubscriptions.get(id)
     if (!subscription) {
-      return
+      throw new Error(`No subscription with id ${id}`)
     }
 
-    for await (const message of subscription) {
+    for await (const message of subscription.generator()) {
       let topic = message.subject.substring(peerPrefix.length)
       const sender = topic.substring(0, topic.indexOf('.'))
       topic = topic.substring(sender.length + 1)
