@@ -24,6 +24,7 @@ const aliasToUserId = new Map<number, string>()
 export async function websocketRoomHandler(
   context: IHttpServerComponent.DefaultContext<GlobalContext> & IHttpServerComponent.PathAwareContext<GlobalContext>
 ) {
+  const metrics = context.components.metrics
   const logger = context.components.logs.getLogger('Websocket Room Handler')
   logger.info('Websocket')
   const roomId = context.params.roomId || 'I1' // TODO: Validate params
@@ -36,6 +37,8 @@ export async function websocketRoomHandler(
   }
 
   return upgradeWebSocketResponse((socket) => {
+    metrics.increment('dcl_ws_rooms_connections')
+
     logger.info('Websocket connected')
     // TODO fix ws types
     const ws = socket as any as WebSocket
@@ -55,15 +58,18 @@ export async function websocketRoomHandler(
     } catch (err) {
       logger.error(err as Error)
       ws.close()
+      metrics.decrement('dcl_ws_rooms_connections')
       return
     }
 
     aliasToUserId.set(alias, userId)
 
-    ws.on('message', (rawMessage) => {
+    ws.on('message', (rawMessage: Buffer) => {
+      metrics.increment('dcl_ws_rooms_in_messages')
+      metrics.increment('dcl_ws_rooms_in_bytes', {}, rawMessage.byteLength)
       let message: WsMessage
       try {
-        message = WsMessage.decode(Reader.create(rawMessage as Buffer))
+        message = WsMessage.decode(Reader.create(rawMessage))
       } catch (e: any) {
         logger.error(`cannot process ws message ${e.toString()}`)
         return
@@ -111,6 +117,8 @@ export async function websocketRoomHandler(
           connections.forEach(($) => {
             if (ws !== $) {
               $.send(d)
+              metrics.increment('dcl_ws_rooms_out_messages')
+              metrics.increment('dcl_ws_rooms_out_bytes', {}, d.byteLength)
             }
           })
           break
@@ -124,6 +132,7 @@ export async function websocketRoomHandler(
     ws.on('error', (error) => {
       logger.error(error)
       ws.close()
+      metrics.decrement('dcl_ws_rooms_connections')
       const room = connectionsPerRoom.get(roomId)
       if (room) {
         room.delete(ws)
@@ -131,6 +140,7 @@ export async function websocketRoomHandler(
     })
 
     ws.on('close', () => {
+      metrics.decrement('dcl_ws_rooms_connections')
       logger.info('Websocket closed')
       const room = connectionsPerRoom.get(roomId)
       if (room) {
