@@ -21,13 +21,11 @@ export async function onPeerDisconnected({ components, peer }: RpcContext) {
     throw new Error('onPeerDisconnected for a non registered peer')
   }
 
-  peer.systemSubscriptions.forEach((subscription) => {
+  peer.subscriptions.forEach((subscription) => {
     subscription.unsubscribe()
   })
 
-  peer.peerSubscriptions.forEach((subscription) => {
-    subscription.unsubscribe()
-  })
+  peer.subscriptions = []
 
   components.messageBroker.publish(`peer.${peer.address}.disconnect`)
 }
@@ -48,7 +46,7 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
       ok: true
     }
   },
-  async subscribe({ topic, fromPeers }, { components, peer }) {
+  async *subscribeToPeerMessages({ topic }, { components, peer }) {
     if (!peer) {
       throw new Error('trying to subscribe a peer that has not been registered')
     }
@@ -57,66 +55,42 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
       throw new Error(`Invalid topic ${topic}`)
     }
 
-    let subscriptions: Map<number, Subscription>
-    let realTopic: string
-    if (fromPeers) {
-      realTopic = `${peerPrefix}*.${topic}`
-      subscriptions = peer.peerSubscriptions
-    } else {
-      realTopic = `${saltedPrefix}${topic}`
-      subscriptions = peer.systemSubscriptions
-    }
+    const realTopic = `${peerPrefix}*.${topic}`
     const subscription = components.messageBroker.subscribe(realTopic)
+    peer.subscriptions.push(subscription)
 
-    peer.subscriptionsIndex++
-    const subscriptionId = peer.subscriptionsIndex
-    subscriptions.set(subscriptionId, subscription)
-
-    return { id: subscriptionId }
+    console.log('START PEERS FOR', topic)
+    try {
+      for await (const message of subscription.generator()) {
+        let topic = message.subject.substring(peerPrefix.length)
+        const sender = topic.substring(0, topic.indexOf('.'))
+        topic = topic.substring(sender.length + 1)
+        yield { payload: message.data, topic, sender }
+      }
+    } finally {
+      console.log('STOP PEERS FOR', topic)
+    }
   },
-  async *getSystemMessages({ id }, { peer }) {
+  async *subscribeToSystemMessages({ topic }, { components, peer }) {
     if (!peer) {
       throw new Error('trying to subscribe a peer that has not been registered')
     }
 
-    const subscription = peer.systemSubscriptions.get(id)
-    if (!subscription) {
-      throw new Error(`No subscription with id ${id}`)
+    if (!topicRegex.test(topic)) {
+      throw new Error(`Invalid topic ${topic}`)
     }
 
-    for await (const message of subscription.generator()) {
-      yield { payload: message.data, topic: message.subject.substring(saltedPrefix.length) }
-    }
-  },
-  async *getPeerMessages({ id }, { peer }) {
-    if (!peer) {
-      throw new Error('trying to subscribe a peer that has not been registered')
-    }
+    const realTopic = `${saltedPrefix}${topic}`
+    const subscription = components.messageBroker.subscribe(realTopic)
+    peer.subscriptions.push(subscription)
 
-    const subscription = peer.peerSubscriptions.get(id)
-    if (!subscription) {
-      throw new Error(`No subscription with id ${id}`)
-    }
-
-    for await (const message of subscription.generator()) {
-      let topic = message.subject.substring(peerPrefix.length)
-      const sender = topic.substring(0, topic.indexOf('.'))
-      topic = topic.substring(sender.length + 1)
-      yield { payload: message.data, topic, sender }
-    }
-  },
-  async unsubscribe({ id, fromPeers }, { peer }) {
-    if (!peer) {
-      throw new Error('trying to unsubscribe a peer that has not been registered')
-    }
-
-    const subscription = fromPeers ? peer.peerSubscriptions.get(id) : peer.systemSubscriptions.get(id)
-
-    if (subscription) {
-      subscription.unsubscribe()
-    }
-    return {
-      ok: true
+    console.log('START SYSTEM FOR', topic)
+    try {
+      for await (const message of subscription.generator()) {
+        yield { payload: message.data, topic: message.subject.substring(saltedPrefix.length) }
+      }
+    } finally {
+      console.log('STOP SYSTEM FOR', topic)
     }
   }
 }

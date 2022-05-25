@@ -80,9 +80,7 @@ async function registerAuthenticatedConnectionModules(
   const peer: RpcSession = {
     address,
     port,
-    peerSubscriptions: new Map<number, Subscription>(),
-    systemSubscriptions: new Map<number, Subscription>(),
-    subscriptionsIndex: 0
+    subscriptions: []
   }
 
   // hydrate the context with the session

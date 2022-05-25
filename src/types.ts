@@ -62,9 +62,7 @@ export interface Subscription {
 export type RpcSession = {
   port: RpcServerPort<RpcContext>
   address: string
-  peerSubscriptions: Map<number, Subscription>
-  systemSubscriptions: Map<number, Subscription>
-  subscriptionsIndex: number
+  subscriptions: Subscription[]
 }
 
 // components used in runtime
