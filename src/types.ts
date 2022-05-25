@@ -57,7 +57,9 @@ export interface Subscription extends AsyncIterable<Msg> {
 export type RpcSession = {
   port: RpcServerPort<RpcContext>
   address: string
-  subscriptions?: Map<string, Subscription>
+  peerSubscriptions: Map<number, Subscription>
+  systemSubscriptions: Map<number, Subscription>
+  subscriptionsIndex: number
 }
 
 // components used in runtime

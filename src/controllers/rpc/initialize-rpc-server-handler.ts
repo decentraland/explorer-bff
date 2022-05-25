@@ -3,7 +3,7 @@ import { registerService } from '@dcl/rpc/dist/codegen'
 import { EthAddress } from '@dcl/schemas'
 import { AuthChain, Authenticator } from 'dcl-crypto'
 import { normalizeAddress } from '../../logic/address'
-import { RpcContext, RpcSession } from '../../types'
+import { RpcContext, RpcSession, Subscription } from '../../types'
 import { BffAuthenticationServiceDefinition } from '../bff-proto/authentication-service'
 import { commsModule, onPeerConnected, onPeerDisconnected } from './comms'
 import { CommsServiceDefinition } from '../bff-proto/comms-service'
@@ -79,7 +79,10 @@ async function registerAuthenticatedConnectionModules(
 
   const peer: RpcSession = {
     address,
-    port
+    port,
+    peerSubscriptions: new Map<number, Subscription>(),
+    systemSubscriptions: new Map<number, Subscription>(),
+    subscriptionsIndex: 0
   }
 
   // hydrate the context with the session
