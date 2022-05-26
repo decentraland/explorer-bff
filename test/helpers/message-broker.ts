@@ -38,7 +38,7 @@ export async function createLocalMessageBrokerComponent(
     channels.set(pattern, channel)
     return {
       unsubscribe: () => channel.close(),
-      generator: () => channel.iterable
+      generator: channel.iterable
     }
   }
 

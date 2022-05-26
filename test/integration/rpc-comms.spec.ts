@@ -27,8 +27,8 @@ test('rpc: RoomService sanity integration receive system message', function ({ c
     const msg1 = new Uint8Array([1, 2, 3])
 
     async function fn() {
-      const { id } = await sender.subscribe({ topic, fromPeers: false })
-      for await (const msg of sender.getSystemMessages({ id })) {
+      const sub = await sender.subscribeToSystemMessages({ topic })
+      for await (const msg of sender.getSystemMessages(sub)) {
         return msg
       }
     }
@@ -49,8 +49,8 @@ test('rpc: RoomService sanity integration receive system message', function ({ c
     const sender = await roomServiceFuture1
     const topic = 'abcd'
 
-    const { id } = await sender.subscribe({ topic, fromPeers: false })
-    const stream = sender.getSystemMessages({ id })[Symbol.asyncIterator]()
+    const sub = await sender.subscribeToSystemMessages({ topic })
+    const stream = sender.getSystemMessages(sub)[Symbol.asyncIterator]()
     const finished = takeAsync<SystemTopicSubscriptionResultElem>(stream, 2)
 
     const msg1 = new Uint8Array([1, 2, 3])
@@ -82,8 +82,8 @@ test('rpc: RoomService sanity integration receive peer message', function ({ com
     const msg1 = new Uint8Array([1, 2, 3])
 
     async function fn() {
-      const { id } = await sender.subscribe({ topic, fromPeers: true })
-      for await (const msg of sender.getPeerMessages({ id })) {
+      const sub = await sender.subscribeToPeerMessages({ topic })
+      for await (const msg of sender.getPeerMessages(sub)) {
         return msg
       }
     }
@@ -105,8 +105,8 @@ test('rpc: RoomService sanity integration receive peer message', function ({ com
     const fromPeerId = 'peer1'
     const topic = 'abcd'
 
-    const { id } = await sender.subscribe({ topic, fromPeers: true })
-    const stream = sender.getPeerMessages({ id })[Symbol.asyncIterator]()
+    const sub = await sender.subscribeToPeerMessages({ topic })
+    const stream = sender.getPeerMessages(sub)[Symbol.asyncIterator]()
     const finished = takeAsync<PeerTopicSubscriptionResultElem>(stream, 2)
 
     const msg1 = new Uint8Array([1, 2, 3])
@@ -138,8 +138,8 @@ test('rpc: RoomService integration', function ({ components, stubComponents }) {
     const topic = 'abc'
 
     async function fn() {
-      const { id } = await receiver.subscribe({ topic, fromPeers: true })
-      for await (const msg of receiver.getPeerMessages({ id })) {
+      const sub = await receiver.subscribeToPeerMessages({ topic })
+      for await (const msg of receiver.getPeerMessages(sub)) {
         return msg
       }
     }
