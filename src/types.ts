@@ -54,15 +54,17 @@ export type NatsMsg = {
   data: Uint8Array
 }
 
-export interface Subscription {
-  generator(): AsyncIterable<NatsMsg>
-  unsubscribe(): void
+export type Subscription = {
+  generator: AsyncIterable<NatsMsg>
+  unsubscribe: () => void
 }
 
 export type RpcSession = {
   port: RpcServerPort<RpcContext>
   address: string
-  subscriptions: Subscription[]
+  subscriptionsIndex: number
+  peerSubscriptions: Map<number, Subscription>
+  systemSubscriptions: Map<number, Subscription>
 }
 
 // components used in runtime

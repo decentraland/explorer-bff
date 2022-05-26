@@ -1,5 +1,9 @@
 syntax = "proto3";
 
+message Subscription {
+  uint32 subscription_id = 1;
+}
+
 message SubscriptionRequest {
   string topic = 1;
 }
@@ -24,10 +28,20 @@ message PublishToTopicResult {
   bool ok = 1;
 }
 
-service CommsService {
-  rpc SubscribeToSystemMessages(SubscriptionRequest) returns (stream SystemTopicSubscriptionResultElem) {}
-  rpc SubscribeToPeerMessages(SubscriptionRequest) returns (stream PeerTopicSubscriptionResultElem) {}
+message UnsubscriptionResult {
+  bool ok = 1;
+}
 
-  // send a message to a topic
+service CommsService {
+  rpc SubscribeToPeerMessages(SubscriptionRequest) returns (Subscription) {}
+  rpc GetPeerMessages(Subscription) returns (stream PeerTopicSubscriptionResultElem) {}
+  rpc UnsubscribeToPeerMessages(Subscription) returns (UnsubscriptionResult) {}
+
+  rpc SubscribeToSystemMessages(SubscriptionRequest) returns (Subscription) {}
+  rpc GetSystemMessages(Subscription) returns (stream SystemTopicSubscriptionResultElem) {}
+  rpc UnsubscribeToSystemMessages(Subscription) returns (UnsubscriptionResult) {}
+
+
+  // send a peer message to a topic
   rpc PublishToTopic(PublishToTopicRequest) returns (PublishToTopicResult) {}
 }

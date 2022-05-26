@@ -35,8 +35,8 @@ export async function createMessageBrokerComponent(
         logger.error(`subscription closed with an error ${err.message}`)
       })
     return {
-      unsubscribe: () => sub.unsubscribe,
-      generator: () => sub
+      unsubscribe: () => sub.unsubscribe(),
+      generator: sub
     }
   }
 

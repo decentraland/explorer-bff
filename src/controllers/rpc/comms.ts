@@ -21,11 +21,16 @@ export async function onPeerDisconnected({ components, peer }: RpcContext) {
     throw new Error('onPeerDisconnected for a non registered peer')
   }
 
-  peer.subscriptions.forEach((subscription) => {
+  peer.peerSubscriptions.forEach((subscription) => {
     subscription.unsubscribe()
   })
 
-  peer.subscriptions = []
+  peer.systemSubscriptions.forEach((subscription) => {
+    subscription.unsubscribe()
+  })
+
+  peer.peerSubscriptions.clear()
+  peer.systemSubscriptions.clear()
 
   components.messageBroker.publish(`peer.${peer.address}.disconnect`)
 }
@@ -33,7 +38,7 @@ export async function onPeerDisconnected({ components, peer }: RpcContext) {
 export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = {
   async publishToTopic({ topic, payload }, { peer, components }) {
     if (!peer) {
-      throw new Error('trying to publish from a peer that has not been registered')
+      throw new Error('Trying to publish from a peer that has not been registered')
     }
 
     if (!topicRegex.test(topic)) {
@@ -46,9 +51,9 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
       ok: true
     }
   },
-  async *subscribeToPeerMessages({ topic }, { components, peer }) {
+  async subscribeToPeerMessages({ topic }, { components, peer }) {
     if (!peer) {
-      throw new Error('trying to subscribe a peer that has not been registered')
+      throw new Error('Trying to subscribe a peer that has not been registered')
     }
 
     if (!topicRegex.test(topic)) {
@@ -57,23 +62,15 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
 
     const realTopic = `${peerPrefix}*.${topic}`
     const subscription = components.messageBroker.subscribe(realTopic)
-    peer.subscriptions.push(subscription)
 
-    console.log('START PEERS FOR', topic)
-    try {
-      for await (const message of subscription.generator()) {
-        let topic = message.subject.substring(peerPrefix.length)
-        const sender = topic.substring(0, topic.indexOf('.'))
-        topic = topic.substring(sender.length + 1)
-        yield { payload: message.data, topic, sender }
-      }
-    } finally {
-      console.log('STOP PEERS FOR', topic)
-    }
+    const subscriptionId = peer.subscriptionsIndex
+    peer.peerSubscriptions.set(subscriptionId, subscription)
+    peer.subscriptionsIndex++
+    return { subscriptionId }
   },
-  async *subscribeToSystemMessages({ topic }, { components, peer }) {
+  async subscribeToSystemMessages({ topic }, { components, peer }) {
     if (!peer) {
-      throw new Error('trying to subscribe a peer that has not been registered')
+      throw new Error('Trying to subscribe a peer that has not been registered')
     }
 
     if (!topicRegex.test(topic)) {
@@ -82,15 +79,65 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
 
     const realTopic = `${saltedPrefix}${topic}`
     const subscription = components.messageBroker.subscribe(realTopic)
-    peer.subscriptions.push(subscription)
 
-    console.log('START SYSTEM FOR', topic)
-    try {
-      for await (const message of subscription.generator()) {
-        yield { payload: message.data, topic: message.subject.substring(saltedPrefix.length) }
-      }
-    } finally {
-      console.log('STOP SYSTEM FOR', topic)
+    const subscriptionId = peer.subscriptionsIndex
+    peer.systemSubscriptions.set(subscriptionId, subscription)
+    peer.subscriptionsIndex++
+
+    return { subscriptionId }
+  },
+  async *getPeerMessages({ subscriptionId }, { components, peer }) {
+    if (!peer) {
+      throw new Error('Trying to get messages for a peer that has not been registered')
     }
+    const subscription = peer.peerSubscriptions.get(subscriptionId)
+    if (!subscription) {
+      throw new Error(`Subscription not found: ${subscriptionId}`)
+    }
+
+    for await (const message of subscription.generator) {
+      let topic = message.subject.substring(peerPrefix.length)
+      const sender = topic.substring(0, topic.indexOf('.'))
+      topic = topic.substring(sender.length + 1)
+      yield { payload: message.data, topic, sender }
+    }
+  },
+  async *getSystemMessages({ subscriptionId }, { components, peer }) {
+    if (!peer) {
+      throw new Error('Trying to get messages for a peer that has not been registered')
+    }
+    const subscription = peer.systemSubscriptions.get(subscriptionId)
+    if (!subscription) {
+      throw new Error(`Subscription not found: ${subscriptionId}`)
+    }
+
+    for await (const message of subscription.generator) {
+      const topic = message.subject.substring(saltedPrefix.length)
+      yield { payload: message.data, topic }
+    }
+  },
+  async unsubscribeToPeerMessages({ subscriptionId }, { components, peer }) {
+    if (!peer) {
+      throw new Error('Trying to unsubscribe from a peer that has not been registered')
+    }
+    const subscription = peer.peerSubscriptions.get(subscriptionId)
+
+    if (subscription) {
+      subscription.unsubscribe()
+    }
+
+    return { ok: true }
+  },
+  async unsubscribeToSystemMessages({ subscriptionId }, { components, peer }) {
+    if (!peer) {
+      throw new Error('Trying to unsubscribe from a peer that has not been registered')
+    }
+    const subscription = peer && peer.systemSubscriptions.get(subscriptionId)
+
+    if (subscription) {
+      subscription.unsubscribe()
+    }
+
+    return { ok: true }
   }
 }
