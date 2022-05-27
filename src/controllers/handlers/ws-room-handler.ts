@@ -2,8 +2,9 @@ import { upgradeWebSocketResponse } from '@well-known-components/http-server/dis
 import { IHttpServerComponent } from '@well-known-components/interfaces'
 import { WebSocket } from 'ws'
 import { GlobalContext } from '../../types'
-import { MessageType, MessageHeader, MessageTypeMap, SystemMessage, IdentityMessage } from '../proto/ws_pb'
+import { WsMessage } from '../proto/ws'
 import { verify } from 'jsonwebtoken'
+import { Reader } from 'protobufjs/minimal'
 
 const connectionsPerRoom = new Map<string, Set<WebSocket>>()
 
@@ -63,66 +64,67 @@ export async function websocketRoomHandler(
 
     aliasToUserId.set(alias, userId)
 
-    ws.on('message', (message) => {
-      const data = message as Buffer
+    ws.on('message', (rawMessage: Buffer) => {
       metrics.increment('dcl_ws_rooms_in_messages')
-      metrics.increment('dcl_ws_rooms_in_bytes', {}, data.byteLength)
-
-      let msgType = MessageType.UNKNOWN_MESSAGE_TYPE as MessageTypeMap[keyof MessageTypeMap]
+      metrics.increment('dcl_ws_rooms_in_bytes', {}, rawMessage.byteLength)
+      let message: WsMessage
       try {
-        msgType = MessageHeader.deserializeBinary(data).getType()
-      } catch (err) {
-        logger.error('cannot deserialize message header')
+        message = WsMessage.decode(Reader.create(rawMessage))
+      } catch (e: any) {
+        logger.error(`cannot process ws message ${e.toString()}`)
         return
       }
 
-      switch (msgType) {
-        case MessageType.UNKNOWN_MESSAGE_TYPE: {
-          logger.log('unsupported message')
+      if (!message.data) {
+        return
+      }
+
+      const { $case } = message.data
+
+      switch ($case) {
+        case 'systemMessage': {
+          const { systemMessage } = message.data
+          systemMessage.fromAlias = alias
+
+          const d = WsMessage.encode({
+            data: {
+              $case: 'systemMessage',
+              systemMessage
+            }
+          }).finish()
+
+          // Reliable/unreliable data
+          connections.forEach(($) => {
+            if (ws !== $) {
+              $.send(d)
+            }
+          })
           break
         }
-        case MessageType.SYSTEM: {
-          try {
-            const message = SystemMessage.deserializeBinary(data)
-            message.setFromAlias(alias)
+        case 'identityMessage': {
+          const { identityMessage } = message.data
+          identityMessage.fromAlias = alias
+          identityMessage.identity = userId
 
-            // Reliable/unreliable data
-            connections.forEach(($) => {
-              if (ws !== $) {
-                const serializedMessage = message.serializeBinary()
-                $.send(serializedMessage)
-                metrics.increment('dcl_ws_rooms_out_messages')
-                metrics.increment('dcl_ws_rooms_out_bytes', {}, serializedMessage.byteLength)
-              }
-            })
-          } catch (e) {
-            logger.error(`cannot process system message ${e}`)
-          }
-          break
-        }
-        case MessageType.IDENTITY: {
-          try {
-            const message = IdentityMessage.deserializeBinary(data)
-            message.setFromAlias(alias)
-            message.setIdentity(userId)
+          const d = WsMessage.encode({
+            data: {
+              $case: 'identityMessage',
+              identityMessage
+            }
+          }).finish()
 
-            // Reliable/unreliable data
-            connections.forEach(($) => {
-              if (ws !== $) {
-                const serializedMessage = message.serializeBinary()
-                $.send(serializedMessage)
-                metrics.increment('dcl_ws_rooms_out_messages')
-                metrics.increment('dcl_ws_rooms_out_bytes', {}, serializedMessage.byteLength)
-              }
-            })
-          } catch (e) {
-            logger.error(`cannot process identity message ${e}`)
-          }
+          // Reliable/unreliable data
+          connections.forEach(($) => {
+            if (ws !== $) {
+              $.send(d)
+              metrics.increment('dcl_ws_rooms_out_messages')
+              metrics.increment('dcl_ws_rooms_out_bytes', {}, d.byteLength)
+            }
+          })
           break
         }
         default: {
-          logger.log(`ignoring msgType ${msgType}`)
-          break
+          logger.log(`ignoring msg with ${$case}`)
         }
       }
     })

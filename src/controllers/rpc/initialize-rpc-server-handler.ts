@@ -3,9 +3,9 @@ import { registerService } from '@dcl/rpc/dist/codegen'
 import { EthAddress } from '@dcl/schemas'
 import { AuthChain, Authenticator } from 'dcl-crypto'
 import { normalizeAddress } from '../../logic/address'
-import { RpcContext, RpcSession } from '../../types'
+import { RpcContext, RpcSession, Subscription } from '../../types'
 import { BffAuthenticationServiceDefinition } from '../bff-proto/authentication-service'
-import { commsModule } from './comms'
+import { commsModule, onPeerConnected, onPeerDisconnected } from './comms'
 import { CommsServiceDefinition } from '../bff-proto/comms-service'
 // import { roomsModule } from './rooms'
 
@@ -79,7 +79,10 @@ async function registerAuthenticatedConnectionModules(
 
   const peer: RpcSession = {
     address,
-    port
+    port,
+    subscriptionsIndex: 0,
+    peerSubscriptions: new Map<number, Subscription>(),
+    systemSubscriptions: new Map<number, Subscription>()
   }
 
   // hydrate the context with the session
@@ -93,15 +96,17 @@ async function registerAuthenticatedConnectionModules(
     previousSession.port.close()
   }
 
+  context.components.rpcSessions.sessions.set(address, peer)
+
+  await onPeerConnected(context)
   // Remove the port from the rpcSessions if present.
   // TODO: write a test for this
-  port.on('close', () => {
+  port.on('close', async () => {
     if (context.components.rpcSessions.sessions.get(address)?.port === port) {
       context.components.rpcSessions.sessions.delete(address)
     }
+    await onPeerDisconnected(context)
   })
-
-  context.components.rpcSessions.sessions.set(address, peer)
 
   // register all the modules
   registerService(port, CommsServiceDefinition, async () => commsModule)

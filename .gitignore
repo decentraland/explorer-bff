@@ -8,3 +8,4 @@ protoc3
 .env
 
 src/controllers/bff-proto/*.ts
+src/controllers/proto/ws.ts

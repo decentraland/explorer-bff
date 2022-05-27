@@ -49,9 +49,22 @@ export type RoomMessage = {
   payload: Uint8Array
 }
 
+export type NatsMsg = {
+  subject: string
+  data: Uint8Array
+}
+
+export type Subscription = {
+  generator: AsyncIterable<NatsMsg>
+  unsubscribe: () => void
+}
+
 export type RpcSession = {
   port: RpcServerPort<RpcContext>
   address: string
+  subscriptionsIndex: number
+  peerSubscriptions: Map<number, Subscription>
+  systemSubscriptions: Map<number, Subscription>
 }
 
 // components used in runtime

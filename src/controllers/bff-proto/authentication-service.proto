@@ -10,8 +10,7 @@ message GetChallengeResponse {
 }
 
 message SignedChallenge {
-  string challenge_to_sign = 1;
-  string auth_chain_json = 2;
+  string auth_chain_json = 1;
 }
 
 message WelcomePeerInformation {

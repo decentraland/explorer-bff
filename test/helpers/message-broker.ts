@@ -1,49 +1,45 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
-import { StreamMessage, Subscription } from '../../src/ports/message-broker'
 import { IMessageBrokerComponent } from '../../src/ports/message-broker'
-import { BaseComponents } from '../../src/types'
-import mitt from 'mitt'
+import { BaseComponents, NatsMsg, Subscription } from '../../src/types'
 import { pushableChannel } from '@dcl/rpc/dist/push-channel'
 
+type PushableChannel = {
+  push(msg: NatsMsg): void
+}
+
 export async function createLocalMessageBrokerComponent(
-  components: Pick<BaseComponents, 'config' | 'logs'>
+  _: Pick<BaseComponents, 'config' | 'logs'>
 ): Promise<IMessageBrokerComponent & IBaseComponent> {
-  const messages = mitt<Record<string, Uint8Array>>()
+  const channels = new Map<string, PushableChannel>()
 
-  function matchesNatsWildcards(pattern: string, topic: string) {
-    // TODO: match topic.*.b with topic.test.b like nats does
-    return pattern == topic
-  }
+  function publish(topic: string, data: Uint8Array): void {
+    channels.forEach((ch, pattern) => {
+      const sPattern = pattern.split('.')
+      const sTopic = topic.split('.')
 
-  function publish(topic: string, message: Uint8Array): void {
-    messages.emit(topic, message)
-  }
+      if (sPattern.length !== sTopic.length) {
+        return
+      }
 
-  function subscribe(topic: string, handler: Function): Subscription {
-    const unsubscribe = () => {}
-    return { unsubscribe }
-  }
+      for (let i = 0; i < sTopic.length; i++) {
+        if (sPattern[i] !== '*' && sPattern[i] !== sTopic[i]) {
+          return
+        }
+      }
 
-  async function* subscribeGenerator(pattern: string): AsyncGenerator<StreamMessage> {
-    const channel = pushableChannel<Uint8Array>(function deferCloseChannel() {
-      messages.off('*', send)
+      ch.push({ subject: topic, data })
     })
-    function send(topic: string, payload: Uint8Array) {
-      if (matchesNatsWildcards(pattern, topic)) {
-        channel.push(payload)
-      }
-    }
-    messages.on('*', send)
+  }
 
-    // forward all messages
-    for await (const message of channel) {
-      yield {
-        data: message,
-        subject: pattern
-      }
+  function subscribe(pattern: string): Subscription {
+    const channel = pushableChannel<NatsMsg>(function deferCloseChannel() {
+      channels.delete(pattern)
+    })
+    channels.set(pattern, channel)
+    return {
+      unsubscribe: () => channel.close(),
+      generator: channel.iterable
     }
-
-    channel.close()
   }
 
   async function start() {}
@@ -53,7 +49,6 @@ export async function createLocalMessageBrokerComponent(
   return {
     publish,
     subscribe,
-    subscribeGenerator,
     start,
     stop
   }
