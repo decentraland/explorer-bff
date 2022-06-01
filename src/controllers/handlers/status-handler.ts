@@ -5,6 +5,8 @@ export async function statusHandler(
   _context: Pick<HandlerContextWithPath<'metrics', '/status'>, 'url' | 'components'>
 ) {
   return {
-    body: {}
+    body: {
+      commitHash: process.env.COMMIT_HASH
+    }
   }
 }
