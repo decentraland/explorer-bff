@@ -33,6 +33,9 @@ FROM node:lts
 # NODE_ENV is used to configure some runtime options, like JSON logger
 ENV NODE_ENV production
 
+ARG COMMIT_HASH=local
+ENV COMMIT_HASH=${COMMIT_HASH:-local}
+
 WORKDIR /app
 COPY --from=builderenv /app /app
 COPY --from=builderenv /tini /tini
