@@ -1,5 +1,5 @@
 import { RpcServerModule } from '@dcl/rpc/dist/codegen'
-import { RpcContext, Subscription } from '../../types'
+import { RpcContext } from '../../types'
 import { CommsServiceDefinition } from '../bff-proto/comms-service'
 
 export const topicRegex = /^[^\.]+(\.[^\.]+)*$/
@@ -86,7 +86,7 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
 
     return { subscriptionId }
   },
-  async *getPeerMessages({ subscriptionId }, { components, peer }) {
+  async *getPeerMessages({ subscriptionId }, { peer }) {
     if (!peer) {
       throw new Error('Trying to get messages for a peer that has not been registered')
     }
@@ -102,7 +102,7 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
       yield { payload: message.data, topic, sender }
     }
   },
-  async *getSystemMessages({ subscriptionId }, { components, peer }) {
+  async *getSystemMessages({ subscriptionId }, { peer }) {
     if (!peer) {
       throw new Error('Trying to get messages for a peer that has not been registered')
     }
@@ -116,7 +116,7 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
       yield { payload: message.data, topic }
     }
   },
-  async unsubscribeToPeerMessages({ subscriptionId }, { components, peer }) {
+  async unsubscribeToPeerMessages({ subscriptionId }, { peer }) {
     if (!peer) {
       throw new Error('Trying to unsubscribe from a peer that has not been registered')
     }
@@ -128,7 +128,7 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
 
     return { ok: true }
   },
-  async unsubscribeToSystemMessages({ subscriptionId }, { components, peer }) {
+  async unsubscribeToSystemMessages({ subscriptionId }, { peer }) {
     if (!peer) {
       throw new Error('Trying to unsubscribe from a peer that has not been registered')
     }
