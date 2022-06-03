@@ -43,7 +43,7 @@
     "jsonwebtoken": "^8.5.1",
     "nats": "^2.6.1",
     "protoc-gen-dcl": "^1.0.0-20220109214200.commit-f45e34a",
-    "ts-proto": "^1.112.1",
+    "ts-proto": "^1.115.1",
     "ws": "^8.6.0"
   }
 }
