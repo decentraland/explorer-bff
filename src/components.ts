@@ -10,6 +10,7 @@ import { createMessageBrokerComponent } from './ports/message-broker'
 import { createRpcServer } from '@dcl/rpc'
 import { httpProviderForNetwork } from '@dcl/catalyst-contracts'
 import mitt from 'mitt'
+import { createServiceDiscoveryComponent } from './ports/service-discovery'
 
 const DEFAULT_ETH_NETWORK = 'ropsten'
 
@@ -35,6 +36,7 @@ export async function initComponents(): Promise<AppComponents> {
   const fetch = await createFetchComponent()
   const metrics = await createMetricsComponent(metricDeclarations, { server, config })
   const messageBroker = await createMessageBrokerComponent({ config, logs })
+  const serviceDiscovery = await createServiceDiscoveryComponent({ messageBroker, logs, config })
 
   // TODO: deprecate web3x and use ethersjs
   const CURRENT_ETH_NETWORK = (await config.getString('ETH_NETWORK')) ?? DEFAULT_ETH_NETWORK
@@ -49,6 +51,7 @@ export async function initComponents(): Promise<AppComponents> {
     metrics,
     ws,
     messageBroker,
+    serviceDiscovery,
     ethereumProvider,
     rpcServer,
     roomsMessages: mitt(),
