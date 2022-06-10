@@ -41,6 +41,7 @@
     "dcl-crypto": "^2.3.0",
     "google-protobuf": "^3.20.1",
     "jsonwebtoken": "^8.5.1",
+    "mitt": "^3.0.0",
     "nats": "^2.7.1",
     "protoc-gen-dcl": "^1.0.0-20220109214200.commit-f45e34a",
     "ts-proto": "^1.112.1",

@@ -1,6 +1,12 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { connect, NatsConnection } from 'nats'
 import { Subscription, BaseComponents } from '../types'
+import mitt from 'mitt'
+import { Emitter } from 'mitt'
+
+export type MessageBrokerEvents = {
+  connected: void
+}
 
 export type IMessageBrokerComponent = {
   publish(topic: string, message?: Uint8Array): void
@@ -8,6 +14,8 @@ export type IMessageBrokerComponent = {
 
   start(): Promise<void>
   stop(): Promise<void>
+
+  events: Emitter<MessageBrokerEvents>
 }
 
 export async function createMessageBrokerComponent(
@@ -20,6 +28,8 @@ export async function createMessageBrokerComponent(
   const natsUrl = await config.getString('NATS_URL')
   const natsConfig = { servers: `${natsUrl}` }
   let natsConnection: NatsConnection
+
+  const events = mitt<MessageBrokerEvents>()
 
   function publish(topic: string, message?: Uint8Array): void {
     natsConnection.publish(topic, message)
@@ -43,6 +53,7 @@ export async function createMessageBrokerComponent(
   async function start() {
     try {
       natsConnection = await connect(natsConfig)
+      events.emit('connected')
       logger.info(`Connected to NATS: ${natsUrl}`)
     } catch (error) {
       logger.error(`An error occurred trying to connect to the NATS server: ${natsUrl}`)
@@ -62,6 +73,7 @@ export async function createMessageBrokerComponent(
     publish,
     subscribe,
     start,
-    stop
+    stop,
+    events
   }
 }

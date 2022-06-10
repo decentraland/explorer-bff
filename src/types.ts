@@ -12,6 +12,7 @@ import { WebSocket } from 'ws'
 import { HttpProvider } from 'web3x/providers'
 import { RpcServer, RpcServerPort } from '@dcl/rpc'
 import { Emitter } from 'mitt'
+import { IServiceDiscoveryComponent } from './ports/service-discovery'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -32,6 +33,7 @@ export type BaseComponents = {
   metrics: IMetricsComponent<keyof typeof metricDeclarations>
   ws: WebSocketComponent
   messageBroker: IMessageBrokerComponent
+  serviceDiscovery: IServiceDiscoveryComponent
   // TODO: deprecate web3x and use ethersjs
   ethereumProvider: HttpProvider
 
