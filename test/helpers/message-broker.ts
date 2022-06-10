@@ -1,7 +1,9 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
-import { IMessageBrokerComponent } from '../../src/ports/message-broker'
+import { IMessageBrokerComponent, MessageBrokerEvents } from '../../src/ports/message-broker'
 import { BaseComponents, NatsMsg, Subscription } from '../../src/types'
 import { pushableChannel } from '@dcl/rpc/dist/push-channel'
+import mitt from 'mitt'
+import { Emitter } from 'mitt'
 
 type PushableChannel = {
   push(msg: NatsMsg): void
@@ -11,6 +13,7 @@ export async function createLocalMessageBrokerComponent(
   _: Pick<BaseComponents, 'config' | 'logs'>
 ): Promise<IMessageBrokerComponent & IBaseComponent> {
   const channels = new Map<string, PushableChannel>()
+  const events = mitt<MessageBrokerEvents>()
 
   function publish(topic: string, data: Uint8Array): void {
     channels.forEach((ch, pattern) => {
@@ -42,7 +45,9 @@ export async function createLocalMessageBrokerComponent(
     }
   }
 
-  async function start() {}
+  async function start() {
+    events.emit('connected')
+  }
 
   async function stop() {}
 
@@ -50,6 +55,7 @@ export async function createLocalMessageBrokerComponent(
     publish,
     subscribe,
     start,
-    stop
+    stop,
+    events
   }
 }

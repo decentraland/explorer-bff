@@ -1,6 +1,6 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { JSONCodec } from 'nats'
-import { BaseComponents } from '../types'
+import { BaseComponents, Subscription } from '../types'
 
 export type ServiceDiscoveryMessage = {
   serverName: string
@@ -12,12 +12,15 @@ export type LastStatusUpdate = Map<string, number>
 
 export type IServiceDiscoveryComponent = IBaseComponent & {
   getClusterStatus(): Promise<any>
-  setup(): Promise<void>
+  stop(): Promise<void>
 }
 
 export async function createServiceDiscoveryComponent(
   components: Pick<BaseComponents, 'messageBroker' | 'logs' | 'config'>
 ): Promise<IServiceDiscoveryComponent> {
+  let healthCheckTimer: NodeJS.Timer
+  let subscription: Subscription
+
   const { messageBroker, logs, config } = components
   const logger = logs.getLogger('Service Discovery')
   const jsonCodec = JSONCodec()
@@ -25,13 +28,13 @@ export async function createServiceDiscoveryComponent(
   const clusterStatus = new Map<string, any>()
   const lastStatusUpdate = new Map<string, number>()
 
-  async function setup() {
+  messageBroker.events.on('connected', async () => {
     await setupServiceDiscovery()
     await setupHealthCheck()
-  }
+  })
 
   async function setupServiceDiscovery() {
-    const subscription = messageBroker.subscribe('service.discovery')
+    subscription = messageBroker.subscribe('service.discovery')
     ;(async () => {
       for await (const message of subscription.generator) {
         try {
@@ -47,7 +50,7 @@ export async function createServiceDiscoveryComponent(
 
   async function setupHealthCheck() {
     const interval = await config.requireNumber('SERVICE_DISCOVERY_HEALTH_CHECK_INTERVAL')
-    setInterval(() => {
+    healthCheckTimer = setInterval(() => {
       for (const [serverName, lastUpdate] of lastStatusUpdate) {
         const unhealthy = lastUpdate < Date.now() - interval
         if (unhealthy) {
@@ -62,8 +65,13 @@ export async function createServiceDiscoveryComponent(
     return Object.fromEntries(clusterStatus)
   }
 
+  async function stop() {
+    clearInterval(healthCheckTimer)
+    subscription?.unsubscribe()
+  }
+
   return {
     getClusterStatus,
-    setup
+    stop
   }
 }
