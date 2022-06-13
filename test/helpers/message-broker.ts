@@ -3,10 +3,9 @@ import { IMessageBrokerComponent, MessageBrokerEvents } from '../../src/ports/me
 import { BaseComponents, NatsMsg, Subscription } from '../../src/types'
 import { pushableChannel } from '@dcl/rpc/dist/push-channel'
 import mitt from 'mitt'
-import { Emitter } from 'mitt'
 
 type PushableChannel = {
-  push(msg: NatsMsg): void
+  push: (value: NatsMsg, resolve: (err?: any) => void) => void
 }
 
 export async function createLocalMessageBrokerComponent(
@@ -30,7 +29,7 @@ export async function createLocalMessageBrokerComponent(
         }
       }
 
-      ch.push({ subject: topic, data })
+      ch.push({ subject: topic, data }, console.log)
     })
   }
 
