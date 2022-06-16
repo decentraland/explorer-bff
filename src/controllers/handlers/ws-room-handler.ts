@@ -25,16 +25,13 @@ export async function websocketRoomHandler(
   context: IHttpServerComponent.DefaultContext<GlobalContext> & IHttpServerComponent.PathAwareContext<GlobalContext>
 ) {
   const metrics = context.components.metrics
+  const config = context.components.config
   const logger = context.components.logs.getLogger('Websocket Room Handler')
   logger.info('Websocket')
   const roomId = context.params.roomId || 'I1' // TODO: Validate params
   const connections = getConnectionsList(roomId)
 
-  const secret = process.env.WS_ROOM_SERVICE_SECRET
-
-  if (!secret) {
-    throw new Error('Missing ws room service auth secret')
-  }
+  const secret = await config.requireString('WS_ROOM_SERVICE_SECRET')
 
   return upgradeWebSocketResponse((socket) => {
     metrics.increment('dcl_ws_rooms_connections')
