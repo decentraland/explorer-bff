@@ -2,11 +2,12 @@ import { HandlerContextWithPath } from '../../types'
 
 // handlers arguments only type what they need, to make unit testing easier
 export async function statusHandler(
-  _context: Pick<HandlerContextWithPath<'metrics', '/status'>, 'url' | 'components'>
+  context: Pick<HandlerContextWithPath<'metrics' | 'config', '/status'>, 'url' | 'components'>
 ) {
+  const config = context.components.config
   return {
     body: {
-      commitHash: process.env.COMMIT_HASH
+      commitHash: await config.getString('COMMIT_HASH')
     }
   }
 }
