@@ -21,7 +21,7 @@ test('rpc: RoomService sanity integration receive system message', function ({ c
   const roomServiceFuture1 = getModuleFuture(connection1, CommsServiceDefinition)
 
   it('emits a message and cuts the stream', async () => {
-    const { messageBroker } = components
+    const { nats } = components
     const sender = await roomServiceFuture1
     const topic = 'abc'
     const msg1 = new Uint8Array([1, 2, 3])
@@ -37,7 +37,7 @@ test('rpc: RoomService sanity integration receive system message', function ({ c
 
     await delay(100)
 
-    messageBroker.publish(saltSystemTopic(topic), msg1)
+    nats.publish(saltSystemTopic(topic), msg1)
 
     expect(await finished).toEqual({ payload: msg1, topic })
 
@@ -45,7 +45,7 @@ test('rpc: RoomService sanity integration receive system message', function ({ c
   })
 
   it('emiting a message makes the message arrive', async () => {
-    const { messageBroker } = components
+    const { nats } = components
     const sender = await roomServiceFuture1
     const topic = 'abcd'
 
@@ -59,9 +59,9 @@ test('rpc: RoomService sanity integration receive system message', function ({ c
 
     await delay(100)
 
-    messageBroker.publish(saltSystemTopic(topic), msg1)
-    messageBroker.publish(saltSystemTopic('another-topic'), msg2)
-    messageBroker.publish(saltSystemTopic(topic), msg3)
+    nats.publish(saltSystemTopic(topic), msg1)
+    nats.publish(saltSystemTopic('another-topic'), msg2)
+    nats.publish(saltSystemTopic(topic), msg3)
 
     expect(await finished).toEqual([
       { payload: msg1, topic },
@@ -75,7 +75,7 @@ test('rpc: RoomService sanity integration receive peer message', function ({ com
   const roomServiceFuture1 = getModuleFuture(connection1, CommsServiceDefinition)
 
   it('emits a message and cuts the stream', async () => {
-    const { messageBroker } = components
+    const { nats } = components
     const sender = await roomServiceFuture1
     const fromPeerId = 'peer1'
     const topic = 'abc'
@@ -92,7 +92,7 @@ test('rpc: RoomService sanity integration receive peer message', function ({ com
 
     await delay(100)
 
-    messageBroker.publish(saltPeerTopic(fromPeerId, topic), msg1)
+    nats.publish(saltPeerTopic(fromPeerId, topic), msg1)
 
     expect(await finished).toEqual({ payload: msg1, topic, sender: fromPeerId })
 
@@ -100,7 +100,7 @@ test('rpc: RoomService sanity integration receive peer message', function ({ com
   })
 
   it('emiting a message makes the message arrive', async () => {
-    const { messageBroker } = components
+    const { nats } = components
     const sender = await roomServiceFuture1
     const fromPeerId = 'peer1'
     const topic = 'abcd'
@@ -115,9 +115,9 @@ test('rpc: RoomService sanity integration receive peer message', function ({ com
 
     await delay(100)
 
-    messageBroker.publish(saltPeerTopic(fromPeerId, topic), msg1)
-    messageBroker.publish(saltPeerTopic(fromPeerId, 'another-topic'), msg2)
-    messageBroker.publish(saltPeerTopic(fromPeerId, topic), msg3)
+    nats.publish(saltPeerTopic(fromPeerId, topic), msg1)
+    nats.publish(saltPeerTopic(fromPeerId, 'another-topic'), msg2)
+    nats.publish(saltPeerTopic(fromPeerId, topic), msg3)
 
     expect(await finished).toEqual([
       { payload: msg1, topic, sender: fromPeerId },
