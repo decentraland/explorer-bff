@@ -7,7 +7,7 @@ import type {
   IMetricsComponent
 } from '@well-known-components/interfaces'
 import { metricDeclarations } from './metrics'
-import { IMessageBrokerComponent } from './ports/message-broker'
+import { INatsComponent } from '@well-known-components/nats-component/dist/types'
 import { WebSocket } from 'ws'
 import { HttpProvider } from 'web3x/providers'
 import { RpcServer, RpcServerPort } from '@dcl/rpc'
@@ -32,7 +32,7 @@ export type BaseComponents = {
   fetch: IFetchComponent
   metrics: IMetricsComponent<keyof typeof metricDeclarations>
   ws: WebSocketComponent
-  messageBroker: IMessageBrokerComponent
+  nats: INatsComponent
   serviceDiscovery: IServiceDiscoveryComponent
   // TODO: deprecate web3x and use ethersjs
   ethereumProvider: HttpProvider

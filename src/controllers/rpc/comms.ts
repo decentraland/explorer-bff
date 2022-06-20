@@ -13,7 +13,7 @@ export async function onPeerConnected({ components, peer }: RpcContext) {
   if (!peer) {
     throw new Error('onPeerConnected for a non registered peer')
   }
-  components.messageBroker.publish(`peer.${peer.address}.connect`)
+  components.nats.publish(`peer.${peer.address}.connect`)
 }
 
 export async function onPeerDisconnected({ components, peer }: RpcContext) {
@@ -32,7 +32,7 @@ export async function onPeerDisconnected({ components, peer }: RpcContext) {
   peer.peerSubscriptions.clear()
   peer.systemSubscriptions.clear()
 
-  components.messageBroker.publish(`peer.${peer.address}.disconnect`)
+  components.nats.publish(`peer.${peer.address}.disconnect`)
 }
 
 export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = {
@@ -46,7 +46,7 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
     }
 
     const realTopic = `${peerPrefix}${peer.address}.${topic}`
-    components.messageBroker.publish(realTopic, payload)
+    components.nats.publish(realTopic, payload)
     return {
       ok: true
     }
@@ -61,7 +61,7 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
     }
 
     const realTopic = `${peerPrefix}*.${topic}`
-    const subscription = components.messageBroker.subscribe(realTopic)
+    const subscription = components.nats.subscribe(realTopic)
 
     const subscriptionId = peer.subscriptionsIndex
     peer.peerSubscriptions.set(subscriptionId, subscription)
@@ -78,7 +78,7 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
     }
 
     const realTopic = `${saltedPrefix}${topic}`
-    const subscription = components.messageBroker.subscribe(realTopic)
+    const subscription = components.nats.subscribe(realTopic)
 
     const subscriptionId = peer.subscriptionsIndex
     peer.systemSubscriptions.set(subscriptionId, subscription)

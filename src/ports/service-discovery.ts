@@ -1,5 +1,5 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
-import { JSONCodec } from 'nats'
+import { JSONCodec } from '@well-known-components/nats-component'
 import { BaseComponents, Subscription } from '../types'
 
 export type ServiceDiscoveryMessage = {
@@ -16,25 +16,25 @@ export type IServiceDiscoveryComponent = IBaseComponent & {
 }
 
 export async function createServiceDiscoveryComponent(
-  components: Pick<BaseComponents, 'messageBroker' | 'logs' | 'config'>
+  components: Pick<BaseComponents, 'nats' | 'logs' | 'config'>
 ): Promise<IServiceDiscoveryComponent> {
   let healthCheckTimer: NodeJS.Timer
   let subscription: Subscription
 
-  const { messageBroker, logs, config } = components
+  const { nats, logs, config } = components
   const logger = logs.getLogger('Service Discovery')
   const jsonCodec = JSONCodec()
 
   const clusterStatus = new Map<string, any>()
   const lastStatusUpdate = new Map<string, number>()
 
-  messageBroker.events.on('connected', async () => {
+  nats.events.on('connected', async () => {
     await setupServiceDiscovery()
     await setupHealthCheck()
   })
 
   async function setupServiceDiscovery() {
-    subscription = messageBroker.subscribe('service.discovery')
+    subscription = nats.subscribe('service.discovery')
     ;(async () => {
       for await (const message of subscription.generator) {
         try {

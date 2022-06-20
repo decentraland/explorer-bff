@@ -6,7 +6,7 @@ import { createMetricsComponent } from '@well-known-components/metrics'
 import { AppComponents, GlobalContext } from './types'
 import { metricDeclarations } from './metrics'
 import { createWsComponent } from './ports/ws'
-import { createMessageBrokerComponent } from './ports/message-broker'
+import { createNatsComponent } from '@well-known-components/nats-component'
 import { createRpcServer } from '@dcl/rpc'
 import { httpProviderForNetwork } from '@dcl/catalyst-contracts'
 import mitt from 'mitt'
@@ -35,8 +35,8 @@ export async function initComponents(): Promise<AppComponents> {
   const statusChecks = await createStatusCheckComponent({ server, config })
   const fetch = await createFetchComponent()
   const metrics = await createMetricsComponent(metricDeclarations, { server, config })
-  const messageBroker = await createMessageBrokerComponent({ config, logs })
-  const serviceDiscovery = await createServiceDiscoveryComponent({ messageBroker, logs, config })
+  const nats = await createNatsComponent({ config, logs })
+  const serviceDiscovery = await createServiceDiscoveryComponent({ nats, logs, config })
 
   // TODO: deprecate web3x and use ethersjs
   const CURRENT_ETH_NETWORK = (await config.getString('ETH_NETWORK')) ?? DEFAULT_ETH_NETWORK
@@ -50,7 +50,7 @@ export async function initComponents(): Promise<AppComponents> {
     fetch,
     metrics,
     ws,
-    messageBroker,
+    nats,
     serviceDiscovery,
     ethereumProvider,
     rpcServer,
