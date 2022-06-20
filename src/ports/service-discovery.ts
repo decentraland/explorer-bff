@@ -1,5 +1,5 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
-import { JSONCodec } from 'nats'
+import { JSONCodec } from '@well-known-components/nats-component'
 import { BaseComponents, Subscription } from '../types'
 
 export type ServiceDiscoveryMessage = {
