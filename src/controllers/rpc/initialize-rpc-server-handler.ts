@@ -7,7 +7,6 @@ import { RpcContext, RpcSession, Subscription } from '../../types'
 import { BffAuthenticationServiceDefinition } from '../bff-proto/authentication-service'
 import { commsModule, onPeerConnected, onPeerDisconnected } from './comms'
 import { CommsServiceDefinition } from '../bff-proto/comms-service'
-// import { roomsModule } from './rooms'
 
 // TODO: use proper component-based loggers
 
@@ -110,5 +109,4 @@ async function registerAuthenticatedConnectionModules(
 
   // register all the modules
   registerService(port, CommsServiceDefinition, async () => commsModule)
-  // registerService(port, RoomServiceDefinition, async () => roomsModule)
 }

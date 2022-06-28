@@ -9,7 +9,6 @@ import { createWsComponent } from './ports/ws'
 import { createNatsComponent } from '@well-known-components/nats-component'
 import { createRpcServer } from '@dcl/rpc'
 import { httpProviderForNetwork } from '@dcl/catalyst-contracts'
-import mitt from 'mitt'
 import { createServiceDiscoveryComponent } from './ports/service-discovery'
 
 const DEFAULT_ETH_NETWORK = 'ropsten'
@@ -54,7 +53,6 @@ export async function initComponents(): Promise<AppComponents> {
     serviceDiscovery,
     ethereumProvider,
     rpcServer,
-    roomsMessages: mitt(),
     rpcSessions: {
       sessions: new Map()
     }

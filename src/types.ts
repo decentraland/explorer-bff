@@ -11,7 +11,6 @@ import { INatsComponent } from '@well-known-components/nats-component/dist/types
 import { WebSocket } from 'ws'
 import { HttpProvider } from 'web3x/providers'
 import { RpcServer, RpcServerPort } from '@dcl/rpc'
-import { Emitter } from 'mitt'
 import { IServiceDiscoveryComponent } from './ports/service-discovery'
 
 export type GlobalContext = {
@@ -38,17 +37,10 @@ export type BaseComponents = {
   ethereumProvider: HttpProvider
 
   rpcServer: RpcServer<RpcContext>
-  roomsMessages: Emitter<Record<string /* roomId */, RoomMessage>>
 
   rpcSessions: {
     sessions: Map<string, RpcSession>
   }
-}
-
-export type RoomMessage = {
-  room: string
-  sender: string
-  payload: Uint8Array
 }
 
 export type NatsMsg = {
