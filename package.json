@@ -29,7 +29,7 @@
   "dependencies": {
     "@dcl/catalyst-contracts": "^1.0.2",
     "@dcl/rpc": "^1.0.1-20220608232056.commit-741737c",
-    "@dcl/schemas": "^4.8.0",
+    "@dcl/schemas": "^5.1.0",
     "@types/google-protobuf": "^3.15.6",
     "@types/jsonwebtoken": "^8.5.8",
     "@types/ws": "^8.5.3",
