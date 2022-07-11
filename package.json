@@ -44,7 +44,7 @@
     "jsonwebtoken": "^8.5.1",
     "mitt": "^3.0.0",
     "protoc-gen-dcl": "^1.0.0-20220109214200.commit-f45e34a",
-    "ts-proto": "^1.112.1",
+    "ts-proto": "^1.117.0",
     "ws": "^8.7.0"
   }
 }
