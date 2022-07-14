@@ -69,12 +69,17 @@ export async function aboutHandler(
         healthy: true,
         ...clusterStatus.archipelago
       }
+    } else {
+      body.comms = {
+        healthy: false
+      }
     }
   }
 
   body.healthy = body.content.healthy && body.lambdas.healthy && body.comms.healthy
 
   return {
+    status: body.healthy ? 200 : 503,
     body
   }
 }
