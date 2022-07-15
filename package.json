@@ -13,7 +13,7 @@
     "@well-known-components/test-helpers": "^1.3.0",
     "eslint": "^8.15.0",
     "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-prettier": "^4.2.1",
     "ethereum-cryptography": "^1.0.3",
     "fp-future": "^1.0.1",
     "prettier": "^2.6.2",
