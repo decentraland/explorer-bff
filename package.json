@@ -11,7 +11,7 @@
     "@typescript-eslint/eslint-plugin": "^5.30.6",
     "@typescript-eslint/parser": "^5.30.6",
     "@well-known-components/test-helpers": "^1.3.0",
-    "eslint": "^8.15.0",
+    "eslint": "^8.19.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
     "ethereum-cryptography": "^1.1.2",
