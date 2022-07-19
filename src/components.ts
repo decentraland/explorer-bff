@@ -1,3 +1,4 @@
+import { HTTPProvider } from 'eth-connect'
 import { createDotEnvConfigComponent } from '@well-known-components/env-config-provider'
 import { createServerComponent, createStatusCheckComponent } from '@well-known-components/http-server'
 import { createLogComponent } from '@well-known-components/logger'
@@ -8,7 +9,6 @@ import { metricDeclarations } from './metrics'
 import { createWsComponent } from './ports/ws'
 import { createNatsComponent } from '@well-known-components/nats-component'
 import { createRpcServer } from '@dcl/rpc'
-import { httpProviderForNetwork } from '@dcl/catalyst-contracts'
 import { createServiceDiscoveryComponent } from './ports/service-discovery'
 import { createRealmComponent } from './ports/realm'
 
@@ -17,6 +17,8 @@ const DEFAULT_ETH_NETWORK = 'ropsten'
 // Initialize all the components of the app
 export async function initComponents(): Promise<AppComponents> {
   const config = await createDotEnvConfigComponent({ path: ['.env.default', '.env'] })
+
+  const ethNetwork = (await config.getString('ETH_NETWORK')) ?? DEFAULT_ETH_NETWORK
 
   const logs = createLogComponent()
   const ws = await createWsComponent({ logs })
@@ -37,12 +39,11 @@ export async function initComponents(): Promise<AppComponents> {
   const metrics = await createMetricsComponent(metricDeclarations, { server, config })
   const nats = await createNatsComponent({ config, logs })
   const serviceDiscovery = await createServiceDiscoveryComponent({ nats, logs, config })
-  const realm = await createRealmComponent({ config, logs })
+  const ethereumProvider = new HTTPProvider(
+    `https://rpc.decentraland.org/${encodeURIComponent(ethNetwork)}?project=explorer-bff`
+  )
 
-  // TODO: deprecate web3x and use ethersjs
-  const CURRENT_ETH_NETWORK = (await config.getString('ETH_NETWORK')) ?? DEFAULT_ETH_NETWORK
-  const ethereumProvider = httpProviderForNetwork(CURRENT_ETH_NETWORK)
-
+  const realm = await createRealmComponent({ config, logs, ethereumProvider })
   return {
     config,
     logs,

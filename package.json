@@ -27,7 +27,7 @@
     "tabWidth": 2
   },
   "dependencies": {
-    "@dcl/catalyst-contracts": "^1.0.2",
+    "@dcl/catalyst-contracts": "^2.0.0-20220530154414.commit-8fd9522",
     "@dcl/rpc": "^1.0.1-20220608232056.commit-741737c",
     "@dcl/schemas": "^5.4.1",
     "@types/google-protobuf": "^3.15.6",

@@ -1,6 +1,6 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { BaseComponents } from '../types'
-import { DAOContract } from '@dcl/catalyst-contracts'
+import { catalystRegistryForProvider } from '@dcl/catalyst-contracts'
 import * as fs from 'fs/promises'
 
 export const defaultNames = [
@@ -32,13 +32,13 @@ const CURRENT_ETH_NETWORK = process.env.ETH_NETWORK ?? DEFAULT_ETH_NETWORK
 const CATALYST_NAME_CONFIG_FILE = '.catalyst-name'
 
 export async function createRealmComponent(
-  components: Pick<BaseComponents, 'config' | 'logs'>
+  components: Pick<BaseComponents, 'config' | 'logs' | 'ethereumProvider'>
 ): Promise<IRealmComponent> {
-  const { config, logs } = components
+  const { config, logs, ethereumProvider } = components
 
   let pickedName: string | undefined = undefined
   const logger = logs.getLogger('realm-component')
-  const contract = DAOContract.withNetwork(CURRENT_ETH_NETWORK)
+  const contract = await catalystRegistryForProvider(ethereumProvider)
 
   async function storeName(name: string): Promise<void> {
     try {
@@ -67,9 +67,8 @@ export async function createRealmComponent(
   }
 
   async function resolveCatalystName(ix: number): Promise<string | undefined> {
-    const id = await contract.getCatalystIdByIndex(ix)
-
-    const { domain } = await contract.getServerData(id)
+    const id = await contract.catalystIds(ix)
+    const { domain } = await contract.catalystById(id)
 
     let baseUrl = domain.trim()
 
@@ -141,7 +140,7 @@ export async function createRealmComponent(
     }
 
     const possiblesNames = await getOptions()
-    const count = await contract.getCount()
+    const count = (await contract.catalystCount()).toNumber()
 
     const catalystNamePromises: Promise<string | undefined>[] = []
     for (let i = 0; i < count; i++) {
