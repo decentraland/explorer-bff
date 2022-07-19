@@ -12,6 +12,7 @@ import { WebSocket } from 'ws'
 import { HttpProvider } from 'web3x/providers'
 import { RpcServer, RpcServerPort } from '@dcl/rpc'
 import { IServiceDiscoveryComponent } from './ports/service-discovery'
+import { IRealmComponent } from './ports/realm'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -33,6 +34,7 @@ export type BaseComponents = {
   ws: WebSocketComponent
   nats: INatsComponent
   serviceDiscovery: IServiceDiscoveryComponent
+  realm: IRealmComponent
   // TODO: deprecate web3x and use ethersjs
   ethereumProvider: HttpProvider
 

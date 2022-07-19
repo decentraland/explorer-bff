@@ -4,6 +4,7 @@ export type About = {
   healthy: boolean
   configurations: {
     commsProtocol: string
+    realmName?: string
   }
   content: {
     healthy: boolean
@@ -14,25 +15,34 @@ export type About = {
   lambdas: {
     healthy: boolean
   }
+  bff: {
+    healthy: boolean
+    commitHash?: string
+  }
 }
 
 // handlers arguments only type what they need, to make unit testing easier
 export async function aboutHandler(
   context: Pick<
-    HandlerContextWithPath<'serviceDiscovery' | 'logs' | 'metrics' | 'config' | 'fetch', '/explorer-configuration'>,
+    HandlerContextWithPath<
+      'serviceDiscovery' | 'realm' | 'logs' | 'metrics' | 'config' | 'fetch',
+      '/explorer-configuration'
+    >,
     'url' | 'components'
   >
 ) {
-  const { logs, config, fetch, serviceDiscovery } = context.components
+  const { logs, realm, config, fetch, serviceDiscovery } = context.components
 
   const logger = logs.getLogger('explorer-configuration')
   const commsProtocol = await config.requireString('COMMS_PROTOCOL')
   const lambdasUrl = await config.requireString('LAMBDAS_URL')
+  const realmName = await realm.getName(commsProtocol)
 
   const body: About = {
     healthy: false,
     configurations: {
-      commsProtocol
+      commsProtocol,
+      realmName
     },
     content: {
       healthy: false
@@ -42,6 +52,10 @@ export async function aboutHandler(
     },
     lambdas: {
       healthy: false
+    },
+    bff: {
+      healthy: true,
+      commitHash: await config.getString('COMMIT_HASH')
     }
   }
 

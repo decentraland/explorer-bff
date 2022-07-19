@@ -10,6 +10,7 @@ import { createNatsComponent } from '@well-known-components/nats-component'
 import { createRpcServer } from '@dcl/rpc'
 import { httpProviderForNetwork } from '@dcl/catalyst-contracts'
 import { createServiceDiscoveryComponent } from './ports/service-discovery'
+import { createRealmComponent } from './ports/realm'
 
 const DEFAULT_ETH_NETWORK = 'ropsten'
 
@@ -36,6 +37,7 @@ export async function initComponents(): Promise<AppComponents> {
   const metrics = await createMetricsComponent(metricDeclarations, { server, config })
   const nats = await createNatsComponent({ config, logs })
   const serviceDiscovery = await createServiceDiscoveryComponent({ nats, logs, config })
+  const realm = await createRealmComponent({ config, logs })
 
   // TODO: deprecate web3x and use ethersjs
   const CURRENT_ETH_NETWORK = (await config.getString('ETH_NETWORK')) ?? DEFAULT_ETH_NETWORK
@@ -53,6 +55,7 @@ export async function initComponents(): Promise<AppComponents> {
     serviceDiscovery,
     ethereumProvider,
     rpcServer,
+    realm,
     rpcSessions: {
       sessions: new Map()
     }
