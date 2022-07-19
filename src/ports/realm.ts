@@ -1,6 +1,5 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { BaseComponents } from '../types'
-import { catalystRegistryForProvider } from '@dcl/catalyst-contracts'
 import * as fs from 'fs/promises'
 
 export const defaultNames = [
@@ -23,38 +22,38 @@ export const defaultNames = [
 ]
 
 export type IRealmComponent = IBaseComponent & {
-  getName(commsProtocol: string): Promise<string | undefined>
+  getName(lighthouseName?: string): Promise<string | undefined>
 }
 
-const DEFAULT_ETH_NETWORK = 'ropsten'
-
-const CURRENT_ETH_NETWORK = process.env.ETH_NETWORK ?? DEFAULT_ETH_NETWORK
 const CATALYST_NAME_CONFIG_FILE = '.catalyst-name'
 
+/*
+  The process of picking a name works as follows:
+
+  1. If there is a file .catalyst-name, just the name there
+  2. If the local lighthouse has a name, pick it, store it in .catalyst-name for next time
+  3. If there is a no name, pick one from the env var REALM_NAMES (or defaultNames if the var is not provided), and ask every catalyst in the DAO if the name is already taken, if it's available, store it in .catalyst-name, otherwise repeat 
+*/
+
 export async function createRealmComponent(
-  components: Pick<BaseComponents, 'config' | 'logs' | 'ethereumProvider'>
+  components: Pick<BaseComponents, 'config' | 'logs' | 'fetch' | 'contract'>
 ): Promise<IRealmComponent> {
-  const { config, logs, ethereumProvider } = components
+  const { config, logs, fetch, contract } = components
+
+  const logger = logs.getLogger('realm-component')
 
   let pickedName: string | undefined = undefined
-  const logger = logs.getLogger('realm-component')
-  const contract = await catalystRegistryForProvider(ethereumProvider)
+  try {
+    pickedName = await fs.readFile(CATALYST_NAME_CONFIG_FILE, { encoding: 'utf8' })
+  } catch (e: any) {
+    logger.debug(`Error reading catalyst name from ${CATALYST_NAME_CONFIG_FILE}: ${e.toString()}`)
+  }
 
   async function storeName(name: string): Promise<void> {
     try {
       await fs.writeFile(CATALYST_NAME_CONFIG_FILE, name)
     } catch (e: any) {
       logger.error(`Error writing catalyst name to ${CATALYST_NAME_CONFIG_FILE}: ${e.toString()}`)
-    }
-  }
-
-  async function readSavedName(): Promise<string | undefined> {
-    try {
-      const data = await fs.readFile(CATALYST_NAME_CONFIG_FILE, { encoding: 'utf8' })
-      return data
-    } catch (e: any) {
-      logger.debug(`Error reading catalyst name from ${CATALYST_NAME_CONFIG_FILE}: ${e.toString()}`)
-      return
     }
   }
 
@@ -81,62 +80,38 @@ export async function createRealmComponent(
       baseUrl = 'https://' + baseUrl
     }
 
-    let name: string | undefined = undefined
-
-    // Timeout is an option that is supported server side, but not browser side, so it doesn't compile if we don't cast it to any
     try {
-      const statusResponse = await fetch(`${baseUrl}/about`, { timeout: 5000 } as any)
-      const json = await statusResponse.json()
+      const statusResponse = await fetch.fetch(`${baseUrl}/about`)
+      const data = await statusResponse.json()
 
-      if (json && json.configurations) {
-        name = json.configurations.realmName
+      if (data && data.configurations) {
+        return data.configurations.realmName
       }
     } catch (e: any) {
       logger.warn(`Error while getting the name (/about) of ${baseUrl}, id: ${id}: ${e.toString()}`)
-      return
-    }
-
-    if (name) {
-      return name
     }
 
     try {
-      const statusResponse = await fetch(`${baseUrl}/comms/status`, { timeout: 5000 } as any)
-      const json = await statusResponse.json()
+      const statusResponse = await fetch.fetch(`${baseUrl}/comms/status`)
+      const data = await statusResponse.json()
 
-      name = json.name
+      return data.name
     } catch (e: any) {
       logger.warn(`Error while getting the name (/comms/status) of ${baseUrl}, id: ${id}: ${e.toString()}`)
     }
 
-    return name
+    return
   }
 
-  async function getName(commsProtocol: string): Promise<string | undefined> {
+  async function getName(lighthouseName?: string): Promise<string | undefined> {
     if (pickedName) {
       return pickedName
     }
 
-    const savedName = await readSavedName()
-    if (savedName) {
-      pickedName = savedName
+    if (lighthouseName) {
+      pickedName = lighthouseName
+      await storeName(pickedName)
       return pickedName
-    }
-
-    if (commsProtocol === 'v2') {
-      const lighthouseUrl = config.requireString('LIGHTHOUSE_URL')
-      try {
-        const statusResponse = await fetch(`${lighthouseUrl}/comms/status`, { timeout: 5000 } as any)
-        const json = await statusResponse.json()
-
-        pickedName = json.name
-        if (pickedName) {
-          await storeName(pickedName)
-          return pickedName
-        }
-      } catch (e: any) {
-        logger.warn(`Error while getting name from local lighthouse: ${e.toString()}`)
-      }
     }
 
     const possiblesNames = await getOptions()

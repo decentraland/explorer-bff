@@ -12,6 +12,7 @@ import { WebSocket } from 'ws'
 import { RpcServer, RpcServerPort } from '@dcl/rpc'
 import { IServiceDiscoveryComponent } from './ports/service-discovery'
 import { IRealmComponent } from './ports/realm'
+import { CatalystContract } from '@dcl/catalyst-contracts'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -35,6 +36,7 @@ export type BaseComponents = {
   serviceDiscovery: IServiceDiscoveryComponent
   realm: IRealmComponent
   ethereumProvider: any
+  contract: CatalystContract
 
   rpcServer: RpcServer<RpcContext>
 

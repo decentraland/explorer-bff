@@ -11,6 +11,7 @@ import { createNatsComponent } from '@well-known-components/nats-component'
 import { createRpcServer } from '@dcl/rpc'
 import { createServiceDiscoveryComponent } from './ports/service-discovery'
 import { createRealmComponent } from './ports/realm'
+import { catalystRegistryForProvider } from '@dcl/catalyst-contracts'
 
 const DEFAULT_ETH_NETWORK = 'ropsten'
 
@@ -43,7 +44,9 @@ export async function initComponents(): Promise<AppComponents> {
     `https://rpc.decentraland.org/${encodeURIComponent(ethNetwork)}?project=explorer-bff`
   )
 
-  const realm = await createRealmComponent({ config, logs, ethereumProvider })
+  const contract = await catalystRegistryForProvider(ethereumProvider)
+  const realm = await createRealmComponent({ config, logs, fetch, contract })
+
   return {
     config,
     logs,
@@ -57,6 +60,7 @@ export async function initComponents(): Promise<AppComponents> {
     ethereumProvider,
     rpcServer,
     realm,
+    contract,
     rpcSessions: {
       sessions: new Map()
     }
