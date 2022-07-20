@@ -28,7 +28,7 @@ export type IRealmComponent = IBaseComponent & {
 export const CATALYST_NAME_CONFIG_FILE = '.catalyst-name'
 
 /*
-  The process of picking a name works as follows:
+  The process of picking a name follows the next rules in order:
 
   1. If there is a file .catalyst-name, just the name there
   2. If the local lighthouse has a name, pick it, store it in .catalyst-name for next time
