@@ -12,6 +12,7 @@ import { createRpcServer } from '@dcl/rpc'
 import { createServiceDiscoveryComponent } from './ports/service-discovery'
 import { createRealmComponent } from './ports/realm'
 import { catalystRegistryForProvider } from '@dcl/catalyst-contracts'
+import { createStatusComponent } from './ports/status'
 
 const DEFAULT_ETH_NETWORK = 'ropsten'
 
@@ -46,6 +47,7 @@ export async function initComponents(): Promise<AppComponents> {
 
   const contract = await catalystRegistryForProvider(ethereumProvider)
   const realm = await createRealmComponent({ config, logs, fetch, contract })
+  const status = await createStatusComponent({ config, logs, fetch })
 
   return {
     config,
@@ -61,6 +63,7 @@ export async function initComponents(): Promise<AppComponents> {
     rpcServer,
     realm,
     contract,
+    status,
     rpcSessions: {
       sessions: new Map()
     }

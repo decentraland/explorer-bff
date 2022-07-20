@@ -13,6 +13,7 @@ import { RpcServer, RpcServerPort } from '@dcl/rpc'
 import { IServiceDiscoveryComponent } from './ports/service-discovery'
 import { IRealmComponent } from './ports/realm'
 import { CatalystContract } from '@dcl/catalyst-contracts'
+import { IStatusComponent } from './ports/status'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -37,6 +38,7 @@ export type BaseComponents = {
   realm: IRealmComponent
   ethereumProvider: any
   contract: CatalystContract
+  status: IStatusComponent
 
   rpcServer: RpcServer<RpcContext>
 

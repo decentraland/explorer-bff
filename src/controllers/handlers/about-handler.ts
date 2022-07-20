@@ -24,23 +24,26 @@ export type About = {
   bff: {
     healthy: boolean
     commitHash?: string
+    userCount: number
   }
 }
 
 // handlers arguments only type what they need, to make unit testing easier
 export async function aboutHandler(
   context: Pick<
-    HandlerContextWithPath<'serviceDiscovery' | 'realm' | 'logs' | 'metrics' | 'config' | 'fetch', '/about'>,
+    HandlerContextWithPath<
+      'serviceDiscovery' | 'status' | 'realm' | 'logs' | 'metrics' | 'config' | 'fetch' | 'rpcSessions',
+      '/about'
+    >,
     'url' | 'components'
   >
 ) {
-  const { logs, realm, config, fetch, serviceDiscovery } = context.components
+  const { logs, realm, config, fetch, status, serviceDiscovery, rpcSessions } = context.components
 
-  const logger = logs.getLogger('explorer-configuration')
+  const logger = logs.getLogger('about')
   const commsProtocol = await config.requireString('COMMS_PROTOCOL')
-  const lambdasUrl = await config.requireString('LAMBDAS_URL')
-  const contentUrl = await config.requireString('CONTENT_URL')
 
+  const userCount = rpcSessions.sessions.size
   const result: About = {
     healthy: false,
     content: {
@@ -58,11 +61,13 @@ export async function aboutHandler(
     },
     bff: {
       healthy: true,
-      commitHash: await config.getString('COMMIT_HASH')
+      commitHash: await config.getString('COMMIT_HASH'),
+      userCount
     }
   }
 
   try {
+    const lambdasUrl = await config.requireString('LAMBDAS_URL')
     const response = await fetch.fetch(`${lambdasUrl}/health`, {
       method: 'GET',
       headers: {
@@ -79,56 +84,21 @@ export async function aboutHandler(
     logger.error(err)
   }
 
-  try {
-    const response = await fetch.fetch(`${lambdasUrl}/status`, {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json'
-      }
-    })
-
-    const data = await response.json()
-
-    result.lambdas.version = data.version
-    result.lambdas.commitHash = data.commitHash
-  } catch (err: any) {
-    logger.error(err)
-  }
-
-  try {
-    const response = await fetch.fetch(`${contentUrl}/status`, {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json'
-      }
-    })
-
-    const data = await response.json()
-
-    result.content.version = data.version
-    result.content.commitHash = data.commitHash
-  } catch (err: any) {
-    logger.error(err)
+  const contentStatus = await status.getContentStatus()
+  if (contentStatus) {
+    const { version, commitHash } = contentStatus
+    result.content.version = version
+    result.content.commitHash = commitHash
   }
 
   let lighthouseRealmName: string | undefined = undefined
   if (commsProtocol === 'v2') {
-    const lighthouseUrl = await config.requireString('LIGHTHOUSE_URL')
-    try {
-      const response = await fetch.fetch(`${lighthouseUrl}/status`, {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json'
-        }
-      })
-      const data = await response.json()
-
-      result.comms.version = data.version
-      result.comms.commitHash = data.env.commitHash
-
-      lighthouseRealmName = data.name
-    } catch (e: any) {
-      logger.warn(`Error fetching ${lighthouseUrl}/status: ${e.toString()}`)
+    const lighthouseStatus = await status.getLighthouseStatus()
+    if (lighthouseStatus) {
+      const { version, commitHash, realmName } = lighthouseStatus
+      result.comms.version = version
+      result.comms.commitHash = commitHash
+      lighthouseRealmName = realmName
     }
   } else {
     const clusterStatus = await serviceDiscovery.getClusterStatus()
