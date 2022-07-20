@@ -32,7 +32,7 @@ export type About = {
 export async function aboutHandler(
   context: Pick<
     HandlerContextWithPath<
-      'serviceDiscovery' | 'status' | 'realm' | 'logs' | 'metrics' | 'config' | 'fetch' | 'rpcSessions',
+      'serviceDiscovery' | 'status' | 'realm' | 'logs' | 'config' | 'fetch' | 'rpcSessions',
       '/about'
     >,
     'url' | 'components'
@@ -89,6 +89,13 @@ export async function aboutHandler(
     const { version, commitHash } = contentStatus
     result.content.version = version
     result.content.commitHash = commitHash
+  }
+
+  const lambdasStatus = await status.getLambdasStatus()
+  if (lambdasStatus) {
+    const { version, commitHash } = lambdasStatus
+    result.lambdas.version = version
+    result.lambdas.commitHash = commitHash
   }
 
   let lighthouseRealmName: string | undefined = undefined

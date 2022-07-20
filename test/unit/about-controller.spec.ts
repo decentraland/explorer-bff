@@ -1,227 +1,276 @@
 import { createLogComponent } from '@well-known-components/logger'
 import { createConfigComponent } from '@well-known-components/env-config-provider'
-import { IFetchComponent } from '@well-known-components/http-server'
 import { aboutHandler } from '../../src/controllers/handlers/about-handler'
-import * as node_fetch from 'node-fetch'
-
-type FetchTestResponse = {
-  status: number
-  body: Record<string, string>
-}
-
-function createTestFetchComponent(handler: (url: string) => FetchTestResponse): IFetchComponent {
-  const fetch: IFetchComponent = {
-    async fetch(info: node_fetch.RequestInfo, _?: node_fetch.RequestInit): Promise<node_fetch.Response> {
-      const url = info.toString()
-      const { body, status } = handler(url)
-      const response = new node_fetch.Response(JSON.stringify(body), {
-        status,
-        url
-      })
-      return response
-    }
-  }
-
-  return fetch
-}
-
-function testAbout(config: Record<string, string>, lambdaResponse: FetchTestResponse, clusterStatus: any) {
-  const handler = (_: string): FetchTestResponse => {
-    return lambdaResponse
-  }
-
-  return aboutHandler({
-    url: new URL('https://bff/about'),
-    components: {
-      serviceDiscovery: {
-        getClusterStatus: () => Promise.resolve(clusterStatus),
-        stop: () => Promise.resolve()
-      },
-      logs: createLogComponent(),
-      config: createConfigComponent(config),
-      fetch: createTestFetchComponent(handler)
-    }
-  })
-}
+import { createTestFetchComponent, FetchTestResponse } from '../helpers/fetch'
 
 describe('about-controller-unit', () => {
-  it('v2 - services are healthy', async () => {
-    const config = {
-      COMMS_PROTOCOL: 'v2',
-      LAMBDAS_URL: 'lambdas'
+  const time = Date.now()
+
+  const lambdasStatus = {
+    time,
+    version: 'lambdas-1',
+    commitHash: 'lambdas-hash'
+  }
+
+  const contentStatus = {
+    time,
+    version: 'content-1',
+    commitHash: 'content-hash'
+  }
+
+  const lighthouseStatus = {
+    time,
+    version: 'lighthouse-1',
+    commitHash: 'lighthouse-hash',
+    realmName: 'lighthouse-test'
+  }
+
+  describe('with comms v2 layout', () => {
+    const testAbout = async (lambdaResponse: FetchTestResponse) => {
+      const config = {
+        COMMS_PROTOCOL: 'v2',
+        LAMBDAS_URL: 'lambdas',
+        COMMIT_HASH: 'bff-hash'
+      }
+      const handler = (_: string): FetchTestResponse => {
+        return lambdaResponse
+      }
+
+      const status = {
+        getLambdasStatus: () => Promise.resolve(lambdasStatus),
+        getContentStatus: () => Promise.resolve(contentStatus),
+        getLighthouseStatus: () => Promise.resolve(lighthouseStatus)
+      }
+
+      const realm = {
+        getName: (_?: string) => Promise.resolve('test')
+      }
+
+      const rpcSessions = {
+        sessions: new Map()
+      }
+
+      const response = await aboutHandler({
+        url: new URL('https://bff/about'),
+        components: {
+          serviceDiscovery: {
+            getClusterStatus: () => Promise.resolve({}),
+            stop: () => Promise.resolve()
+          },
+          logs: createLogComponent(),
+          config: createConfigComponent(config),
+          fetch: createTestFetchComponent(handler),
+          status,
+          realm,
+          rpcSessions
+        }
+      })
+
+      const { body } = response
+
+      expect(body.configurations.realmName).toEqual('test')
+      expect(body.content.commitHash).toEqual(contentStatus.commitHash)
+      expect(body.content.version).toEqual(contentStatus.version)
+
+      expect(body.lambdas.commitHash).toEqual(lambdasStatus.commitHash)
+      expect(body.lambdas.version).toEqual(lambdasStatus.version)
+
+      expect(body.comms.commitHash).toEqual(lighthouseStatus.commitHash)
+      expect(body.comms.version).toEqual(lighthouseStatus.version)
+
+      expect(body.bff.healthy).toEqual(true)
+      expect(body.bff.commitHash).toEqual('bff-hash')
+      expect(body.bff.userCount).toEqual(0)
+
+      return response
     }
-    const response = await testAbout(
-      config,
-      {
+
+    it('services are healthy', async () => {
+      const { status, body } = await testAbout({
         status: 200,
         body: {
           lambda: 'Healthy',
           content: 'Healthy',
           comms: 'Healthy'
         }
-      },
-      {}
-    )
+      })
 
-    expect(response.status).toEqual(200)
-    expect(response.body.healthy).toEqual(true)
-    expect(response.body.configurations.commsProtocol).toEqual('v2')
-    expect(response.body.content.healthy).toEqual(true)
-    expect(response.body.lambdas.healthy).toEqual(true)
-    expect(response.body.comms.healthy).toEqual(true)
-  })
+      expect(status).toEqual(200)
+      expect(body.healthy).toEqual(true)
+      expect(body.content.healthy).toEqual(true)
+      expect(body.lambdas.healthy).toEqual(true)
+      expect(body.comms.protocol).toEqual('v2')
+      expect(body.comms.healthy).toEqual(true)
+    })
 
-  it('v2 - content is not healthy', async () => {
-    const config = {
-      COMMS_PROTOCOL: 'v2',
-      LAMBDAS_URL: 'lambdas'
-    }
-    const response = await testAbout(
-      config,
-      {
+    it('content is not healthy', async () => {
+      const { status, body } = await testAbout({
         status: 503,
         body: {
           lambda: 'Healthy',
           content: 'Unhealthy',
           comms: 'Healthy'
         }
-      },
-      {}
-    )
+      })
 
-    expect(response.status).toEqual(503)
-    expect(response.body.healthy).toEqual(false)
-    expect(response.body.configurations.commsProtocol).toEqual('v2')
-    expect(response.body.content.healthy).toEqual(false)
-    expect(response.body.lambdas.healthy).toEqual(true)
-    expect(response.body.comms.healthy).toEqual(true)
-  })
+      expect(status).toEqual(503)
+      expect(body.healthy).toEqual(false)
+      expect(body.content.healthy).toEqual(false)
+      expect(body.lambdas.healthy).toEqual(true)
+      expect(body.comms.protocol).toEqual('v2')
+      expect(body.comms.healthy).toEqual(true)
+    })
 
-  it('v2 - lambdas is not healthy', async () => {
-    const config = {
-      COMMS_PROTOCOL: 'v2',
-      LAMBDAS_URL: 'lambdas'
-    }
-    const response = await testAbout(
-      config,
-      {
+    it('lambdas is not healthy', async () => {
+      const { status, body } = await testAbout({
         status: 500,
         body: {}
-      },
-      {}
-    )
+      })
 
-    expect(response.status).toEqual(503)
-    expect(response.body.healthy).toEqual(false)
-    expect(response.body.configurations.commsProtocol).toEqual('v2')
-    expect(response.body.content.healthy).toEqual(false)
-    expect(response.body.lambdas.healthy).toEqual(false)
-    expect(response.body.comms.healthy).toEqual(false)
+      expect(status).toEqual(503)
+      expect(body.healthy).toEqual(false)
+      expect(body.content.healthy).toEqual(false)
+      expect(body.lambdas.healthy).toEqual(false)
+      expect(body.comms.protocol).toEqual('v2')
+      expect(body.comms.healthy).toEqual(false)
+    })
   })
 
-  it('v3 - services are healthy', async () => {
-    const config = {
-      COMMS_PROTOCOL: 'v3',
-      LAMBDAS_URL: 'lambdas'
-    }
-    const response = await testAbout(
-      config,
-      {
-        status: 200,
-        body: {
-          lambda: 'Healthy',
-          content: 'Healthy',
-          comms: 'Unhealthy'
-        }
-      },
-      {
-        archipelago: {}
+  describe('with comms v3 layout', () => {
+    const testAbout = async (lambdaResponse: FetchTestResponse, archipelagoStatus) => {
+      const config = {
+        COMMS_PROTOCOL: 'v3',
+        LAMBDAS_URL: 'lambdas',
+        COMMIT_HASH: 'bff-hash'
       }
-    )
-
-    expect(response.status).toEqual(200)
-    expect(response.body.healthy).toEqual(true)
-    expect(response.body.configurations.commsProtocol).toEqual('v3')
-    expect(response.body.content.healthy).toEqual(true)
-    expect(response.body.lambdas.healthy).toEqual(true)
-    expect(response.body.comms.healthy).toEqual(true)
-  })
-
-  it('v3 - content is not healthy', async () => {
-    const config = {
-      COMMS_PROTOCOL: 'v3',
-      LAMBDAS_URL: 'lambdas'
-    }
-    const response = await testAbout(
-      config,
-      {
-        status: 503,
-        body: {
-          lambda: 'Healthy',
-          content: 'Unhealthy',
-          comms: 'Healthy'
-        }
-      },
-      {
-        archipelago: {}
+      const handler = (_: string): FetchTestResponse => {
+        return lambdaResponse
       }
-    )
 
-    expect(response.status).toEqual(503)
-    expect(response.body.healthy).toEqual(false)
-    expect(response.body.configurations.commsProtocol).toEqual('v3')
-    expect(response.body.content.healthy).toEqual(false)
-    expect(response.body.lambdas.healthy).toEqual(true)
-    expect(response.body.comms.healthy).toEqual(true)
-  })
-
-  it('v3 - lambdas is not healthy', async () => {
-    const config = {
-      COMMS_PROTOCOL: 'v3',
-      LAMBDAS_URL: 'lambdas'
-    }
-    const response = await testAbout(
-      config,
-      {
-        status: 500,
-        body: {}
-      },
-      {
-        archipelago: {}
+      const status = {
+        getLambdasStatus: () => Promise.resolve(lambdasStatus),
+        getContentStatus: () => Promise.resolve(contentStatus),
+        getLighthouseStatus: () => Promise.resolve(undefined)
       }
-    )
 
-    expect(response.status).toEqual(503)
-    expect(response.body.healthy).toEqual(false)
-    expect(response.body.configurations.commsProtocol).toEqual('v3')
-    expect(response.body.content.healthy).toEqual(false)
-    expect(response.body.lambdas.healthy).toEqual(false)
-    expect(response.body.comms.healthy).toEqual(true)
-  })
+      const realm = {
+        getName: (_?: string) => Promise.resolve('test')
+      }
 
-  it('v3 - comms is not healthy', async () => {
-    const config = {
-      COMMS_PROTOCOL: 'v3',
-      LAMBDAS_URL: 'lambdas'
-    }
-    const response = await testAbout(
-      config,
-      {
-        status: 503,
-        body: {
-          lambda: 'Healthy',
-          content: 'Healthy',
-          comms: 'Healthy'
+      const rpcSessions = {
+        sessions: new Map()
+      }
+
+      const response = await aboutHandler({
+        url: new URL('https://bff/about'),
+        components: {
+          serviceDiscovery: {
+            getClusterStatus: () => Promise.resolve({ archipelago: archipelagoStatus }),
+            stop: () => Promise.resolve()
+          },
+          logs: createLogComponent(),
+          config: createConfigComponent(config),
+          fetch: createTestFetchComponent(handler),
+          status,
+          realm,
+          rpcSessions
         }
-      },
-      {}
-    )
+      })
 
-    expect(response.status).toEqual(503)
-    expect(response.body.healthy).toEqual(false)
-    expect(response.body.configurations.commsProtocol).toEqual('v3')
-    expect(response.body.content.healthy).toEqual(true)
-    expect(response.body.lambdas.healthy).toEqual(true)
-    expect(response.body.comms.healthy).toEqual(false)
+      const { body } = response
+
+      expect(body.configurations.realmName).toEqual('test')
+      expect(body.content.commitHash).toEqual(contentStatus.commitHash)
+      expect(body.content.version).toEqual(contentStatus.version)
+
+      expect(body.lambdas.commitHash).toEqual(lambdasStatus.commitHash)
+      expect(body.lambdas.version).toEqual(lambdasStatus.version)
+
+      expect(body.bff.healthy).toEqual(true)
+      expect(body.bff.commitHash).toEqual('bff-hash')
+      expect(body.bff.userCount).toEqual(0)
+
+      return response
+    }
+
+    it('services are healthy', async () => {
+      const { status, body } = await testAbout(
+        {
+          status: 200,
+          body: {
+            lambda: 'Healthy',
+            content: 'Healthy',
+            comms: 'Unhealthy'
+          }
+        },
+        {}
+      )
+
+      expect(status).toEqual(200)
+      expect(body.healthy).toEqual(true)
+      expect(body.content.healthy).toEqual(true)
+      expect(body.lambdas.healthy).toEqual(true)
+      expect(body.comms.healthy).toEqual(true)
+      expect(body.comms.protocol).toEqual('v3')
+    })
+
+    it('content is not healthy', async () => {
+      const { status, body } = await testAbout(
+        {
+          status: 503,
+          body: {
+            lambda: 'Healthy',
+            content: 'Unhealthy',
+            comms: 'Healthy'
+          }
+        },
+        {}
+      )
+
+      expect(status).toEqual(503)
+      expect(body.healthy).toEqual(false)
+      expect(body.content.healthy).toEqual(false)
+      expect(body.lambdas.healthy).toEqual(true)
+      expect(body.comms.healthy).toEqual(true)
+      expect(body.comms.protocol).toEqual('v3')
+    })
+
+    it('lambdas is not healthy', async () => {
+      const { status, body } = await testAbout(
+        {
+          status: 500,
+          body: {}
+        },
+        {}
+      )
+
+      expect(status).toEqual(503)
+      expect(body.healthy).toEqual(false)
+      expect(body.content.healthy).toEqual(false)
+      expect(body.lambdas.healthy).toEqual(false)
+      expect(body.comms.healthy).toEqual(true)
+      expect(body.comms.protocol).toEqual('v3')
+    })
+
+    it('comms is not healthy', async () => {
+      const { status, body } = await testAbout(
+        {
+          status: 503,
+          body: {
+            lambda: 'Healthy',
+            content: 'Healthy',
+            comms: 'Healthy'
+          }
+        },
+        undefined
+      )
+
+      expect(status).toEqual(503)
+      expect(body.healthy).toEqual(false)
+      expect(body.content.healthy).toEqual(true)
+      expect(body.lambdas.healthy).toEqual(true)
+      expect(body.comms.healthy).toEqual(false)
+      expect(body.comms.protocol).toEqual('v3')
+    })
   })
 })
