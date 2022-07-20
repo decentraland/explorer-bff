@@ -9,7 +9,7 @@ import { WebSocket } from 'ws'
  * to upgrade the connection for the rpcServer
  */
 export async function websocketRpcHandler(context: IHttpServerComponent.DefaultContext<GlobalContext>) {
-  const { logs, status } = context.components
+  const { logs } = context.components
   const logger = logs.getLogger('ws')
   return upgradeWebSocketResponse((socket) => {
     let isAlive = true
