@@ -36,7 +36,7 @@ export async function createStatusComponent(
     return response.json()
   }
 
-  const lambdasUrl = await config.requireString('LAMBDAS_URL')
+  const lambdasUrl = new URL(await config.requireString('LAMBDAS_URL')).origin
   let lastLambdasStatus: ServiceStatus | undefined = undefined
   async function getLambdasStatus() {
     if (lastLambdasStatus && Date.now() - lastLambdasStatus.time < STATUS_EXPIRATION_TIME_MS) {
@@ -60,7 +60,7 @@ export async function createStatusComponent(
     return undefined
   }
 
-  const contentUrl = await config.requireString('CONTENT_URL')
+  const contentUrl = new URL(await config.requireString('CONTENT_URL')).origin
   let lastContentStatus: ServiceStatus | undefined = undefined
   async function getContentStatus() {
     if (lastContentStatus && Date.now() - lastContentStatus.time < STATUS_EXPIRATION_TIME_MS) {
@@ -84,7 +84,7 @@ export async function createStatusComponent(
     return undefined
   }
 
-  const lighthouseUrl = await config.requireString('LIGHTHOUSE_URL')
+  const lighthouseUrl = new URL(await config.requireString('LIGHTHOUSE_URL')).origin
   let lastLighthouseStatus: LighthouseStatus | undefined = undefined
 
   async function getLighthouseStatus() {

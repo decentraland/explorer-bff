@@ -29,7 +29,7 @@ describe('about-controller-unit', () => {
     const testAbout = async (lambdaResponse: FetchTestResponse) => {
       const config = {
         COMMS_PROTOCOL: 'v2',
-        LAMBDAS_URL: 'lambdas',
+        LAMBDAS_URL: 'http://lambdas',
         COMMIT_HASH: 'bff-hash'
       }
 
@@ -137,7 +137,7 @@ describe('about-controller-unit', () => {
     const testAbout = async (lambdaResponse: FetchTestResponse, archipelagoStatus: any) => {
       const config = {
         COMMS_PROTOCOL: 'v3',
-        LAMBDAS_URL: 'lambdas',
+        LAMBDAS_URL: 'http://lambdas',
         COMMIT_HASH: 'bff-hash'
       }
 

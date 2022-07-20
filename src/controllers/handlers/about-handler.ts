@@ -67,7 +67,7 @@ export async function aboutHandler(
   }
 
   try {
-    const lambdasUrl = await config.requireString('LAMBDAS_URL')
+    const lambdasUrl = new URL(await config.requireString('LAMBDAS_URL')).origin
     const response = await fetch.fetch(`${lambdasUrl}/health`, {
       method: 'GET',
       headers: {
