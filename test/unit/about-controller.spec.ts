@@ -32,9 +32,6 @@ describe('about-controller-unit', () => {
         LAMBDAS_URL: 'lambdas',
         COMMIT_HASH: 'bff-hash'
       }
-      const handler = (_: string): FetchTestResponse => {
-        return lambdaResponse
-      }
 
       const status = {
         getLambdasStatus: () => Promise.resolve(lambdasStatus),
@@ -59,7 +56,7 @@ describe('about-controller-unit', () => {
           },
           logs: createLogComponent(),
           config: createConfigComponent(config),
-          fetch: createTestFetchComponent(handler),
+          fetch: createTestFetchComponent((_?: string) => lambdaResponse),
           status,
           realm,
           rpcSessions
@@ -137,14 +134,11 @@ describe('about-controller-unit', () => {
   })
 
   describe('with comms v3 layout', () => {
-    const testAbout = async (lambdaResponse: FetchTestResponse, archipelagoStatus) => {
+    const testAbout = async (lambdaResponse: FetchTestResponse, archipelagoStatus: any) => {
       const config = {
         COMMS_PROTOCOL: 'v3',
         LAMBDAS_URL: 'lambdas',
         COMMIT_HASH: 'bff-hash'
-      }
-      const handler = (_: string): FetchTestResponse => {
-        return lambdaResponse
       }
 
       const status = {
@@ -170,7 +164,7 @@ describe('about-controller-unit', () => {
           },
           logs: createLogComponent(),
           config: createConfigComponent(config),
-          fetch: createTestFetchComponent(handler),
+          fetch: createTestFetchComponent((_?: string) => lambdaResponse),
           status,
           realm,
           rpcSessions

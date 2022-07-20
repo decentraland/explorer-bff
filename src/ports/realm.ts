@@ -25,7 +25,7 @@ export type IRealmComponent = IBaseComponent & {
   getName(lighthouseName?: string): Promise<string | undefined>
 }
 
-const CATALYST_NAME_CONFIG_FILE = '.catalyst-name'
+export const CATALYST_NAME_CONFIG_FILE = '.catalyst-name'
 
 /*
   The process of picking a name works as follows:
@@ -123,6 +123,8 @@ export async function createRealmComponent(
     }
 
     const existingNames = new Set(await Promise.all(catalystNamePromises))
+
+    console.log('COUNT', existingNames)
 
     for (const name of possiblesNames) {
       if (!existingNames.has(name)) {
