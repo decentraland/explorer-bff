@@ -30,7 +30,7 @@ export const CATALYST_NAME_CONFIG_FILE = '.catalyst-name'
 /*
   The process of picking a name follows the next rules in order:
 
-  1. If there is a file .catalyst-name, just the name there
+  1. If there is a file .catalyst-name, just use the name there
   2. If the local lighthouse has a name, pick it, store it in .catalyst-name for next time
   3. If there is no name, pick one from the list in the env var `REALM_NAMES` (or use `defaultNames` if the var is not provided),  and ask every catalyst in the DAO if the name is already taken, if it's available, store it in .catalyst-name, otherwise repeat 
 */
