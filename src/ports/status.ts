@@ -36,7 +36,6 @@ export async function createStatusComponent(
     return response.json()
   }
 
-  const lambdasUrl = new URL(await config.requireString('LAMBDAS_URL')).origin
   let lastLambdasStatus: ServiceStatus | undefined = undefined
   async function getLambdasStatus() {
     if (lastLambdasStatus && Date.now() - lastLambdasStatus.time < STATUS_EXPIRATION_TIME_MS) {
@@ -44,6 +43,7 @@ export async function createStatusComponent(
     }
 
     try {
+      const lambdasUrl = new URL(await config.requireString('LAMBDAS_URL')).origin
       const data = await fetchJson(`${lambdasUrl}/status`)
 
       lastLambdasStatus = {
@@ -60,7 +60,6 @@ export async function createStatusComponent(
     return undefined
   }
 
-  const contentUrl = new URL(await config.requireString('CONTENT_URL')).origin
   let lastContentStatus: ServiceStatus | undefined = undefined
   async function getContentStatus() {
     if (lastContentStatus && Date.now() - lastContentStatus.time < STATUS_EXPIRATION_TIME_MS) {
@@ -68,6 +67,7 @@ export async function createStatusComponent(
     }
 
     try {
+      const contentUrl = new URL(await config.requireString('CONTENT_URL')).origin
       const data = await fetchJson(`${contentUrl}/status`)
 
       lastContentStatus = {
@@ -84,7 +84,6 @@ export async function createStatusComponent(
     return undefined
   }
 
-  const lighthouseUrl = new URL(await config.requireString('LIGHTHOUSE_URL')).origin
   let lastLighthouseStatus: LighthouseStatus | undefined = undefined
 
   async function getLighthouseStatus() {
@@ -93,6 +92,7 @@ export async function createStatusComponent(
         return lastLighthouseStatus
       }
 
+      const lighthouseUrl = new URL(await config.requireString('LIGHTHOUSE_URL')).origin
       const data = await fetchJson(`${lighthouseUrl}/status`)
 
       lastLighthouseStatus = {
@@ -104,7 +104,7 @@ export async function createStatusComponent(
 
       return lastLighthouseStatus
     } catch (e: any) {
-      logger.warn(`Error fetching ${lighthouseUrl}/status: ${e.toString()}`)
+      logger.warn(`Error fetching lighthouse status: ${e.toString()}`)
     }
 
     return undefined
