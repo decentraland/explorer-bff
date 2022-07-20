@@ -17,7 +17,7 @@ export type IStatusComponent = IBaseComponent & {
   getLighthouseStatus(): Promise<LighthouseStatus | undefined>
 }
 
-const STATUS_EXPIRATION_TIME_MS = 1000 * 60 * 5
+const STATUS_EXPIRATION_TIME_MS = 1000 * 60 * 5 // 5mins
 
 export async function createStatusComponent(
   components: Pick<BaseComponents, 'fetch' | 'logs' | 'config'>
