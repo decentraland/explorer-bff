@@ -2,24 +2,7 @@ import { IBaseComponent } from '@well-known-components/interfaces'
 import { BaseComponents } from '../types'
 import * as fs from 'fs/promises'
 
-export const defaultNames = [
-  'zeus',
-  'poseidon',
-  'athena',
-  'hera',
-  'hephaestus',
-  'aphrodite',
-  'hades',
-  'hermes',
-  'artemis',
-  'thor',
-  'loki',
-  'odin',
-  'freyja',
-  'fenrir',
-  'heimdallr',
-  'baldr'
-]
+export const defaultNames = ['zeus', 'poseidon', 'hera', 'aphrodite', 'hades', 'hermes', 'thor', 'freyja', 'fenrir']
 
 export type IRealmComponent = IBaseComponent & {
   getName(lighthouseName?: string): Promise<string | undefined>
