@@ -9,9 +9,11 @@ import type {
 import { metricDeclarations } from './metrics'
 import { INatsComponent } from '@well-known-components/nats-component/dist/types'
 import { WebSocket } from 'ws'
-import { HttpProvider } from 'web3x/providers'
 import { RpcServer, RpcServerPort } from '@dcl/rpc'
 import { IServiceDiscoveryComponent } from './ports/service-discovery'
+import { IRealmComponent } from './ports/realm'
+import { CatalystContract } from '@dcl/catalyst-contracts'
+import { IStatusComponent } from './ports/status'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -33,8 +35,10 @@ export type BaseComponents = {
   ws: WebSocketComponent
   nats: INatsComponent
   serviceDiscovery: IServiceDiscoveryComponent
-  // TODO: deprecate web3x and use ethersjs
-  ethereumProvider: HttpProvider
+  realm: IRealmComponent
+  ethereumProvider: any
+  contract: CatalystContract
+  status: IStatusComponent
 
   rpcServer: RpcServer<RpcContext>
 
