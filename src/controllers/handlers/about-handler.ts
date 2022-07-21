@@ -98,14 +98,13 @@ export async function aboutHandler(
     result.lambdas.commitHash = commitHash
   }
 
-  let lighthouseRealmName: string | undefined = undefined
   if (commsProtocol === 'v2') {
     const lighthouseStatus = await status.getLighthouseStatus()
     if (lighthouseStatus) {
       const { version, commitHash, realmName } = lighthouseStatus
       result.comms.version = version
       result.comms.commitHash = commitHash
-      lighthouseRealmName = realmName
+      result.configurations.realmName = await realm.getName(realmName)
     }
   } else {
     const clusterStatus = await serviceDiscovery.getClusterStatus()
@@ -118,9 +117,9 @@ export async function aboutHandler(
     } else {
       result.comms.healthy = false
     }
+    result.configurations.realmName = await realm.getName()
   }
 
-  result.configurations.realmName = await realm.getName(lighthouseRealmName)
   result.healthy = result.content.healthy && result.lambdas.healthy && result.comms.healthy
 
   return {
