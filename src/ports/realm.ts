@@ -1,6 +1,7 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { BaseComponents } from '../types'
 import * as fs from 'fs/promises'
+import * as path from 'path'
 
 export const defaultNames = ['zeus', 'poseidon', 'hera', 'aphrodite', 'hades', 'hermes', 'thor', 'freyja', 'fenrir']
 
@@ -25,18 +26,21 @@ export async function createRealmComponent(
 
   const logger = logs.getLogger('realm-component')
 
+  const storageLocation = (await config.getString('STORAGE_LOCATION')) || './'
+  const configFile = path.join(storageLocation, CATALYST_NAME_CONFIG_FILE)
+
   let pickedName: string | undefined = undefined
   try {
-    pickedName = await fs.readFile(CATALYST_NAME_CONFIG_FILE, { encoding: 'utf8' })
+    pickedName = await fs.readFile(configFile, { encoding: 'utf8' })
   } catch (e: any) {
-    logger.debug(`Error reading catalyst name from ${CATALYST_NAME_CONFIG_FILE}: ${e.toString()}`)
+    logger.debug(`Error reading catalyst name from ${configFile}: ${e.toString()}`)
   }
 
   async function storeName(name: string): Promise<void> {
     try {
-      await fs.writeFile(CATALYST_NAME_CONFIG_FILE, name)
+      await fs.writeFile(configFile, name)
     } catch (e: any) {
-      logger.error(`Error writing catalyst name to ${CATALYST_NAME_CONFIG_FILE}: ${e.toString()}`)
+      logger.error(`Error writing catalyst name to ${configFile}: ${e.toString()}`)
     }
   }
 
