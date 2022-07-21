@@ -22,7 +22,7 @@ export async function initComponents(): Promise<AppComponents> {
 
   const ethNetwork = (await config.getString('ETH_NETWORK')) ?? DEFAULT_ETH_NETWORK
 
-  const logs = createLogComponent()
+  const logs = createLogComponent({})
   const ws = await createWsComponent({ logs })
   const server = await createServerComponent<GlobalContext>(
     { config, logs, ws: ws.ws },

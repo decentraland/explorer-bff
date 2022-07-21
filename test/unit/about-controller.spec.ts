@@ -54,7 +54,7 @@ describe('about-controller-unit', () => {
             getClusterStatus: () => Promise.resolve({}),
             stop: () => Promise.resolve()
           },
-          logs: createLogComponent(),
+          logs: createLogComponent({}),
           config: createConfigComponent(config),
           fetch: createTestFetchComponent((_?: string) => lambdaResponse),
           status,
@@ -162,7 +162,7 @@ describe('about-controller-unit', () => {
             getClusterStatus: () => Promise.resolve({ archipelago: archipelagoStatus }),
             stop: () => Promise.resolve()
           },
-          logs: createLogComponent(),
+          logs: createLogComponent({}),
           config: createConfigComponent(config),
           fetch: createTestFetchComponent((_?: string) => lambdaResponse),
           status,
