@@ -109,11 +109,9 @@ export async function aboutHandler(
   } else {
     const clusterStatus = await serviceDiscovery.getClusterStatus()
     if (clusterStatus.archipelago) {
-      result.comms = {
-        ...result.comms,
-        healthy: true,
-        ...clusterStatus.archipelago
-      }
+      result.comms.healthy = true
+      result.comms.protocol = 'v3'
+      result.comms.commitHash = clusterStatus.archipelago.commitHash
     } else {
       result.comms.healthy = false
     }
