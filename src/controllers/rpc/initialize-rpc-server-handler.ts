@@ -1,7 +1,7 @@
 import { RpcServerHandler, RpcServerPort } from '@dcl/rpc'
 import { registerService } from '@dcl/rpc/dist/codegen'
 import { EthAddress } from '@dcl/schemas'
-import { AuthChain, Authenticator } from 'dcl-crypto'
+import { AuthChain, Authenticator } from '@dcl/crypto'
 import { normalizeAddress } from '../../logic/address'
 import { RpcContext, RpcSession, Subscription } from '../../types'
 import { BffAuthenticationServiceDefinition } from '../bff-proto/authentication-service'
