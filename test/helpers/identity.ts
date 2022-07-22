@@ -1,5 +1,5 @@
 import { createIdentity } from 'eth-crypto'
-import { Authenticator } from 'dcl-crypto'
+import { Authenticator } from '@dcl/crypto'
 import { sha512 } from 'ethereum-cryptography/sha512'
 import { utf8ToBytes } from 'ethereum-cryptography/utils'
 
