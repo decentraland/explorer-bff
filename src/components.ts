@@ -13,6 +13,7 @@ import { createServiceDiscoveryComponent } from './ports/service-discovery'
 import { createRealmComponent } from './ports/realm'
 import { catalystRegistryForProvider } from '@dcl/catalyst-contracts'
 import { createStatusComponent } from './ports/status'
+import 'isomorphic-fetch'
 
 const DEFAULT_ETH_NETWORK = 'ropsten'
 

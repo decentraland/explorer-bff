@@ -17,6 +17,7 @@
     "eth-crypto": "^2.3.0",
     "ethereum-cryptography": "^1.1.2",
     "fp-future": "^1.0.1",
+    "isomorphic-fetch": "^3.0.0",
     "prettier": "^2.7.1",
     "typescript": "^4.7.4"
   },
