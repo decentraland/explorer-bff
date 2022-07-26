@@ -15,7 +15,7 @@ import { catalystRegistryForProvider } from '@dcl/catalyst-contracts'
 import { createStatusComponent } from './ports/status'
 import 'isomorphic-fetch'
 
-const DEFAULT_ETH_NETWORK = 'ropsten'
+const DEFAULT_ETH_NETWORK = 'goerli'
 
 // Initialize all the components of the app
 export async function initComponents(): Promise<AppComponents> {
