@@ -1,6 +1,12 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
 import { BaseComponents } from '../types'
 
+export type HealthStatus = {
+  content: boolean
+  lambdas: boolean
+  comms: boolean
+}
+
 export type ServiceStatus = {
   time: number
   version: string
@@ -12,6 +18,7 @@ export type LighthouseStatus = ServiceStatus & {
 }
 
 export type IStatusComponent = IBaseComponent & {
+  getLambdasHealth(): Promise<HealthStatus | undefined>
   getLambdasStatus(): Promise<ServiceStatus | undefined>
   getContentStatus(): Promise<ServiceStatus | undefined>
   getLighthouseStatus(): Promise<LighthouseStatus | undefined>
@@ -25,6 +32,8 @@ export async function createStatusComponent(
   const { fetch, logs, config } = components
 
   const logger = logs.getLogger('status-component')
+  const lambdasUrl = await config.requireString('LAMBDAS_URL')
+  const contentUrl = await config.requireString('CONTENT_URL')
 
   const fetchJson = async (url: string) => {
     const response = await fetch.fetch(url, {
@@ -36,6 +45,22 @@ export async function createStatusComponent(
     return response.json()
   }
 
+  async function getLambdasHealth(): Promise<HealthStatus | undefined> {
+    try {
+      const data = await fetchJson(`${lambdasUrl}/health`)
+
+      return {
+        content: data['content'] === 'Healthy',
+        lambdas: data['lambda'] === 'Healthy',
+        comms: data['comms'] === 'Healthy'
+      }
+    } catch (err: any) {
+      logger.error(err)
+    }
+
+    return undefined
+  }
+
   let lastLambdasStatus: ServiceStatus | undefined = undefined
   async function getLambdasStatus() {
     if (lastLambdasStatus && Date.now() - lastLambdasStatus.time < STATUS_EXPIRATION_TIME_MS) {
@@ -43,7 +68,6 @@ export async function createStatusComponent(
     }
 
     try {
-      const lambdasUrl = new URL(await config.requireString('LAMBDAS_URL')).origin
       const data = await fetchJson(`${lambdasUrl}/status`)
 
       lastLambdasStatus = {
@@ -67,7 +91,6 @@ export async function createStatusComponent(
     }
 
     try {
-      const contentUrl = new URL(await config.requireString('CONTENT_URL')).origin
       const data = await fetchJson(`${contentUrl}/status`)
 
       lastContentStatus = {
@@ -92,7 +115,7 @@ export async function createStatusComponent(
         return lastLighthouseStatus
       }
 
-      const lighthouseUrl = new URL(await config.requireString('LIGHTHOUSE_URL')).origin
+      const lighthouseUrl = await config.requireString('LIGHTHOUSE_URL')
       const data = await fetchJson(`${lighthouseUrl}/status`)
 
       lastLighthouseStatus = {
@@ -111,6 +134,7 @@ export async function createStatusComponent(
   }
 
   return {
+    getLambdasHealth,
     getLambdasStatus,
     getContentStatus,
     getLighthouseStatus

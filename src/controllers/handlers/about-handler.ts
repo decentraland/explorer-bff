@@ -31,16 +31,11 @@ export type About = {
 // handlers arguments only type what they need, to make unit testing easier
 export async function aboutHandler(
   context: Pick<
-    HandlerContextWithPath<
-      'serviceDiscovery' | 'status' | 'realm' | 'logs' | 'config' | 'fetch' | 'rpcSessions',
-      '/about'
-    >,
+    HandlerContextWithPath<'serviceDiscovery' | 'status' | 'realm' | 'config' | 'rpcSessions', '/about'>,
     'url' | 'components'
   >
 ) {
-  const { logs, realm, config, fetch, status, serviceDiscovery, rpcSessions } = context.components
-
-  const logger = logs.getLogger('about')
+  const { realm, config, status, serviceDiscovery, rpcSessions } = context.components
   const commsProtocol = await config.requireString('COMMS_PROTOCOL')
 
   const userCount = rpcSessions.sessions.size
@@ -66,32 +61,24 @@ export async function aboutHandler(
     }
   }
 
-  try {
-    const lambdasUrl = new URL(await config.requireString('LAMBDAS_URL')).origin
-    const response = await fetch.fetch(`${lambdasUrl}/health`, {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json'
-      }
-    })
+  const [health, contentStatus, lambdasStatus] = await Promise.all([
+    status.getLambdasHealth(),
+    status.getContentStatus(),
+    status.getLambdasStatus()
+  ])
 
-    const data: Record<string, string> = await response.json()
-
-    result.content.healthy = data['content'] === 'Healthy'
-    result.lambdas.healthy = data['lambda'] === 'Healthy'
-    result.comms.healthy = data['comms'] === 'Healthy'
-  } catch (err: any) {
-    logger.error(err)
+  if (health) {
+    result.comms.healthy = health.comms
+    result.content.healthy = health.content
+    result.lambdas.healthy = health.lambdas
   }
 
-  const contentStatus = await status.getContentStatus()
   if (contentStatus) {
     const { version, commitHash } = contentStatus
     result.content.version = version
     result.content.commitHash = commitHash
   }
 
-  const lambdasStatus = await status.getLambdasStatus()
   if (lambdasStatus) {
     const { version, commitHash } = lambdasStatus
     result.lambdas.version = version

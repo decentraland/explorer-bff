@@ -1,7 +1,7 @@
 import { createLogComponent } from '@well-known-components/logger'
 import { createConfigComponent } from '@well-known-components/env-config-provider'
 import { aboutHandler } from '../../src/controllers/handlers/about-handler'
-import { createTestFetchComponent, FetchTestResponse } from '../helpers/fetch'
+import { HealthStatus } from '../../src/ports/status'
 
 describe('about-controller-unit', () => {
   const time = Date.now()
@@ -26,7 +26,7 @@ describe('about-controller-unit', () => {
   }
 
   describe('with comms v2 layout', () => {
-    const testAbout = async (lambdaResponse: FetchTestResponse) => {
+    const testAbout = async (lambdasHealth: HealthStatus) => {
       const config = {
         COMMS_PROTOCOL: 'v2',
         LAMBDAS_URL: 'http://lambdas',
@@ -34,6 +34,7 @@ describe('about-controller-unit', () => {
       }
 
       const status = {
+        getLambdasHealth: () => Promise.resolve(lambdasHealth),
         getLambdasStatus: () => Promise.resolve(lambdasStatus),
         getContentStatus: () => Promise.resolve(contentStatus),
         getLighthouseStatus: () => Promise.resolve(lighthouseStatus)
@@ -54,9 +55,7 @@ describe('about-controller-unit', () => {
             getClusterStatus: () => Promise.resolve({}),
             stop: () => Promise.resolve()
           },
-          logs: createLogComponent({}),
           config: createConfigComponent(config),
-          fetch: createTestFetchComponent((_?: string) => lambdaResponse),
           status,
           realm,
           rpcSessions
@@ -84,12 +83,9 @@ describe('about-controller-unit', () => {
 
     it('services are healthy', async () => {
       const { status, body } = await testAbout({
-        status: 200,
-        body: {
-          lambda: 'Healthy',
-          content: 'Healthy',
-          comms: 'Healthy'
-        }
+        lambdas: true,
+        content: true,
+        comms: true
       })
 
       expect(status).toEqual(200)
@@ -102,12 +98,9 @@ describe('about-controller-unit', () => {
 
     it('content is not healthy', async () => {
       const { status, body } = await testAbout({
-        status: 503,
-        body: {
-          lambda: 'Healthy',
-          content: 'Unhealthy',
-          comms: 'Healthy'
-        }
+        lambdas: true,
+        content: false,
+        comms: true
       })
 
       expect(status).toEqual(503)
@@ -117,24 +110,10 @@ describe('about-controller-unit', () => {
       expect(body.comms.protocol).toEqual('v2')
       expect(body.comms.healthy).toEqual(true)
     })
-
-    it('lambdas is not healthy', async () => {
-      const { status, body } = await testAbout({
-        status: 500,
-        body: {}
-      })
-
-      expect(status).toEqual(503)
-      expect(body.healthy).toEqual(false)
-      expect(body.content.healthy).toEqual(false)
-      expect(body.lambdas.healthy).toEqual(false)
-      expect(body.comms.protocol).toEqual('v2')
-      expect(body.comms.healthy).toEqual(false)
-    })
   })
 
   describe('with comms v3 layout', () => {
-    const testAbout = async (lambdaResponse: FetchTestResponse, archipelagoStatus: any) => {
+    const testAbout = async (lambdasHealth: HealthStatus, archipelagoStatus: any) => {
       const config = {
         COMMS_PROTOCOL: 'v3',
         LAMBDAS_URL: 'http://lambdas',
@@ -142,6 +121,7 @@ describe('about-controller-unit', () => {
       }
 
       const status = {
+        getLambdasHealth: () => Promise.resolve(lambdasHealth),
         getLambdasStatus: () => Promise.resolve(lambdasStatus),
         getContentStatus: () => Promise.resolve(contentStatus),
         getLighthouseStatus: () => Promise.resolve(undefined)
@@ -162,9 +142,7 @@ describe('about-controller-unit', () => {
             getClusterStatus: () => Promise.resolve({ archipelago: archipelagoStatus }),
             stop: () => Promise.resolve()
           },
-          logs: createLogComponent({}),
           config: createConfigComponent(config),
-          fetch: createTestFetchComponent((_?: string) => lambdaResponse),
           status,
           realm,
           rpcSessions
@@ -190,12 +168,9 @@ describe('about-controller-unit', () => {
     it('services are healthy', async () => {
       const { status, body } = await testAbout(
         {
-          status: 200,
-          body: {
-            lambda: 'Healthy',
-            content: 'Healthy',
-            comms: 'Unhealthy'
-          }
+          lambdas: true,
+          content: true,
+          comms: false
         },
         {}
       )
@@ -211,12 +186,9 @@ describe('about-controller-unit', () => {
     it('content is not healthy', async () => {
       const { status, body } = await testAbout(
         {
-          status: 503,
-          body: {
-            lambda: 'Healthy',
-            content: 'Unhealthy',
-            comms: 'Healthy'
-          }
+          lambdas: true,
+          content: false,
+          comms: false
         },
         {}
       )
@@ -229,32 +201,12 @@ describe('about-controller-unit', () => {
       expect(body.comms.protocol).toEqual('v3')
     })
 
-    it('lambdas is not healthy', async () => {
-      const { status, body } = await testAbout(
-        {
-          status: 500,
-          body: {}
-        },
-        {}
-      )
-
-      expect(status).toEqual(503)
-      expect(body.healthy).toEqual(false)
-      expect(body.content.healthy).toEqual(false)
-      expect(body.lambdas.healthy).toEqual(false)
-      expect(body.comms.healthy).toEqual(true)
-      expect(body.comms.protocol).toEqual('v3')
-    })
-
     it('comms is not healthy', async () => {
       const { status, body } = await testAbout(
         {
-          status: 503,
-          body: {
-            lambda: 'Healthy',
-            content: 'Healthy',
-            comms: 'Healthy'
-          }
+          lambdas: true,
+          content: true,
+          comms: true
         },
         undefined
       )
