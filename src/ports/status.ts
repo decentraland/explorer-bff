@@ -72,7 +72,7 @@ export async function createStatusComponent(
 
       lastLambdasStatus = {
         time: Date.now(),
-        version: data.version,
+        version: data.catalystVersion,
         commitHash: data.commitHash
       }
 
@@ -95,7 +95,7 @@ export async function createStatusComponent(
 
       lastContentStatus = {
         time: Date.now(),
-        version: data.version,
+        version: data.catalystVersion,
         commitHash: data.commitHash
       }
 
