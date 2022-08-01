@@ -31,7 +31,7 @@ describe('realm-controller-unit', () => {
 
     const realm = await createRealmComponent({
       config: createConfigComponent({}),
-      logs: createLogComponent({}),
+      logs: await createLogComponent({}),
       fetch: createTestFetchComponent(handler),
       contract
     })
@@ -46,7 +46,7 @@ describe('realm-controller-unit', () => {
 
     const realm = await createRealmComponent({
       config: createConfigComponent({}),
-      logs: createLogComponent({}),
+      logs: await createLogComponent({}),
       fetch: createTestFetchComponent(handler),
       contract
     })
@@ -74,7 +74,7 @@ describe('realm-controller-unit', () => {
 
     const realm = await createRealmComponent({
       config: createConfigComponent(config),
-      logs: createLogComponent({}),
+      logs: await createLogComponent({}),
       fetch: createTestFetchComponent(handler),
       contract
     })
