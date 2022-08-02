@@ -39,7 +39,6 @@ export async function aboutHandler(
   const commsProtocol = await config.requireString('COMMS_PROTOCOL')
 
   const userCount = rpcSessions.sessions.size
-  metrics.observe('explorer_bff_connected_users', {}, userCount)
   const result: About = {
     healthy: false,
     content: {
