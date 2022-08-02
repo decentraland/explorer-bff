@@ -31,14 +31,15 @@ export type About = {
 // handlers arguments only type what they need, to make unit testing easier
 export async function aboutHandler(
   context: Pick<
-    HandlerContextWithPath<'serviceDiscovery' | 'status' | 'realm' | 'config' | 'rpcSessions', '/about'>,
+    HandlerContextWithPath<'serviceDiscovery' | 'status' | 'realm' | 'config' | 'rpcSessions' | 'metrics', '/about'>,
     'url' | 'components'
   >
 ) {
-  const { realm, config, status, serviceDiscovery, rpcSessions } = context.components
+  const { realm, config, status, serviceDiscovery, rpcSessions, metrics } = context.components
   const commsProtocol = await config.requireString('COMMS_PROTOCOL')
 
   const userCount = rpcSessions.sessions.size
+  metrics.observe('explorer_bff_connected_users', {}, userCount)
   const result: About = {
     healthy: false,
     content: {
