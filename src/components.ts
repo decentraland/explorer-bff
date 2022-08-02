@@ -51,7 +51,7 @@ export async function initComponents(): Promise<AppComponents> {
   const realm = await createRealmComponent({ config, logs, fetch, contract })
   const status = await createStatusComponent({ config, logs, fetch })
 
-  observeBuildInfo({ config, metrics })
+  await observeBuildInfo({ config, metrics })
 
   return {
     config,
