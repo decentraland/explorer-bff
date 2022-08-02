@@ -35,7 +35,7 @@ export async function aboutHandler(
     'url' | 'components'
   >
 ) {
-  const { realm, config, status, serviceDiscovery, rpcSessions, metrics } = context.components
+  const { realm, config, status, serviceDiscovery, rpcSessions } = context.components
   const commsProtocol = await config.requireString('COMMS_PROTOCOL')
 
   const userCount = rpcSessions.sessions.size

@@ -15,7 +15,6 @@ export async function onPeerConnected({ components, peer }: RpcContext) {
   }
   components.nats.publish(`peer.${peer.address}.connect`)
   components.metrics.increment('explorer_bff_connected_users', {})
-
 }
 
 export async function onPeerDisconnected({ components, peer }: RpcContext) {
