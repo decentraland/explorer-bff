@@ -2,6 +2,8 @@ import { createLogComponent } from '@well-known-components/logger'
 import { createConfigComponent } from '@well-known-components/env-config-provider'
 import { aboutHandler } from '../../src/controllers/handlers/about-handler'
 import { HealthStatus } from '../../src/ports/status'
+import { createTestMetricsComponent } from '@well-known-components/metrics'
+import { metricDeclarations } from '../../src/metrics'
 
 describe('about-controller-unit', () => {
   const time = Date.now()
@@ -24,6 +26,8 @@ describe('about-controller-unit', () => {
     commitHash: 'lighthouse-hash',
     realmName: 'lighthouse-test'
   }
+
+  const metrics = createTestMetricsComponent(metricDeclarations)
 
   describe('with comms v2 layout', () => {
     const testAbout = async (lambdasHealth: HealthStatus) => {
@@ -58,7 +62,8 @@ describe('about-controller-unit', () => {
           config: createConfigComponent(config),
           status,
           realm,
-          rpcSessions
+          rpcSessions,
+          metrics
         }
       })
 
@@ -145,7 +150,8 @@ describe('about-controller-unit', () => {
           config: createConfigComponent(config),
           status,
           realm,
-          rpcSessions
+          rpcSessions,
+          metrics
         }
       })
 

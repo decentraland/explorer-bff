@@ -31,7 +31,7 @@ export type About = {
 // handlers arguments only type what they need, to make unit testing easier
 export async function aboutHandler(
   context: Pick<
-    HandlerContextWithPath<'serviceDiscovery' | 'status' | 'realm' | 'config' | 'rpcSessions', '/about'>,
+    HandlerContextWithPath<'serviceDiscovery' | 'status' | 'realm' | 'config' | 'rpcSessions' | 'metrics', '/about'>,
     'url' | 'components'
   >
 ) {

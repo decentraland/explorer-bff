@@ -14,6 +14,7 @@ import { createRealmComponent } from './ports/realm'
 import { catalystRegistryForProvider } from '@dcl/catalyst-contracts'
 import { createStatusComponent } from './ports/status'
 import 'isomorphic-fetch'
+import { observeBuildInfo } from './logic/build-info'
 
 const DEFAULT_ETH_NETWORK = 'goerli'
 
@@ -49,6 +50,8 @@ export async function initComponents(): Promise<AppComponents> {
   const contract = await catalystRegistryForProvider(ethereumProvider)
   const realm = await createRealmComponent({ config, logs, fetch, contract })
   const status = await createStatusComponent({ config, logs, fetch })
+
+  await observeBuildInfo({ config, metrics })
 
   return {
     config,
