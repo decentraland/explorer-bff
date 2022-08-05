@@ -13,7 +13,6 @@ import { createServiceDiscoveryComponent } from './ports/service-discovery'
 import { createRealmComponent } from './ports/realm'
 import { catalystRegistryForProvider } from '@dcl/catalyst-contracts'
 import { createStatusComponent } from './ports/status'
-import 'isomorphic-fetch'
 import { observeBuildInfo } from './logic/build-info'
 
 const DEFAULT_ETH_NETWORK = 'goerli'
@@ -44,7 +43,8 @@ export async function initComponents(): Promise<AppComponents> {
   const nats = await createNatsComponent({ config, logs })
   const serviceDiscovery = await createServiceDiscoveryComponent({ nats, logs, config })
   const ethereumProvider = new HTTPProvider(
-    `https://rpc.decentraland.org/${encodeURIComponent(ethNetwork)}?project=explorer-bff`
+    `https://rpc.decentraland.org/${encodeURIComponent(ethNetwork)}?project=explorer-bff`,
+    { fetch: fetch.fetch }
   )
 
   const contract = await catalystRegistryForProvider(ethereumProvider)
