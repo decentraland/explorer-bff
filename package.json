@@ -1,7 +1,7 @@
 {
   "name": "@dcl/explorer-bff",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "make build",
     "start": "node --trace-warnings --abort-on-uncaught-exception --unhandled-rejections=strict dist/index.js",
     "test": "jest --forceExit --detectOpenHandles --coverage --verbose"
   },
@@ -42,7 +42,6 @@
     "@well-known-components/metrics": "^1.1.3",
     "@well-known-components/nats-component": "^1.0.0-20220722202432.commit-34395ec",
     "google-protobuf": "^3.20.1",
-    "isomorphic-fetch": "^3.0.0",
     "jsonwebtoken": "^8.5.1",
     "mitt": "^3.0.0",
     "protoc-gen-dcl": "^1.0.0-20220109214200.commit-f45e34a",

@@ -56,6 +56,9 @@ build: ${PBS_TS}
 	@mkdir -p dist
 	@./node_modules/.bin/tsc -p tsconfig.json
 
+start: build
+	npm start
+
 lint:
 	@node_modules/.bin/eslint . --ext .ts
 
