@@ -1,5 +1,5 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
-import { JSONCodec } from '@well-known-components/nats-component'
+import { decodeJson } from '@well-known-components/nats-component'
 import { BaseComponents, Subscription } from '../types'
 
 export type ServiceDiscoveryMessage = {
@@ -23,7 +23,6 @@ export async function createServiceDiscoveryComponent(
 
   const { nats, logs, config } = components
   const logger = logs.getLogger('Service Discovery')
-  const jsonCodec = JSONCodec()
 
   const clusterStatus = new Map<string, any>()
   const lastStatusUpdate = new Map<string, number>()
@@ -38,7 +37,7 @@ export async function createServiceDiscoveryComponent(
     ;(async () => {
       for await (const message of subscription.generator) {
         try {
-          const discoveryMsg = jsonCodec.decode(message.data) as ServiceDiscoveryMessage
+          const discoveryMsg = decodeJson(message.data) as ServiceDiscoveryMessage
           clusterStatus.set(discoveryMsg.serverName, discoveryMsg.status)
           lastStatusUpdate.set(discoveryMsg.serverName, Date.now())
         } catch (err: any) {
