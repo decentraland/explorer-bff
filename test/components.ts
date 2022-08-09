@@ -40,12 +40,12 @@ async function createTestWsComponent(
 async function initComponents(): Promise<TestComponents> {
   const components = await originalInitComponents()
 
-  const { config, logs } = components
+  const { config } = components
 
   return {
     ...components,
     localFetch: await createLocalFetchCompoment(config),
-    nats: await createLocalNatsComponent({ config, logs }),
+    nats: await createLocalNatsComponent(),
     createLocalWebSocket: await createTestWsComponent({ config })
   }
 }
