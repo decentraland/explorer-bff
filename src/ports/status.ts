@@ -15,6 +15,7 @@ export type ServiceStatus = {
 
 export type LighthouseStatus = ServiceStatus & {
   realmName: string
+  usersCount: number
 }
 
 export type IStatusComponent = IBaseComponent & {
