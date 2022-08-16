@@ -24,7 +24,8 @@ describe('about-controller-unit', () => {
     time,
     version: 'lighthouse-1',
     commitHash: 'lighthouse-hash',
-    realmName: 'lighthouse-test'
+    realmName: 'lighthouse-test',
+    usersCount: 0
   }
 
   const metrics = createTestMetricsComponent(metricDeclarations)
