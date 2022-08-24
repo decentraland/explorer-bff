@@ -38,6 +38,7 @@ function createChannelSubscription<T>(
 
   run().catch((err) => {
     logger.error(err)
+    ch.close()
   })
 
   return ch
