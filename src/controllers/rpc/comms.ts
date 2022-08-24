@@ -1,6 +1,12 @@
 import { RpcServerModule } from '@dcl/rpc/dist/codegen'
-import { RpcContext } from '../../types'
-import { CommsServiceDefinition } from '../bff-proto/comms-service'
+import { pushableChannel } from '@dcl/rpc/dist/push-channel'
+import { NatsMsg } from '@well-known-components/nats-component/dist/types'
+import { RpcContext, Channel, BaseComponents } from '../../types'
+import {
+  CommsServiceDefinition,
+  PeerTopicSubscriptionResultElem,
+  SystemTopicSubscriptionResultElem
+} from '../bff-proto/comms-service'
 
 export const topicRegex = /^[^\.]+(\.[^\.]+)*$/
 
@@ -8,6 +14,34 @@ export const topicRegex = /^[^\.]+(\.[^\.]+)*$/
 // users "hacking" the NATS messages
 export const saltedPrefix = 'client-proto.'
 export const peerPrefix = `${saltedPrefix}peer.`
+
+function createChannelSubscription<T>(
+  { logs, nats }: Pick<BaseComponents, 'logs' | 'nats'>,
+  topic: string,
+  transform: (m: NatsMsg) => T
+): Channel<T> {
+  const subscription = nats.subscribe(topic)
+  const logger = logs.getLogger(`channel subscription-${topic}`)
+  const ch = pushableChannel<T>(() => {
+    subscription.unsubscribe()
+  })
+
+  async function run() {
+    for await (const message of subscription.generator) {
+      ch.push(transform(message), (err?: any) => {
+        if (err) {
+          logger.debug(err)
+        }
+      })
+    }
+  }
+
+  run().catch((err) => {
+    logger.error(err)
+  })
+
+  return ch
+}
 
 export async function onPeerConnected({ components, peer }: RpcContext) {
   if (!peer) {
@@ -23,11 +57,11 @@ export async function onPeerDisconnected({ components, peer }: RpcContext) {
   }
 
   peer.peerSubscriptions.forEach((subscription) => {
-    subscription.unsubscribe()
+    subscription.close()
   })
 
   peer.systemSubscriptions.forEach((subscription) => {
-    subscription.unsubscribe()
+    subscription.close()
   })
 
   peer.peerSubscriptions.clear()
@@ -63,10 +97,15 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
     }
 
     const realTopic = `${peerPrefix}*.${topic}`
-    const subscription = components.nats.subscribe(realTopic)
+    const ch = createChannelSubscription<PeerTopicSubscriptionResultElem>(components, realTopic, (message) => {
+      let topic = message.subject.substring(peerPrefix.length)
+      const sender = topic.substring(0, topic.indexOf('.'))
+      topic = topic.substring(sender.length + 1)
+      return { payload: message.data, topic, sender }
+    })
 
     const subscriptionId = peer.subscriptionsIndex
-    peer.peerSubscriptions.set(subscriptionId, subscription)
+    peer.peerSubscriptions.set(subscriptionId, ch)
     peer.subscriptionsIndex++
     return { subscriptionId }
   },
@@ -80,10 +119,14 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
     }
 
     const realTopic = `${saltedPrefix}${topic}`
-    const subscription = components.nats.subscribe(realTopic)
+
+    const ch = createChannelSubscription<SystemTopicSubscriptionResultElem>(components, realTopic, (message) => {
+      const topic = message.subject.substring(saltedPrefix.length)
+      return { payload: message.data, topic }
+    })
 
     const subscriptionId = peer.subscriptionsIndex
-    peer.systemSubscriptions.set(subscriptionId, subscription)
+    peer.systemSubscriptions.set(subscriptionId, ch)
     peer.subscriptionsIndex++
 
     return { subscriptionId }
@@ -97,11 +140,8 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
       throw new Error(`Subscription not found: ${subscriptionId}`)
     }
 
-    for await (const message of subscription.generator) {
-      let topic = message.subject.substring(peerPrefix.length)
-      const sender = topic.substring(0, topic.indexOf('.'))
-      topic = topic.substring(sender.length + 1)
-      yield { payload: message.data, topic, sender }
+    for await (const message of subscription) {
+      yield message
     }
   },
   async *getSystemMessages({ subscriptionId }, { peer }) {
@@ -113,9 +153,8 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
       throw new Error(`Subscription not found: ${subscriptionId}`)
     }
 
-    for await (const message of subscription.generator) {
-      const topic = message.subject.substring(saltedPrefix.length)
-      yield { payload: message.data, topic }
+    for await (const message of subscription) {
+      yield message
     }
   },
   async unsubscribeToPeerMessages({ subscriptionId }, { peer }) {
@@ -123,9 +162,8 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
       throw new Error('Trying to unsubscribe from a peer that has not been registered')
     }
     const subscription = peer.peerSubscriptions.get(subscriptionId)
-
     if (subscription) {
-      subscription.unsubscribe()
+      subscription.close()
     }
 
     return { ok: true }
@@ -135,9 +173,8 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
       throw new Error('Trying to unsubscribe from a peer that has not been registered')
     }
     const subscription = peer && peer.systemSubscriptions.get(subscriptionId)
-
     if (subscription) {
-      subscription.unsubscribe()
+      subscription.close()
     }
 
     return { ok: true }

@@ -14,6 +14,10 @@ import { IServiceDiscoveryComponent } from './ports/service-discovery'
 import { IRealmComponent } from './ports/realm'
 import { CatalystContract } from '@dcl/catalyst-contracts'
 import { IStatusComponent } from './ports/status'
+import {
+  PeerTopicSubscriptionResultElem,
+  SystemTopicSubscriptionResultElem
+} from './controllers/bff-proto/comms-service'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -57,12 +61,17 @@ export type Subscription = {
   unsubscribe: () => void
 }
 
+export type Channel<T> = {
+  close: () => void
+  [Symbol.asyncIterator]: () => AsyncGenerator<T>
+}
+
 export type RpcSession = {
   port: RpcServerPort<RpcContext>
   address: string
   subscriptionsIndex: number
-  peerSubscriptions: Map<number, Subscription>
-  systemSubscriptions: Map<number, Subscription>
+  peerSubscriptions: Map<number, Channel<PeerTopicSubscriptionResultElem>>
+  systemSubscriptions: Map<number, Channel<SystemTopicSubscriptionResultElem>>
 }
 
 // components used in runtime

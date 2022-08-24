@@ -3,10 +3,14 @@ import { registerService } from '@dcl/rpc/dist/codegen'
 import { EthAddress } from '@dcl/schemas'
 import { AuthChain, Authenticator } from '@dcl/crypto'
 import { normalizeAddress } from '../../logic/address'
-import { RpcContext, RpcSession, Subscription } from '../../types'
+import { RpcContext, RpcSession, Channel } from '../../types'
 import { BffAuthenticationServiceDefinition } from '../bff-proto/authentication-service'
 import { commsModule, onPeerConnected, onPeerDisconnected } from './comms'
-import { CommsServiceDefinition } from '../bff-proto/comms-service'
+import {
+  CommsServiceDefinition,
+  PeerTopicSubscriptionResultElem,
+  SystemTopicSubscriptionResultElem
+} from '../bff-proto/comms-service'
 
 // TODO: use proper component-based loggers
 
@@ -80,8 +84,8 @@ async function registerAuthenticatedConnectionModules(
     address,
     port,
     subscriptionsIndex: 0,
-    peerSubscriptions: new Map<number, Subscription>(),
-    systemSubscriptions: new Map<number, Subscription>()
+    peerSubscriptions: new Map<number, Channel<PeerTopicSubscriptionResultElem>>(),
+    systemSubscriptions: new Map<number, Channel<SystemTopicSubscriptionResultElem>>()
   }
 
   // hydrate the context with the session
