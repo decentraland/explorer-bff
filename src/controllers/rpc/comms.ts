@@ -1,5 +1,5 @@
 import { RpcServerModule } from '@dcl/rpc/dist/codegen'
-import { pushableChannel } from '@dcl/rpc/dist/push-channel'
+import { pushableChannel } from '@well-known-components/pushable-channel'
 import { NatsMsg } from '@well-known-components/nats-component/dist/types'
 import { RpcContext, Channel, BaseComponents } from '../../types'
 import {
@@ -15,10 +15,13 @@ export const topicRegex = /^[^\.]+(\.[^\.]+)*$/
 export const saltedPrefix = 'client-proto.'
 export const peerPrefix = `${saltedPrefix}peer.`
 
+const MAX_PEER_MESSAGES_BUFFER_SIZE = 50
+
 function createChannelSubscription<T>(
   { logs, nats }: Pick<BaseComponents, 'logs' | 'nats'>,
   topic: string,
-  transform: (m: NatsMsg) => T
+  transform: (m: NatsMsg) => T,
+  maxBufferSize?: number
 ): Channel<T> {
   const subscription = nats.subscribe(topic)
   const logger = logs.getLogger(`channel subscription-${topic}`)
@@ -28,9 +31,12 @@ function createChannelSubscription<T>(
 
   async function run() {
     for await (const message of subscription.generator) {
+      if (maxBufferSize && ch.bufferSize() > maxBufferSize) {
+        continue
+      }
       ch.push(transform(message), (err?: any) => {
         if (err) {
-          logger.debug(err)
+          logger.error(err)
         }
       })
     }
@@ -98,12 +104,17 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
     }
 
     const realTopic = `${peerPrefix}*.${topic}`
-    const ch = createChannelSubscription<PeerTopicSubscriptionResultElem>(components, realTopic, (message) => {
-      let topic = message.subject.substring(peerPrefix.length)
-      const sender = topic.substring(0, topic.indexOf('.'))
-      topic = topic.substring(sender.length + 1)
-      return { payload: message.data, topic, sender }
-    })
+    const ch = createChannelSubscription<PeerTopicSubscriptionResultElem>(
+      components,
+      realTopic,
+      (message) => {
+        let topic = message.subject.substring(peerPrefix.length)
+        const sender = topic.substring(0, topic.indexOf('.'))
+        topic = topic.substring(sender.length + 1)
+        return { payload: message.data, topic, sender }
+      },
+      MAX_PEER_MESSAGES_BUFFER_SIZE
+    )
 
     const subscriptionId = peer.subscriptionsIndex
     peer.peerSubscriptions.set(subscriptionId, ch)
