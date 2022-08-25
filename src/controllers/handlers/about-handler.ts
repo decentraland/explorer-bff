@@ -15,6 +15,7 @@ export type About = {
     healthy: boolean
     version?: string
     commitHash?: string
+    usersCount?: number
   }
   lambdas: {
     healthy: boolean
@@ -38,7 +39,6 @@ export async function aboutHandler(
   const { realm, config, status, serviceDiscovery, rpcSessions } = context.components
   const commsProtocol = await config.requireString('COMMS_PROTOCOL')
 
-  const userCount = rpcSessions.sessions.size
   const result: About = {
     healthy: false,
     content: {
@@ -57,7 +57,7 @@ export async function aboutHandler(
     bff: {
       healthy: true,
       commitHash: await config.getString('COMMIT_HASH'),
-      userCount
+      userCount: rpcSessions.sessions.size
     }
   }
 
@@ -88,9 +88,10 @@ export async function aboutHandler(
   if (commsProtocol === 'v2') {
     const lighthouseStatus = await status.getLighthouseStatus()
     if (lighthouseStatus) {
-      const { version, commitHash, realmName } = lighthouseStatus
+      const { version, commitHash, realmName, usersCount } = lighthouseStatus
       result.comms.version = version
       result.comms.commitHash = commitHash
+      result.comms.usersCount = usersCount
       result.configurations.realmName = await realm.getName(realmName)
     }
   } else {

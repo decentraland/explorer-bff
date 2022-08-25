@@ -15,6 +15,7 @@ export type ServiceStatus = {
 
 export type LighthouseStatus = ServiceStatus & {
   realmName: string
+  usersCount: number
 }
 
 export type IStatusComponent = IBaseComponent & {
@@ -122,7 +123,8 @@ export async function createStatusComponent(
         time: Date.now(),
         realmName: data.name,
         version: data.version,
-        commitHash: data.env.commitHash
+        commitHash: data.env.commitHash,
+        usersCount: data.usersCount
       }
 
       return lastLighthouseStatus
