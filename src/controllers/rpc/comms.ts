@@ -32,6 +32,7 @@ function createChannelSubscription<T>(
   async function run() {
     for await (const message of subscription.generator) {
       if (maxBufferSize && ch.bufferSize() > maxBufferSize) {
+        logger.warn('Discarding messages because push channel buffer is full')
         continue
       }
       ch.push(transform(message), (err?: any) => {
