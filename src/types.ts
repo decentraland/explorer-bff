@@ -56,11 +56,6 @@ export type NatsMsg = {
   data: Uint8Array
 }
 
-export type Subscription = {
-  generator: AsyncIterable<NatsMsg>
-  unsubscribe: () => void
-}
-
 export type Channel<T> = {
   close: () => void
   [Symbol.asyncIterator]: () => AsyncGenerator<T>
