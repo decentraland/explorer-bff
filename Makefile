@@ -1,8 +1,8 @@
 PROTOBUF_VERSION = 3.19.1
 UNAME := $(shell uname)
 
-PROTO_FILES := $(wildcard src/controllers/bff-proto/*.proto)
-PBS_TS = $(PROTO_FILES:src/controllers/bff-proto/%.proto=src/controllers/bff-proto/%.ts)
+PROTO_FILES := $(wildcard node_modules/@dcl/protocol/bff/*.proto)
+PBS_TS = $(PROTO_FILES:node_modules/@dcl/protocol/bff/%.proto=src/controllers/bff-proto/%.ts)
 
 export PATH := node_modules/.bin:/usr/local/include/:protoc3/bin:$(PATH)
 
@@ -43,13 +43,14 @@ test: build
 test-watch:
 	node_modules/.bin/jest --detectOpenHandles --colors --runInBand --watch $(TESTARGS) --coverage
 
-src/controllers/bff-proto/%.ts: protoc3/bin/protoc src/controllers/bff-proto/%.proto
+src/controllers/bff-proto/%.ts: protoc3/bin/protoc node_modules/@dcl/protocol/bff/%.proto
 	protoc3/bin/protoc \
 		--plugin=./node_modules/.bin/protoc-gen-ts_proto \
 		--ts_proto_opt=esModuleInterop=true,returnObservable=false,outputServices=generic-definitions \
 		--ts_proto_out="$(PWD)/src/controllers/bff-proto" \
-		-I="$(PWD)/src/controllers/bff-proto" \
-		"$(PWD)/src/controllers/bff-proto/$*.proto"
+		-I="$(PWD)/node_modules/protobufjs" \
+		-I="$(PWD)/node_modules/@dcl/protocol/bff" \
+		"$(PWD)/node_modules/@dcl/protocol/bff/$*.proto"
 
 build: ${PBS_TS}
 	@rm -rf dist || true
