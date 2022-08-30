@@ -32,7 +32,6 @@
     "@dcl/crypto": "^3.1.1",
     "@dcl/rpc": "^1.0.2",
     "@dcl/schemas": "^5.10.0",
-    "@dcl/catalyst-contracts": "^2.1.0",
     "@dcl/protocol": "https://sdk-team-cdn.decentraland.org/@dcl/protocol/branch//dcl-protocol-1.0.0-2958890464.commit-84b41d5.tgz",
     "@types/google-protobuf": "^3.15.6",
     "@types/ws": "^8.5.3",
