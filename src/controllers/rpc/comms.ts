@@ -23,29 +23,26 @@ function createChannelSubscription<T>(
   transform: (m: NatsMsg) => T,
   maxBufferSize?: number
 ): Channel<T> {
-  const subscription = nats.subscribe(topic)
   const logger = logs.getLogger(`channel subscription-${topic}`)
   const ch = pushableChannel<T>(() => {
     subscription.unsubscribe()
   })
 
-  async function run() {
-    for await (const message of subscription.generator) {
-      if (maxBufferSize && ch.bufferSize() > maxBufferSize) {
-        logger.warn('Discarding messages because push channel buffer is full')
-        continue
-      }
-      ch.push(transform(message), (err?: any) => {
-        if (err) {
-          logger.error(err)
-        }
-      })
+  const subscription = nats.subscribe(topic, (err, message) => {
+    if (err) {
+      logger.error(err)
+      ch.close()
+      return
     }
-  }
-
-  run().catch((err) => {
-    logger.error(err)
-    ch.close()
+    if (maxBufferSize && ch.bufferSize() > maxBufferSize) {
+      logger.warn('Discarding messages because push channel buffer is full')
+      return
+    }
+    ch.push(transform(message), (err?: any) => {
+      if (err) {
+        logger.error(err)
+      }
+    })
   })
 
   return ch
@@ -177,6 +174,7 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
     const subscription = peer.peerSubscriptions.get(subscriptionId)
     if (subscription) {
       subscription.close()
+      peer.peerSubscriptions.delete(subscriptionId)
     }
 
     return { ok: true }
@@ -188,6 +186,7 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
     const subscription = peer && peer.systemSubscriptions.get(subscriptionId)
     if (subscription) {
       subscription.close()
+      peer.systemSubscriptions.delete(subscriptionId)
     }
 
     return { ok: true }

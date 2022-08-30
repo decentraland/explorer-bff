@@ -1,6 +1,6 @@
 import { IBaseComponent } from '@well-known-components/interfaces'
-import { decodeJson } from '@well-known-components/nats-component'
-import { BaseComponents, Subscription } from '../types'
+import { decodeJson, Subscription } from '@well-known-components/nats-component'
+import { BaseComponents } from '../types'
 
 export type ServiceDiscoveryMessage = {
   serverName: string
@@ -33,18 +33,19 @@ export async function createServiceDiscoveryComponent(
   })
 
   async function setupServiceDiscovery() {
-    subscription = nats.subscribe('service.discovery')
-    ;(async () => {
-      for await (const message of subscription.generator) {
-        try {
-          const discoveryMsg = decodeJson(message.data) as ServiceDiscoveryMessage
-          clusterStatus.set(discoveryMsg.serverName, discoveryMsg.status)
-          lastStatusUpdate.set(discoveryMsg.serverName, Date.now())
-        } catch (err: any) {
-          logger.error(`Could not decode status discovery message: ${err.message}`)
-        }
+    subscription = nats.subscribe('service.discovery', (err, message) => {
+      if (err) {
+        logger.error(err)
+        return
       }
-    })().catch((err: any) => logger.error(`error processing subscription message; ${err.toString()}`))
+      try {
+        const discoveryMsg = decodeJson(message.data) as ServiceDiscoveryMessage
+        clusterStatus.set(discoveryMsg.serverName, discoveryMsg.status)
+        lastStatusUpdate.set(discoveryMsg.serverName, Date.now())
+      } catch (err: any) {
+        logger.error(`Could not decode status discovery message: ${err.message}`)
+      }
+    })
   }
 
   async function setupHealthCheck() {
