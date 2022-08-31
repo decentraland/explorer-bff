@@ -17,36 +17,8 @@ export const peerPrefix = `${saltedPrefix}peer.`
 
 const MAX_PEER_MESSAGES_BUFFER_SIZE = 50
 
-function createChannelSubscription<T>(
-  { logs, nats }: Pick<BaseComponents, 'logs' | 'nats'>,
-  topic: string,
-  transform: (m: NatsMsg) => T,
-  maxBufferSize?: number
-): Channel<T> {
-  const logger = logs.getLogger(`channel subscription-${topic}`)
-  const ch = pushableChannel<T>(() => {
-    subscription.unsubscribe()
-  })
-
-  const subscription = nats.subscribe(topic, (err, message) => {
-    if (err) {
-      logger.error(err)
-      ch.close()
-      return
-    }
-    if (maxBufferSize && ch.bufferSize() > maxBufferSize) {
-      logger.warn('Discarding messages because push channel buffer is full')
-      return
-    }
-    ch.push(transform(message), (err?: any) => {
-      if (err) {
-        logger.error(err)
-      }
-    })
-  })
-
-  return ch
-}
+type PeerChannel = Channel<PeerTopicSubscriptionResultElem>
+const localSubcriptions = new Map<string, Set<PeerChannel>>()
 
 export async function onPeerConnected({ components, peer }: RpcContext) {
   if (!peer) {
@@ -77,7 +49,7 @@ export async function onPeerDisconnected({ components, peer }: RpcContext) {
 }
 
 export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = {
-  async publishToTopic({ topic, payload }, { peer, components }) {
+  async publishToTopic({ topic, payload }, { peer, components: { logs, nats } }) {
     if (!peer) {
       throw new Error('Trying to publish from a peer that has not been registered')
     }
@@ -86,13 +58,30 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
       throw new Error(`Invalid topic ${topic}`)
     }
 
-    const realTopic = `${peerPrefix}${peer.address}.${topic}`
-    components.nats.publish(realTopic, payload)
+    const logger = logs.getLogger(`publishing to ${topic}`)
+
+    // TODO: check this
+    if (topic.includes('heartbeat')) {
+      const realTopic = `${peerPrefix}${peer.address}.${topic}`
+      nats.publish(realTopic, payload)
+    } else {
+      const chs = localSubcriptions.get(topic)
+      if (chs) {
+        chs.forEach((ch) => {
+          ch.push({ payload, topic, sender: peer.address }, (err?: any) => {
+            if (err) {
+              logger.error(err)
+            }
+          })
+        })
+      }
+    }
+
     return {
       ok: true
     }
   },
-  async subscribeToPeerMessages({ topic }, { components, peer }) {
+  async subscribeToPeerMessages({ topic }, { components: { logs, nats }, peer }) {
     if (!peer) {
       throw new Error('Trying to subscribe a peer that has not been registered')
     }
@@ -101,25 +90,45 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
       throw new Error(`Invalid topic ${topic}`)
     }
 
-    const realTopic = `${peerPrefix}*.${topic}`
-    const ch = createChannelSubscription<PeerTopicSubscriptionResultElem>(
-      components,
-      realTopic,
-      (message) => {
-        let topic = message.subject.substring(peerPrefix.length)
-        const sender = topic.substring(0, topic.indexOf('.'))
-        topic = topic.substring(sender.length + 1)
-        return { payload: message.data, topic, sender }
-      },
-      MAX_PEER_MESSAGES_BUFFER_SIZE
-    )
+    const logger = logs.getLogger(`peer subscription-${topic}`)
+    const ch = pushableChannel<PeerTopicSubscriptionResultElem>(() => {
+      const chs = localSubcriptions.get(topic)
+      if (chs) {
+        chs.delete(ch)
+      }
+      subscription.unsubscribe()
+    })
+
+    const subscription = nats.subscribe(`${peerPrefix}*.${topic}`, (err, message) => {
+      if (err) {
+        logger.error(err)
+        ch.close()
+        return
+      }
+      if (ch.bufferSize() > MAX_PEER_MESSAGES_BUFFER_SIZE) {
+        logger.warn('Discarding messages because push channel buffer is full')
+        return
+      }
+      let topic = message.subject.substring(peerPrefix.length)
+      const sender = topic.substring(0, topic.indexOf('.'))
+      topic = topic.substring(sender.length + 1)
+      ch.push({ payload: message.data, topic, sender }, (err?: any) => {
+        if (err) {
+          logger.error(err)
+        }
+      })
+    })
+
+    const l = localSubcriptions.get(topic) || new Set<PeerChannel>()
+    l.add(ch)
+    localSubcriptions.set(topic, l)
 
     const subscriptionId = peer.subscriptionsIndex
     peer.peerSubscriptions.set(subscriptionId, ch)
     peer.subscriptionsIndex++
     return { subscriptionId }
   },
-  async subscribeToSystemMessages({ topic }, { components, peer }) {
+  async subscribeToSystemMessages({ topic }, { components: { logs, nats }, peer }) {
     if (!peer) {
       throw new Error('Trying to subscribe a peer that has not been registered')
     }
@@ -128,11 +137,25 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
       throw new Error(`Invalid topic ${topic}`)
     }
 
-    const realTopic = `${saltedPrefix}${topic}`
+    const logger = logs.getLogger(`system subscription-${topic}`)
 
-    const ch = createChannelSubscription<SystemTopicSubscriptionResultElem>(components, realTopic, (message) => {
+    const ch = pushableChannel<SystemTopicSubscriptionResultElem>(() => {
+      subscription.unsubscribe()
+    })
+
+    const subscription = nats.subscribe(`${saltedPrefix}${topic}`, (err, message) => {
+      if (err) {
+        logger.error(err)
+        ch.close()
+        return
+      }
+
       const topic = message.subject.substring(saltedPrefix.length)
-      return { payload: message.data, topic }
+      ch.push({ payload: message.data, topic }, (err?: any) => {
+        if (err) {
+          logger.error(err)
+        }
+      })
     })
 
     const subscriptionId = peer.subscriptionsIndex

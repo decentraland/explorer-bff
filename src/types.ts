@@ -58,6 +58,7 @@ export type NatsMsg = {
 
 export type Channel<T> = {
   close: () => void
+  push: (message: T, cb: (err?: any) => void) => void
   [Symbol.asyncIterator]: () => AsyncGenerator<T>
 }
 
