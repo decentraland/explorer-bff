@@ -1,33 +1,12 @@
 import { HandlerContextWithPath } from '../../types'
-
-export type About = {
-  healthy: boolean
-  configurations: {
-    realmName?: string
-  }
-  content: {
-    healthy: boolean
-    version?: string
-    commitHash?: string
-  }
-  comms: {
-    protocol: string
-    healthy: boolean
-    version?: string
-    commitHash?: string
-    usersCount?: number
-  }
-  lambdas: {
-    healthy: boolean
-    version?: string
-    commitHash?: string
-  }
-  bff: {
-    healthy: boolean
-    commitHash?: string
-    userCount: number
-  }
-}
+import {
+  AboutResponse,
+  AboutResponse_AboutConfiguration,
+  AboutResponse_BffInfo,
+  AboutResponse_CommsInfo,
+  AboutResponse_ContentInfo,
+  AboutResponse_LambdasInfo
+} from '../bff-proto/http-endpoints'
 
 // handlers arguments only type what they need, to make unit testing easier
 export async function aboutHandler(
@@ -39,74 +18,76 @@ export async function aboutHandler(
   const { realm, config, status, serviceDiscovery, rpcSessions } = context.components
   const commsProtocol = await config.requireString('COMMS_PROTOCOL')
 
-  const result: About = {
+  const configurations: AboutResponse_AboutConfiguration = {}
+  const comms: AboutResponse_CommsInfo = {
     healthy: false,
-    content: {
-      healthy: false
-    },
-    configurations: {
-      realmName: undefined
-    },
-    comms: {
-      protocol: commsProtocol,
-      healthy: false
-    },
-    lambdas: {
-      healthy: false
-    },
-    bff: {
-      healthy: true,
-      commitHash: await config.getString('COMMIT_HASH'),
-      userCount: rpcSessions.sessions.size
-    }
+    protocol: commsProtocol
+  }
+  const content: AboutResponse_ContentInfo = {
+    healthy: false
+  }
+  const lambdas: AboutResponse_LambdasInfo = {
+    healthy: false
+  }
+  const bff: AboutResponse_BffInfo = {
+    healthy: true,
+    commitHash: await config.getString('COMMIT_HASH'),
+    userCount: rpcSessions.sessions.size
   }
 
-  const [health, contentStatus, lambdasStatus] = await Promise.all([
+  const [lambdasHealth, contentStatus, lambdasStatus] = await Promise.all([
     status.getLambdasHealth(),
     status.getContentStatus(),
     status.getLambdasStatus()
   ])
 
-  if (health) {
-    result.comms.healthy = health.comms
-    result.content.healthy = health.content
-    result.lambdas.healthy = health.lambdas
+  if (lambdasHealth) {
+    comms.healthy = lambdasHealth.comms
+    content.healthy = lambdasHealth.content
+    lambdas.healthy = lambdasHealth.lambdas
   }
 
   if (contentStatus) {
     const { version, commitHash } = contentStatus
-    result.content.version = version
-    result.content.commitHash = commitHash
+    content.version = version
+    content.commitHash = commitHash
   }
 
   if (lambdasStatus) {
     const { version, commitHash } = lambdasStatus
-    result.lambdas.version = version
-    result.lambdas.commitHash = commitHash
+    lambdas.version = version
+    lambdas.commitHash = commitHash
   }
 
   if (commsProtocol === 'v2') {
     const lighthouseStatus = await status.getLighthouseStatus()
     if (lighthouseStatus) {
       const { version, commitHash, realmName, usersCount } = lighthouseStatus
-      result.comms.version = version
-      result.comms.commitHash = commitHash
-      result.comms.usersCount = usersCount
-      result.configurations.realmName = await realm.getName(realmName)
+      comms.version = version
+      comms.commitHash = commitHash
+      comms.usersCount = usersCount
+      configurations.realmName = await realm.getName(realmName)
     }
   } else {
     const clusterStatus = await serviceDiscovery.getClusterStatus()
     if (clusterStatus.archipelago) {
-      result.comms.healthy = true
-      result.comms.protocol = 'v3'
-      result.comms.commitHash = clusterStatus.archipelago.commitHash
+      comms.healthy = true
+      comms.protocol = 'v3'
+      comms.commitHash = clusterStatus.archipelago.commitHash
     } else {
-      result.comms.healthy = false
+      comms.healthy = false
     }
-    result.configurations.realmName = await realm.getName()
+    configurations.realmName = await realm.getName()
   }
 
-  result.healthy = result.content.healthy && result.lambdas.healthy && result.comms.healthy
+  const result: AboutResponse = {
+    healthy: content.healthy && lambdas.healthy && comms.healthy,
+    content,
+    configurations,
+    comms,
+    lambdas,
+    bff
+  }
 
   return {
     status: result.healthy ? 200 : 503,

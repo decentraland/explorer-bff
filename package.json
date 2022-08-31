@@ -30,6 +30,7 @@
   "dependencies": {
     "@dcl/catalyst-contracts": "^3.0.0",
     "@dcl/crypto": "^3.1.1",
+    "@dcl/protocol": "^1.0.0-2959062070.commit-c98319b",
     "@dcl/rpc": "^1.0.2",
     "@dcl/schemas": "^5.10.0",
     "@types/google-protobuf": "^3.15.6",
