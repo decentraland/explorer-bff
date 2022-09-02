@@ -95,6 +95,9 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
       const chs = localSubcriptions.get(topic)
       if (chs) {
         chs.delete(ch)
+        if (chs.size === 0) {
+          localSubcriptions.delete(topic)
+        }
       }
       subscription.unsubscribe()
     })
