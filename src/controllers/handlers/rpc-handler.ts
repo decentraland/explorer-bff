@@ -11,6 +11,7 @@ import { WebSocket } from 'ws'
 export async function websocketRpcHandler(context: IHttpServerComponent.DefaultContext<GlobalContext>) {
   const { logs } = context.components
   const logger = logs.getLogger('ws')
+
   return upgradeWebSocketResponse((socket) => {
     let isAlive = true
     const ws = socket as any as WebSocket
@@ -36,5 +37,8 @@ export async function websocketRpcHandler(context: IHttpServerComponent.DefaultC
     const transport = WebSocketTransport(socket)
     // then we attach the transport to the rpcServer that will handle it
     context.components.rpcServer.attachTransport(transport, context)
+
+    // log all transport errors
+    transport.on('error', logger.error)
   })
 }
