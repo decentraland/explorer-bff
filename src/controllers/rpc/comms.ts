@@ -141,26 +141,28 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
 
     return { subscriptionId }
   },
-  async *getPeerMessages({ subscriptionId }, { peer }) {
+  async *getPeerMessages({ subscriptionId }, { peer, components }) {
     if (!peer) {
       throw new Error('Trying to get messages for a peer that has not been registered')
     }
     const subscription = peer.peerSubscriptions.get(subscriptionId)
     if (!subscription) {
-      throw new Error(`Subscription not found: ${subscriptionId}`)
+      components.logs.getLogger('getPeerMessages').error('Subscription not found', { subscriptionId })
+      return
     }
 
     for await (const message of subscription) {
       yield message
     }
   },
-  async *getSystemMessages({ subscriptionId }, { peer }) {
+  async *getSystemMessages({ subscriptionId }, { peer, components }) {
     if (!peer) {
       throw new Error('Trying to get messages for a peer that has not been registered')
     }
     const subscription = peer.systemSubscriptions.get(subscriptionId)
     if (!subscription) {
-      throw new Error(`Subscription not found: ${subscriptionId}`)
+      components.logs.getLogger('getSystemMessages').error('Subscription not found', { subscriptionId })
+      return
     }
 
     for await (const message of subscription) {
