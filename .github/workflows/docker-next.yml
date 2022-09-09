@@ -11,6 +11,7 @@ jobs:
     with:
       service-name: explorer-bff
       deployment-environment: dev
+      docker-tag: next
     secrets:
       QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
       QUAY_TOKEN: ${{ secrets.QUAY_TOKEN }}
