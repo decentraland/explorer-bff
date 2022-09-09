@@ -38,6 +38,10 @@ export async function websocketRpcHandler(context: IHttpServerComponent.DefaultC
     // then we attach the transport to the rpcServer that will handle it
     context.components.rpcServer.attachTransport(transport, context)
     // log all transport errors
-    transport.on('error', logger.error)
+    transport.on('error', (err) => {
+      if (err && err.message && !err.message.includes('Transport closed while waiting the ACK')) {
+        logger.error(err)
+      }
+    })
   })
 }
