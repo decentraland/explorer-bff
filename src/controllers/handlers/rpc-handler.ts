@@ -37,7 +37,6 @@ export async function websocketRpcHandler(context: IHttpServerComponent.DefaultC
     const transport = WebSocketTransport(socket)
     // then we attach the transport to the rpcServer that will handle it
     context.components.rpcServer.attachTransport(transport, context)
-
     // log all transport errors
     transport.on('error', logger.error)
   })

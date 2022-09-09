@@ -3,7 +3,7 @@ import { createDotEnvConfigComponent } from '@well-known-components/env-config-p
 import { createServerComponent, createStatusCheckComponent } from '@well-known-components/http-server'
 import { createLogComponent } from '@well-known-components/logger'
 import { createFetchComponent } from './ports/fetch'
-import { createMetricsComponent } from '@well-known-components/metrics'
+import { createMetricsComponent, instrumentHttpServerWithMetrics } from '@well-known-components/metrics'
 import { AppComponents, GlobalContext } from './types'
 import { metricDeclarations } from './metrics'
 import { createWsComponent } from './ports/ws'
@@ -22,8 +22,8 @@ export async function initComponents(): Promise<AppComponents> {
   const config = await createDotEnvConfigComponent({ path: ['.env.default', '.env'] })
 
   const ethNetwork = (await config.getString('ETH_NETWORK')) ?? DEFAULT_ETH_NETWORK
-
-  const logs = await createLogComponent({})
+  const metrics = await createMetricsComponent(metricDeclarations, { config })
+  const logs = await createLogComponent({ metrics })
   const ws = await createWsComponent({ logs })
   const server = await createServerComponent<GlobalContext>(
     { config, logs, ws: ws.ws },
@@ -39,7 +39,7 @@ export async function initComponents(): Promise<AppComponents> {
   })
   const statusChecks = await createStatusCheckComponent({ server, config })
   const fetch = await createFetchComponent()
-  const metrics = await createMetricsComponent(metricDeclarations, { server, config })
+
   const nats = await createNatsComponent({ config, logs })
   const serviceDiscovery = await createServiceDiscoveryComponent({ nats, logs, config })
   const ethereumProvider = new HTTPProvider(
@@ -51,6 +51,7 @@ export async function initComponents(): Promise<AppComponents> {
   const realm = await createRealmComponent({ config, logs, fetch, contract })
   const status = await createStatusComponent({ config, logs, fetch })
 
+  await instrumentHttpServerWithMetrics({ server, metrics, config })
   await observeBuildInfo({ config, metrics })
 
   return {
