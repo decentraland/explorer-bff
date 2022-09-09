@@ -23,7 +23,7 @@ function createChannelSubscription<T>(
   transform: (m: NatsMsg) => T,
   maxBufferSize?: number
 ): Channel<T> {
-  const logger = logs.getLogger(`channel subscription-${topic}`)
+  const logger = logs.getLogger(`ChannelSubscription`)
   const ch = pushableChannel<T>(() => {
     subscription.unsubscribe()
   })
