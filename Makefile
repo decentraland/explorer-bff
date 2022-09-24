@@ -60,6 +60,15 @@ build: ${PBS_TS}
 start: build
 	npm start
 
+start-org: build
+	DOT_ENV=.env.org npm start
+
+start-zone: build
+	DOT_ENV=.env.zone npm start
+
+start-fixed: build
+	DOT_ENV=.env.fixed npm start
+
 lint:
 	@node_modules/.bin/eslint . --ext .ts
 

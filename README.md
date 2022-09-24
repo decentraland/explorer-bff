@@ -57,5 +57,4 @@ Use that build to test the integration entirely, and leverage the [decentraland/
 #### Other
 
 - `ETH_NETWORK`: Network for the Ethereum provider
-- `COMMS_PROTOCOL`: (Defaults to v2) Comms Protocol version indicating the use of the legacy Lighthouse or the new Archipelago service
 - `SERVICE_DISCOVERY_HEALTH_CHECK_INTERVAL`: (Defaults to 60000) Interval in milliseconds for checking status updates from external services

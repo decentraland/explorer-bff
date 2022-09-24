@@ -10,14 +10,15 @@ import { metricDeclarations } from './metrics'
 import { INatsComponent } from '@well-known-components/nats-component/dist/types'
 import { WebSocket } from 'ws'
 import { RpcServer, RpcServerPort } from '@dcl/rpc'
-import { IServiceDiscoveryComponent } from './ports/service-discovery'
-import { IRealmComponent } from './ports/realm'
+import { IServiceDiscoveryComponent } from './adapters/service-discovery'
+import { IRealmComponent } from './adapters/realm'
 import { CatalystContract } from '@dcl/catalyst-contracts'
-import { IStatusComponent } from './ports/status'
+import { IStatusComponent } from './adapters/status'
 import {
   PeerTopicSubscriptionResultElem,
   SystemTopicSubscriptionResultElem
 } from './controllers/bff-proto/comms-service'
+import { ICommsModeComponent } from './adapters/comms-fixed-adapter'
 
 export type GlobalContext = {
   components: BaseComponents
@@ -45,6 +46,8 @@ export type BaseComponents = {
   status: IStatusComponent
 
   rpcServer: RpcServer<RpcContext>
+
+  comms: ICommsModeComponent
 
   rpcSessions: {
     sessions: Map<string, RpcSession>

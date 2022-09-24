@@ -11,18 +11,14 @@ import {
 // handlers arguments only type what they need, to make unit testing easier
 export async function aboutHandler(
   context: Pick<
-    HandlerContextWithPath<'serviceDiscovery' | 'status' | 'realm' | 'config' | 'rpcSessions' | 'metrics', '/about'>,
+    HandlerContextWithPath<'status' | 'realm' | 'config' | 'rpcSessions' | 'metrics' | 'comms', '/about'>,
     'url' | 'components'
   >
 ) {
-  const { realm, config, status, serviceDiscovery, rpcSessions } = context.components
-  const commsProtocol = await config.requireString('COMMS_PROTOCOL')
+  const { realm, config, status, rpcSessions } = context.components
 
   const configurations: AboutResponse_AboutConfiguration = {}
-  const comms: AboutResponse_CommsInfo = {
-    healthy: false,
-    protocol: commsProtocol
-  }
+  const comms = await context.components.comms.getStatus()
   const content: AboutResponse_ContentInfo = {
     healthy: false
   }
@@ -42,41 +38,28 @@ export async function aboutHandler(
   ])
 
   if (lambdasHealth) {
-    comms.healthy = lambdasHealth.comms
     content.healthy = lambdasHealth.content
     lambdas.healthy = lambdasHealth.lambdas
   }
 
   if (contentStatus) {
-    const { version, commitHash } = contentStatus
+    const { version, commitHash, publicUrl } = contentStatus
     content.version = version
     content.commitHash = commitHash
+    content.publicUrl = publicUrl
   }
 
   if (lambdasStatus) {
-    const { version, commitHash } = lambdasStatus
+    const { version, commitHash, publicUrl } = lambdasStatus
     lambdas.version = version
     lambdas.commitHash = commitHash
+    lambdas.publicUrl = publicUrl
   }
 
-  if (commsProtocol === 'v2') {
+  if (comms.protocol === 'v2') {
     const lighthouseStatus = await status.getLighthouseStatus()
-    if (lighthouseStatus) {
-      const { version, commitHash, realmName, usersCount } = lighthouseStatus
-      comms.version = version
-      comms.commitHash = commitHash
-      comms.usersCount = usersCount
-      configurations.realmName = await realm.getName(realmName)
-    }
+    configurations.realmName = await realm.getName(lighthouseStatus?.realmName)
   } else {
-    const clusterStatus = await serviceDiscovery.getClusterStatus()
-    if (clusterStatus.archipelago) {
-      comms.healthy = true
-      comms.protocol = 'v3'
-      comms.commitHash = clusterStatus.archipelago.commitHash
-    } else {
-      comms.healthy = false
-    }
     configurations.realmName = await realm.getName()
   }
 

@@ -11,6 +11,7 @@ export type ServiceStatus = {
   time: number
   version: string
   commitHash: string
+  publicUrl: string
 }
 
 export type LighthouseStatus = ServiceStatus & {
@@ -33,8 +34,8 @@ export async function createStatusComponent(
   const { fetch, logs, config } = components
 
   const logger = logs.getLogger('status-component')
-  const lambdasUrl = await config.requireString('LAMBDAS_URL')
-  const contentUrl = await config.requireString('CONTENT_URL')
+  const lambdasUrl = new URL(await config.requireString('LAMBDAS_URL'))
+  const contentUrl = new URL(await config.requireString('CONTENT_URL'))
 
   const fetchJson = async (url: string) => {
     const response = await fetch.fetch(url, {
@@ -74,7 +75,8 @@ export async function createStatusComponent(
       lastLambdasStatus = {
         time: Date.now(),
         version: data.catalystVersion,
-        commitHash: data.commitHash
+        commitHash: data.commitHash,
+        publicUrl: lambdasUrl.toString()
       }
 
       return lastLambdasStatus
@@ -97,7 +99,8 @@ export async function createStatusComponent(
       lastContentStatus = {
         time: Date.now(),
         version: data.catalystVersion,
-        commitHash: data.commitHash
+        commitHash: data.commitHash,
+        publicUrl: contentUrl.toString()
       }
 
       return lastContentStatus
@@ -124,7 +127,8 @@ export async function createStatusComponent(
         realmName: data.name,
         version: data.version,
         commitHash: data.env.commitHash,
-        usersCount: data.usersCount
+        usersCount: data.usersCount,
+        publicUrl: lighthouseUrl
       }
 
       return lastLighthouseStatus
