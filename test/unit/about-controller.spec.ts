@@ -13,7 +13,7 @@ test('fixed adapter about response', ({ beforeStart, components, spyComponents }
   it('tests the about endpoint', async () => {
     const res = await components.localFetch.fetch('/about')
     const body = (await res.json()) as AboutResponse
-    expect(body.comms).toEqual({ healthy: true, protocol: 'v3', publicUrl: 'ws:test-adapter.com' })
+    expect(body.comms).toEqual({ healthy: true, protocol: 'v3', fixedAdapter: 'ws:test-adapter.com' })
   })
 })
 

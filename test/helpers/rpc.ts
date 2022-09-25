@@ -23,6 +23,7 @@ export function createAndAuthenticateIdentity(
     ws = createLocalWebSocket.createWs('/rpc')
     client = await createRpcClient(WebSocketTransport(ws))
     port = await client.createPort('my-port')
+    port.on('close', () => ws.close())
     const auth = loadService(port, BffAuthenticationServiceDefinition)
     const challenge = await auth.getChallenge({ address: identity.address })
     await auth.authenticate({
@@ -31,8 +32,8 @@ export function createAndAuthenticateIdentity(
   })
 
   afterAll(() => {
-    port?.close()
-    ws?.close()
+    if (port) port.close()
+    else ws?.close()
   })
 
   return {
