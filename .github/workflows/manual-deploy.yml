@@ -28,7 +28,7 @@ jobs:
         id: deploy
         uses: decentraland/dcl-deploy-action@main
         with:
-          dockerImage: "quay.io/decentraland/mini-comms:${{ inputs.tag }}"
-          serviceName: "mini-comms"
+          dockerImage: "quay.io/decentraland/explorer-bff:${{ inputs.tag }}"
+          serviceName: "explorer-bff"
           env: ${{ inputs.deployment-environment }}
           token: ${{ secrets.GITHUB_TOKEN }}
