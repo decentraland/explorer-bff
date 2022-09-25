@@ -10,7 +10,7 @@ module.exports = {
   },
   coverageDirectory: "coverage",
   collectCoverageFrom: ["src/**/*.ts", "src/**/*.js"],
-  coveragePathIgnorePatterns: ["/node_modules/", "/src/controllers/bff-proto/", "/src/controllers/proto/"],
+  coveragePathIgnorePatterns: ["/node_modules/", "/src/protocol/"],
   testMatch: ["**/*.spec.(ts)"],
   testEnvironment: "node",
 }

@@ -1,11 +1,12 @@
 import { test } from '../components'
 import { createAndAuthenticateIdentity, getModuleFuture, takeAsync } from '../helpers/rpc'
 import { delay } from '../helpers/delay'
-import {
-  CommsServiceDefinition,
-} from '../../src/protocol/bff/comms-service'
 import { saltedPrefix, peerPrefix } from '../../src/controllers/rpc/comms'
-import { PeerTopicSubscriptionResultElem, SystemTopicSubscriptionResultElem } from '../../src/protocol/bff/topics-service'
+import {
+  PeerTopicSubscriptionResultElem,
+  SystemTopicSubscriptionResultElem,
+  TopicsServiceDefinition
+} from '../../src/protocol/bff/topics-service'
 
 function saltSystemTopic(topic: string) {
   return `${saltedPrefix}${topic}`
@@ -15,9 +16,9 @@ function saltPeerTopic(peerId: string, topic: string) {
   return `${peerPrefix}${peerId}.${topic}`
 }
 
-test('rpc: RoomService sanity integration receive system message', function ({ components }) {
+test('rpc: topics service', function ({ components }) {
   const connection1 = createAndAuthenticateIdentity('connection1', components)
-  const roomServiceFuture1 = getModuleFuture(connection1, CommsServiceDefinition)
+  const roomServiceFuture1 = getModuleFuture(connection1, TopicsServiceDefinition)
 
   it('emits a message and cuts the stream', async () => {
     const { nats } = components
@@ -26,8 +27,7 @@ test('rpc: RoomService sanity integration receive system message', function ({ c
     const msg1 = new Uint8Array([1, 2, 3])
 
     async function fn() {
-      const sub = await sender.subscribeToSystemMessages({ topic })
-      for await (const msg of sender.getSystemMessages(sub)) {
+      for await (const msg of sender.systemSubscription({ topic })) {
         return msg
       }
     }
@@ -48,8 +48,7 @@ test('rpc: RoomService sanity integration receive system message', function ({ c
     const sender = await roomServiceFuture1
     const topic = 'abcd'
 
-    const sub = await sender.subscribeToSystemMessages({ topic })
-    const stream = sender.getSystemMessages(sub)[Symbol.asyncIterator]()
+    const stream = sender.systemSubscription({ topic })[Symbol.asyncIterator]()
     const finished = takeAsync<SystemTopicSubscriptionResultElem>(stream, 2)
 
     const msg1 = new Uint8Array([1, 2, 3])
@@ -69,9 +68,9 @@ test('rpc: RoomService sanity integration receive system message', function ({ c
   })
 })
 
-test('rpc: RoomService sanity integration receive peer message', function ({ components }) {
+test('rpc: topics service sanity peer message', function ({ components }) {
   const connection1 = createAndAuthenticateIdentity('connection1', components)
-  const roomServiceFuture1 = getModuleFuture(connection1, CommsServiceDefinition)
+  const roomServiceFuture1 = getModuleFuture(connection1, TopicsServiceDefinition)
 
   it('emits a message and cuts the stream', async () => {
     const { nats } = components
@@ -81,8 +80,7 @@ test('rpc: RoomService sanity integration receive peer message', function ({ com
     const msg1 = new Uint8Array([1, 2, 3])
 
     async function fn() {
-      const sub = await sender.subscribeToPeerMessages({ topic })
-      for await (const msg of sender.getPeerMessages(sub)) {
+      for await (const msg of sender.peerSubscription({ topic })) {
         return msg
       }
     }
@@ -104,8 +102,7 @@ test('rpc: RoomService sanity integration receive peer message', function ({ com
     const fromPeerId = 'peer1'
     const topic = 'abcd'
 
-    const sub = await sender.subscribeToPeerMessages({ topic })
-    const stream = sender.getPeerMessages(sub)[Symbol.asyncIterator]()
+    const stream = sender.peerSubscription({ topic })[Symbol.asyncIterator]()
     const finished = takeAsync<PeerTopicSubscriptionResultElem>(stream, 2)
 
     const msg1 = new Uint8Array([1, 2, 3])
@@ -127,9 +124,9 @@ test('rpc: RoomService sanity integration receive peer message', function ({ com
 
 test('rpc: RoomService integration', function ({ components, stubComponents }) {
   const connection1 = createAndAuthenticateIdentity('connection1', components)
-  const roomServiceFuture1 = getModuleFuture(connection1, CommsServiceDefinition)
+  const roomServiceFuture1 = getModuleFuture(connection1, TopicsServiceDefinition)
   const connection2 = createAndAuthenticateIdentity('connection2', components)
-  const roomServiceFuture2 = getModuleFuture(connection2, CommsServiceDefinition)
+  const roomServiceFuture2 = getModuleFuture(connection2, TopicsServiceDefinition)
 
   it('sends a message e2e', async () => {
     const sender = await roomServiceFuture1
@@ -137,8 +134,7 @@ test('rpc: RoomService integration', function ({ components, stubComponents }) {
     const topic = 'abc'
 
     async function fn() {
-      const sub = await receiver.subscribeToPeerMessages({ topic })
-      for await (const msg of receiver.getPeerMessages(sub)) {
+      for await (const msg of receiver.peerSubscription({ topic })) {
         return msg
       }
     }

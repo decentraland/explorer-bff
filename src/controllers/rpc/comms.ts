@@ -2,11 +2,14 @@ import { RpcServerModule } from '@dcl/rpc/dist/codegen'
 import { pushableChannel } from '@well-known-components/pushable-channel'
 import { NatsMsg } from '@well-known-components/nats-component/dist/types'
 import { RpcContext, Channel, BaseComponents } from '../../types'
+import { CommsServiceDefinition } from '../../protocol/bff/comms-service'
 import {
-  CommsServiceDefinition,
   PeerTopicSubscriptionResultElem,
-  SystemTopicSubscriptionResultElem
-} from '../bff-proto/comms-service'
+  SubscriptionRequest,
+  SystemTopicSubscriptionResultElem,
+  TopicsServiceDefinition
+} from '../../protocol/bff/topics-service'
+import { ServerStreamingMethodResult } from '@dcl/rpc/dist/codegen-types'
 
 export const topicRegex = /^[^\.]+(\.[^\.]+)*$/
 
@@ -192,5 +195,62 @@ export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = 
     }
 
     return { ok: true }
+  }
+}
+
+export const topicsModule: RpcServerModule<TopicsServiceDefinition, RpcContext> = {
+  async publishToTopic({ topic, payload }, { peer, components }) {
+    if (!peer) {
+      throw new Error('Trying to publish from a peer that has not been registered')
+    }
+
+    if (!topicRegex.test(topic)) {
+      throw new Error(`Invalid topic ${topic}`)
+    }
+
+    const realTopic = `${peerPrefix}${peer.address}.${topic}`
+    components.nats.publish(realTopic, payload)
+    return {
+      ok: true
+    }
+  },
+  peerSubscription({ topic }, { components, peer }) {
+    if (!peer) {
+      throw new Error('Trying to subscribe a peer that has not been registered')
+    }
+
+    if (!topicRegex.test(topic)) {
+      throw new Error(`Invalid topic ${topic}`)
+    }
+
+    const realTopic = `${peerPrefix}*.${topic}`
+
+    return createChannelSubscription<PeerTopicSubscriptionResultElem>(
+      components,
+      realTopic,
+      (message) => {
+        let topic = message.subject.substring(peerPrefix.length)
+        const sender = topic.substring(0, topic.indexOf('.'))
+        topic = topic.substring(sender.length + 1)
+        return { payload: message.data, topic, sender }
+      },
+      MAX_PEER_MESSAGES_BUFFER_SIZE
+    )
+  },
+  systemSubscription({ topic }, { components, peer }) {
+    if (!peer) {
+      throw new Error('Trying to subscribe a peer that has not been registered')
+    }
+
+    if (!topicRegex.test(topic)) {
+      throw new Error(`Invalid topic ${topic}`)
+    }
+
+    const realTopic = `${saltedPrefix}${topic}`
+
+    return createChannelSubscription<SystemTopicSubscriptionResultElem>(components, realTopic, (message) => {
+      const topic = message.subject.substring(saltedPrefix.length)
+      return { payload: message.data, topic }
+    })
   }
 }

@@ -7,6 +7,7 @@
   },
   "devDependencies": {
     "@dcl/eslint-config": "^1.0.6",
+    "@protobuf-ts/protoc": "^2.8.1",
     "@types/node": "^18.0.4",
     "@well-known-components/test-helpers": "^1.3.1-20220909145425.commit-40ebfa8",
     "eth-crypto": "^2.3.0",
@@ -21,13 +22,15 @@
     "trailingComma": "none",
     "tabWidth": 2
   },
+  "config": {
+    "protocVersion": "21.6"
+  },
   "dependencies": {
     "@dcl/catalyst-contracts": "^3.0.0",
     "@dcl/crypto": "^3.2.0",
-    "@dcl/protocol": "^1.0.0-3040169427.commit-643454e",
+    "@dcl/protocol": "https://sdk-team-cdn.decentraland.org/@dcl/protocol/branch//dcl-protocol-1.0.0-3122924195.commit-0e0ad03.tgz",
     "@dcl/rpc": "^1.0.2",
     "@dcl/schemas": "^5.16.0",
-    "@types/google-protobuf": "^3.15.6",
     "@types/ws": "^8.5.3",
     "@well-known-components/env-config-provider": "^1.1.1",
     "@well-known-components/http-server": "^1.1.4",
@@ -36,9 +39,7 @@
     "@well-known-components/metrics": "^2.0.0",
     "@well-known-components/nats-component": "^2.0.0",
     "@well-known-components/pushable-channel": "^1.0.1",
-    "google-protobuf": "^3.20.1",
     "mitt": "^3.0.0",
-    "protoc-gen-dcl": "^1.0.0-20220109214200.commit-f45e34a",
     "ts-proto": "^1.125.0",
     "ws": "^8.8.1"
   }

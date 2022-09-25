@@ -1,7 +1,7 @@
 import { createRpcClient, RpcClient, RpcClientPort } from '@dcl/rpc'
 import { loadService, RpcServerModule } from '@dcl/rpc/dist/codegen'
 import { WebSocketTransport } from '@dcl/rpc/dist/transports/WebSocket'
-import { BffAuthenticationServiceDefinition } from '../../src/controllers/bff-proto/authentication-service'
+import { BffAuthenticationServiceDefinition } from '../../src/protocol/bff/authentication-service'
 import { createEphemeralIdentity } from '../helpers/identity'
 import { TestComponents } from '../../src/types'
 import { WebSocket } from 'ws'
@@ -30,7 +30,10 @@ export function createAndAuthenticateIdentity(
     })
   })
 
-  afterAll(() => ws?.close())
+  afterAll(() => {
+    port?.close()
+    ws?.close()
+  })
 
   return {
     get client() {

@@ -1,4 +1,4 @@
-import { AboutResponse_CommsInfo } from '../controllers/bff-proto/http-endpoints'
+import { AboutResponse_CommsInfo } from '../protocol/bff/http-endpoints'
 import { AppComponents } from '../types'
 import { ICommsModeComponent } from './comms-fixed-adapter'
 

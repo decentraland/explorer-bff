@@ -14,10 +14,7 @@ import { IServiceDiscoveryComponent } from './adapters/service-discovery'
 import { IRealmComponent } from './adapters/realm'
 import { CatalystContract } from '@dcl/catalyst-contracts'
 import { IStatusComponent } from './adapters/status'
-import {
-  PeerTopicSubscriptionResultElem,
-  SystemTopicSubscriptionResultElem
-} from './controllers/bff-proto/comms-service'
+import { PeerTopicSubscriptionResultElem, SystemTopicSubscriptionResultElem } from './protocol/bff/topics-service'
 import { ICommsModeComponent } from './adapters/comms-fixed-adapter'
 
 export type GlobalContext = {

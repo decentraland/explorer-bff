@@ -4,13 +4,10 @@ import { EthAddress } from '@dcl/schemas'
 import { AuthChain, Authenticator } from '@dcl/crypto'
 import { normalizeAddress } from '../../logic/address'
 import { RpcContext, RpcSession, Channel } from '../../types'
-import { BffAuthenticationServiceDefinition } from '../bff-proto/authentication-service'
-import { commsModule, onPeerConnected, onPeerDisconnected } from './comms'
-import {
-  CommsServiceDefinition,
-  PeerTopicSubscriptionResultElem,
-  SystemTopicSubscriptionResultElem
-} from '../bff-proto/comms-service'
+import { BffAuthenticationServiceDefinition } from '../../protocol/bff/authentication-service'
+import { commsModule, onPeerConnected, onPeerDisconnected, topicsModule } from './comms'
+import { PeerTopicSubscriptionResultElem, SystemTopicSubscriptionResultElem, TopicsServiceDefinition } from '../../protocol/bff/topics-service'
+import { CommsServiceDefinition } from '../../protocol/bff/comms-service'
 
 // TODO: use proper component-based loggers
 
@@ -113,4 +110,5 @@ async function registerAuthenticatedConnectionModules(
 
   // register all the modules
   registerService(port, CommsServiceDefinition, async () => commsModule)
+  registerService(port, TopicsServiceDefinition, async () => topicsModule)
 }

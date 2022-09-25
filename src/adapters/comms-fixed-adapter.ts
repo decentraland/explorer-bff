@@ -1,4 +1,4 @@
-import { AboutResponse_CommsInfo } from '../controllers/bff-proto/http-endpoints'
+import { AboutResponse_CommsInfo } from '../protocol/bff/http-endpoints'
 import { AppComponents } from '../types'
 
 export type ICommsModeComponent = {
@@ -15,7 +15,7 @@ export async function commsFixedAdapter(components: Pick<AppComponents, 'config'
       const comms: AboutResponse_CommsInfo = {
         healthy: true,
         protocol: 'v3',
-        publicUrl: adapter
+        fixedAdapter: adapter
       }
       return comms
     }

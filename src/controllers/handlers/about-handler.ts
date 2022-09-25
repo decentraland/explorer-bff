@@ -6,7 +6,7 @@ import {
   AboutResponse_CommsInfo,
   AboutResponse_ContentInfo,
   AboutResponse_LambdasInfo
-} from '../bff-proto/http-endpoints'
+} from '../../protocol/bff/http-endpoints'
 
 // handlers arguments only type what they need, to make unit testing easier
 export async function aboutHandler(
@@ -63,7 +63,7 @@ export async function aboutHandler(
     configurations.realmName = await realm.getName()
   }
 
-  bff.publicUrl = await config.getString('BFF_PUBLIC_URL') || '/'
+  bff.publicUrl = (await config.getString('BFF_PUBLIC_URL')) || '/'
 
   const result: AboutResponse = {
     healthy: content.healthy && lambdas.healthy && comms.healthy,
