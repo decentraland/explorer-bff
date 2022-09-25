@@ -6,7 +6,11 @@ import { normalizeAddress } from '../../logic/address'
 import { RpcContext, RpcSession, Channel } from '../../types'
 import { BffAuthenticationServiceDefinition } from '../../protocol/bff/authentication-service'
 import { commsModule, onPeerConnected, onPeerDisconnected, topicsModule } from './comms'
-import { PeerTopicSubscriptionResultElem, SystemTopicSubscriptionResultElem, TopicsServiceDefinition } from '../../protocol/bff/topics-service'
+import {
+  PeerTopicSubscriptionResultElem,
+  SystemTopicSubscriptionResultElem,
+  TopicsServiceDefinition
+} from '../../protocol/bff/topics-service'
 import { CommsServiceDefinition } from '../../protocol/bff/comms-service'
 
 // TODO: use proper component-based loggers

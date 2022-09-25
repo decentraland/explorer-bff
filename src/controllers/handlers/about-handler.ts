@@ -3,7 +3,6 @@ import {
   AboutResponse,
   AboutResponse_AboutConfiguration,
   AboutResponse_BffInfo,
-  AboutResponse_CommsInfo,
   AboutResponse_ContentInfo,
   AboutResponse_LambdasInfo
 } from '../../protocol/bff/http-endpoints'

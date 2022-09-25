@@ -5,11 +5,9 @@ import { RpcContext, Channel, BaseComponents } from '../../types'
 import { CommsServiceDefinition } from '../../protocol/bff/comms-service'
 import {
   PeerTopicSubscriptionResultElem,
-  SubscriptionRequest,
   SystemTopicSubscriptionResultElem,
   TopicsServiceDefinition
 } from '../../protocol/bff/topics-service'
-import { ServerStreamingMethodResult } from '@dcl/rpc/dist/codegen-types'
 
 export const topicRegex = /^[^\.]+(\.[^\.]+)*$/
 
