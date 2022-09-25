@@ -81,16 +81,17 @@ test('lighthouse adapter about response', ({ beforeStart, components, spyCompone
   })
 
   it('tests the about endpoint on 200', async () => {
-    const statusCall = spyComponents.fetch.fetch.mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          name: 'hola',
-          version: '333',
-          env: { commitHash: 'asd' },
-          usersCount: 15
-        }),
-        { status: 200 }
-      )
+    const statusCall = spyComponents.fetch.fetch.mockImplementation(
+      async () =>
+        new Response(
+          JSON.stringify({
+            name: 'hola',
+            version: '333',
+            env: { commitHash: 'asd' },
+            usersCount: 15
+          }),
+          { status: 200 }
+        )
     )
     const res = await components.localFetch.fetch('/about')
     const body = (await res.json()) as AboutResponse

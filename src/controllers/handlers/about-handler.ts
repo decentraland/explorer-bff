@@ -6,6 +6,7 @@ import {
   AboutResponse_ContentInfo,
   AboutResponse_LambdasInfo
 } from '../../protocol/bff/http-endpoints'
+import { protobufPackage } from '../../protocol/bff-services'
 
 // handlers arguments only type what they need, to make unit testing easier
 export async function aboutHandler(
@@ -24,10 +25,12 @@ export async function aboutHandler(
   const lambdas: AboutResponse_LambdasInfo = {
     healthy: false
   }
+
   const bff: AboutResponse_BffInfo = {
     healthy: true,
     commitHash: await config.getString('COMMIT_HASH'),
-    userCount: rpcSessions.sessions.size
+    userCount: rpcSessions.sessions.size,
+    protocolVersion: protobufPackage.replace('_', '.').replace(/^v/, '')
   }
 
   const [lambdasHealth, contentStatus, lambdasStatus] = await Promise.all([
