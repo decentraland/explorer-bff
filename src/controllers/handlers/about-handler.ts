@@ -63,6 +63,8 @@ export async function aboutHandler(
     configurations.realmName = await realm.getName()
   }
 
+  bff.publicUrl = await config.getString('BFF_PUBLIC_URL') || '/'
+
   const result: AboutResponse = {
     healthy: content.healthy && lambdas.healthy && comms.healthy,
     content,
