@@ -60,10 +60,11 @@ export const rpcHandler: RpcServerHandler<RpcContext> = async (port, _transport,
       if (result.ok) {
         logger.debug(`Authentication successful`, { address })
 
-        await registerAuthenticatedConnectionModules(address, port, context)
+        const { availableModules } = await registerAuthenticatedConnectionModules(address, port, context)
 
         return {
-          peerId: address
+          peerId: address,
+          availableModules
         }
       } else {
         setImmediate(() => port.close())
@@ -78,7 +79,7 @@ async function registerAuthenticatedConnectionModules(
   _address: string,
   port: RpcServerPort<RpcContext>,
   context: RpcContext
-) {
+): Promise<{ availableModules: string[] }> {
   const address = normalizeAddress(_address)
 
   const peer: RpcSession = {
@@ -115,4 +116,8 @@ async function registerAuthenticatedConnectionModules(
   // register all the modules
   registerService(port, CommsServiceDefinition, async () => commsModule)
   registerService(port, TopicsServiceDefinition, async () => topicsModule)
+
+  return {
+    availableModules: [CommsServiceDefinition.name, TopicsServiceDefinition.name]
+  }
 }
