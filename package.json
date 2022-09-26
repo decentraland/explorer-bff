@@ -30,7 +30,7 @@
     "@dcl/crypto": "^3.2.0",
     "@dcl/protocol": "https://sdk-team-cdn.decentraland.org/@dcl/protocol/branch//dcl-protocol-1.0.0-3123268821.commit-87b344c.tgz",
     "@dcl/rpc": "^1.0.3",
-    "@dcl/schemas": "^5.16.0",
+    "@dcl/schemas": "^5.18.0",
     "@types/ws": "^8.5.3",
     "@well-known-components/env-config-provider": "^1.1.1",
     "@well-known-components/http-server": "^1.1.5",
