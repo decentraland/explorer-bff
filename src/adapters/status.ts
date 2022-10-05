@@ -37,7 +37,12 @@ export async function createStatusComponent(
   const lambdasUrl = new URL(await config.requireString('LAMBDAS_URL'))
   const contentUrl = new URL(await config.requireString('CONTENT_URL'))
 
-  const fetchJson = async (url: string) => {
+  const fetchJson = async (baseURL: URL, path: string) => {
+    let url = baseURL.toString()
+    if (!url.endsWith('/')) {
+      url += '/'
+    }
+    url += path
     const response = await fetch.fetch(url, {
       method: 'GET',
       headers: {
@@ -49,7 +54,7 @@ export async function createStatusComponent(
 
   async function getLambdasHealth(): Promise<HealthStatus | undefined> {
     try {
-      const data = await fetchJson(`${lambdasUrl}/health`)
+      const data = await fetchJson(lambdasUrl, 'health')
 
       return {
         content: data['content'] === 'Healthy',
@@ -70,7 +75,7 @@ export async function createStatusComponent(
     }
 
     try {
-      const data = await fetchJson(`${lambdasUrl}/status`)
+      const data = await fetchJson(lambdasUrl, 'status')
 
       lastLambdasStatus = {
         time: Date.now(),
@@ -94,7 +99,7 @@ export async function createStatusComponent(
     }
 
     try {
-      const data = await fetchJson(`${contentUrl}/status`)
+      const data = await fetchJson(contentUrl, 'status')
 
       lastContentStatus = {
         time: Date.now(),
@@ -120,7 +125,7 @@ export async function createStatusComponent(
       }
 
       const lighthouseUrl = await config.requireString('LIGHTHOUSE_URL')
-      const data = await fetchJson(`${lighthouseUrl}/status`)
+      const data = await fetchJson(new URL(lighthouseUrl), 'status')
 
       lastLighthouseStatus = {
         time: Date.now(),
