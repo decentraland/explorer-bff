@@ -1,12 +1,11 @@
-import { HandlerContextWithPath } from '../../types'
-import {
-  AboutResponse,
-  AboutResponse_AboutConfiguration,
-  AboutResponse_BffInfo,
-  AboutResponse_ContentInfo,
-  AboutResponse_LambdasInfo
-} from '../../protocol/bff/http-endpoints'
+import { HandlerContextWithPath, DEFAULT_ETH_NETWORK } from '../../types'
+import { AboutResponse } from '../../protocol/bff/http-endpoints'
 import { protobufPackage } from '../../protocol/bff-services'
+
+const networkIds: Record<string, number> = {
+  goerli: 5,
+  mainnet: 1
+}
 
 // handlers arguments only type what they need, to make unit testing easier
 export async function aboutHandler(
@@ -17,21 +16,10 @@ export async function aboutHandler(
 ) {
   const { realm, config, status, rpcSessions } = context.components
 
-  const configurations: AboutResponse_AboutConfiguration = {}
-  const comms = await context.components.comms.getStatus()
-  const content: AboutResponse_ContentInfo = {
-    healthy: false
-  }
-  const lambdas: AboutResponse_LambdasInfo = {
-    healthy: false
-  }
+  const ethNetwork = (await config.getString('ETH_NETWORK')) ?? DEFAULT_ETH_NETWORK
+  const networkId = networkIds[ethNetwork]
 
-  const bff: AboutResponse_BffInfo = {
-    healthy: true,
-    commitHash: await config.getString('COMMIT_HASH'),
-    userCount: rpcSessions.sessions.size,
-    protocolVersion: protobufPackage.replace('_', '.').replace(/^v/, '')
-  }
+  const comms = await context.components.comms.getStatus()
 
   const [lambdasHealth, contentStatus, lambdasStatus] = await Promise.all([
     status.getLambdasHealth(),
@@ -39,41 +27,42 @@ export async function aboutHandler(
     status.getLambdasStatus()
   ])
 
-  if (lambdasHealth) {
-    content.healthy = lambdasHealth.content
-    lambdas.healthy = lambdasHealth.lambdas
-  }
-
-  if (contentStatus) {
-    const { version, commitHash, publicUrl } = contentStatus
-    content.version = version
-    content.commitHash = commitHash
-    content.publicUrl = publicUrl
-  }
-
-  if (lambdasStatus) {
-    const { version, commitHash, publicUrl } = lambdasStatus
-    lambdas.version = version
-    lambdas.commitHash = commitHash
-    lambdas.publicUrl = publicUrl
-  }
-
+  let realmName: string | undefined
   if (comms.protocol === 'v2') {
     const lighthouseStatus = await status.getLighthouseStatus()
-    configurations.realmName = await realm.getName(lighthouseStatus?.realmName)
+    realmName = await realm.getName(lighthouseStatus?.realmName)
   } else {
-    configurations.realmName = await realm.getName()
+    realmName = await realm.getName()
   }
 
-  bff.publicUrl = (await config.getString('BFF_PUBLIC_URL')) || '/'
-
   const result: AboutResponse = {
-    healthy: content.healthy && lambdas.healthy && comms.healthy,
-    content,
-    configurations,
+    healthy: lambdasHealth.lambdas && lambdasHealth.content && comms.healthy,
+    content: {
+      healthy: lambdasHealth.content,
+      version: contentStatus.version,
+      commitHash: contentStatus.commitHash,
+      publicUrl: contentStatus.publicUrl
+    },
+    lambdas: {
+      healthy: lambdasHealth.lambdas,
+      version: lambdasStatus.version,
+      commitHash: lambdasStatus.commitHash,
+      publicUrl: lambdasStatus.publicUrl
+    },
+    configurations: {
+      networkId,
+      globalScenesUrn: [],
+      scenesUrn: [],
+      realmName
+    },
     comms,
-    lambdas,
-    bff
+    bff: {
+      healthy: true,
+      commitHash: await config.getString('COMMIT_HASH'),
+      userCount: rpcSessions.sessions.size,
+      protocolVersion: protobufPackage.replace('_', '.').replace(/^v/, ''),
+      publicUrl: (await config.getString('BFF_PUBLIC_URL')) || '/'
+    }
   }
 
   return {
