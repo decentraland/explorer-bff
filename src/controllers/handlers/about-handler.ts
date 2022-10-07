@@ -4,7 +4,7 @@ import { protobufPackage } from '../../protocol/bff-services'
 
 const networkIds: Record<string, number> = {
   goerli: 5,
-  main: 1
+  mainnet: 1
 }
 
 // handlers arguments only type what they need, to make unit testing easier
