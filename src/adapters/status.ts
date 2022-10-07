@@ -9,21 +9,21 @@ export type HealthStatus = {
 
 export type ServiceStatus = {
   time: number
-  version: string
-  commitHash: string
+  version?: string
+  commitHash?: string
   publicUrl: string
 }
 
 export type LighthouseStatus = ServiceStatus & {
-  realmName: string
+  realmName?: string
   usersCount: number
 }
 
 export type IStatusComponent = IBaseComponent & {
-  getLambdasHealth(): Promise<HealthStatus | undefined>
-  getLambdasStatus(): Promise<ServiceStatus | undefined>
-  getContentStatus(): Promise<ServiceStatus | undefined>
-  getLighthouseStatus(): Promise<LighthouseStatus | undefined>
+  getLambdasHealth(): Promise<HealthStatus>
+  getLambdasStatus(): Promise<ServiceStatus>
+  getContentStatus(): Promise<ServiceStatus>
+  getLighthouseStatus(): Promise<LighthouseStatus>
 }
 
 const STATUS_EXPIRATION_TIME_MS = 1000 * 60 * 5 // 5mins
@@ -36,6 +36,7 @@ export async function createStatusComponent(
   const logger = logs.getLogger('status-component')
   const lambdasUrl = new URL(await config.requireString('LAMBDAS_URL'))
   const contentUrl = new URL(await config.requireString('CONTENT_URL'))
+  const lighthouseUrl = new URL(await config.requireString('LIGHTHOUSE_URL'))
 
   const fetchJson = async (baseURL: URL, path: string) => {
     let url = baseURL.toString()
@@ -52,96 +53,92 @@ export async function createStatusComponent(
     return response.json()
   }
 
-  async function getLambdasHealth(): Promise<HealthStatus | undefined> {
+  async function getLambdasHealth(): Promise<HealthStatus> {
+    const health = {
+      content: false,
+      lambdas: false,
+      comms: false
+    }
     try {
       const data = await fetchJson(lambdasUrl, 'health')
 
-      return {
-        content: data['content'] === 'Healthy',
-        lambdas: data['lambda'] === 'Healthy',
-        comms: data['comms'] === 'Healthy'
-      }
+      health.content = data['content'] === 'Healthy'
+      health.lambdas = data['lambda'] === 'Healthy'
+      health.comms = data['comms'] === 'Healthy'
     } catch (err: any) {
       logger.error(err)
     }
 
-    return undefined
+    return health
   }
 
-  let lastLambdasStatus: ServiceStatus | undefined = undefined
+  const lastLambdasStatus: ServiceStatus = {
+    time: 0,
+    publicUrl: lambdasUrl.toString()
+  }
+
   async function getLambdasStatus() {
-    if (lastLambdasStatus && Date.now() - lastLambdasStatus.time < STATUS_EXPIRATION_TIME_MS) {
+    if (Date.now() - lastLambdasStatus.time < STATUS_EXPIRATION_TIME_MS) {
       return lastLambdasStatus
     }
 
+    lastLambdasStatus.time = Date.now()
     try {
       const data = await fetchJson(lambdasUrl, 'status')
-
-      lastLambdasStatus = {
-        time: Date.now(),
-        version: data.catalystVersion,
-        commitHash: data.commitHash,
-        publicUrl: lambdasUrl.toString()
-      }
-
-      return lastLambdasStatus
+      lastLambdasStatus.version = data.catalystVersion
+      lastLambdasStatus.commitHash = data.commitHash
     } catch (err: any) {
       logger.error(err)
     }
 
-    return undefined
+    return lastLambdasStatus
   }
 
-  let lastContentStatus: ServiceStatus | undefined = undefined
+  const lastContentStatus: ServiceStatus = {
+    time: 0,
+    publicUrl: contentUrl.toString()
+  }
   async function getContentStatus() {
-    if (lastContentStatus && Date.now() - lastContentStatus.time < STATUS_EXPIRATION_TIME_MS) {
+    if (Date.now() - lastContentStatus.time < STATUS_EXPIRATION_TIME_MS) {
       return lastContentStatus
     }
 
+    lastContentStatus.time = Date.now()
     try {
       const data = await fetchJson(contentUrl, 'status')
-
-      lastContentStatus = {
-        time: Date.now(),
-        version: data.catalystVersion,
-        commitHash: data.commitHash,
-        publicUrl: contentUrl.toString()
-      }
-
-      return lastContentStatus
+      lastContentStatus.version = data.catalystVersion
+      lastContentStatus.commitHash = data.commitHash
     } catch (err: any) {
       logger.error(err)
     }
 
-    return undefined
+    return lastContentStatus
   }
 
-  let lastLighthouseStatus: LighthouseStatus | undefined = undefined
+  const lastLighthouseStatus: LighthouseStatus = {
+    time: 0,
+    usersCount: 0,
+    publicUrl: lighthouseUrl.toString()
+  }
 
   async function getLighthouseStatus() {
-    try {
-      if (lastLighthouseStatus && Date.now() - lastLighthouseStatus.time < STATUS_EXPIRATION_TIME_MS) {
-        return lastLighthouseStatus
-      }
-
-      const lighthouseUrl = await config.requireString('LIGHTHOUSE_URL')
-      const data = await fetchJson(new URL(lighthouseUrl), 'status')
-
-      lastLighthouseStatus = {
-        time: Date.now(),
-        realmName: data.name,
-        version: data.version,
-        commitHash: data.env.commitHash,
-        usersCount: data.usersCount,
-        publicUrl: lighthouseUrl
-      }
-
+    if (Date.now() - lastLighthouseStatus.time < STATUS_EXPIRATION_TIME_MS) {
       return lastLighthouseStatus
+    }
+
+    lastLighthouseStatus.time = Date.now()
+    try {
+      const data = await fetchJson(lighthouseUrl, 'status')
+
+      lastLighthouseStatus.realmName = data.name
+      lastLighthouseStatus.version = data.version
+      lastLighthouseStatus.commitHash = data.env.commitHash
+      lastLighthouseStatus.usersCount = data.usersCount
     } catch (e: any) {
       logger.warn(`Error fetching lighthouse status: ${e.toString()}`)
     }
 
-    return undefined
+    return lastLighthouseStatus
   }
 
   return {

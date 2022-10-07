@@ -17,6 +17,8 @@ import { IStatusComponent } from './adapters/status'
 import { PeerTopicSubscriptionResultElem, SystemTopicSubscriptionResultElem } from './protocol/bff/topics-service'
 import { ICommsModeComponent } from './adapters/comms-fixed-adapter'
 
+export const DEFAULT_ETH_NETWORK = 'goerli'
+
 export type GlobalContext = {
   components: BaseComponents
 }

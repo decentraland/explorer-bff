@@ -4,7 +4,7 @@ import { createServerComponent, createStatusCheckComponent } from '@well-known-c
 import { createLogComponent } from '@well-known-components/logger'
 import { createFetchComponent } from './adapters/fetch'
 import { createMetricsComponent, instrumentHttpServerWithMetrics } from '@well-known-components/metrics'
-import { AppComponents, GlobalContext } from './types'
+import { AppComponents, DEFAULT_ETH_NETWORK, GlobalContext } from './types'
 import { metricDeclarations } from './metrics'
 import { createWsComponent } from './adapters/ws'
 import { createNatsComponent } from '@well-known-components/nats-component'
@@ -18,8 +18,6 @@ import { observeBuildInfo } from './logic/build-info'
 import { commsFixedAdapter, ICommsModeComponent } from './adapters/comms-fixed-adapter'
 import { commsArchipelago } from './adapters/comms-archipelago'
 import { commsLighthouse } from './adapters/comms-lighthouse'
-
-const DEFAULT_ETH_NETWORK = 'goerli'
 
 // Initialize all the components of the app
 export async function initComponents(): Promise<AppComponents> {
