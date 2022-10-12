@@ -14,7 +14,10 @@ import { IServiceDiscoveryComponent } from './adapters/service-discovery'
 import { IRealmComponent } from './adapters/realm'
 import { CatalystContract } from '@dcl/catalyst-contracts'
 import { IStatusComponent } from './adapters/status'
-import { PeerTopicSubscriptionResultElem, SystemTopicSubscriptionResultElem } from './protocol/decentraland/bff/topics_service'
+import {
+  PeerTopicSubscriptionResultElem,
+  SystemTopicSubscriptionResultElem
+} from './protocol/decentraland/bff/topics_service'
 import { ICommsModeComponent } from './adapters/comms-fixed-adapter'
 
 export const DEFAULT_ETH_NETWORK = 'goerli'
