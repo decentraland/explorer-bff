@@ -1,4 +1,4 @@
-import { AboutResponse_CommsInfo } from '../protocol/bff/http-endpoints'
+import { AboutResponse_CommsInfo } from '../protocol/decentraland/bff/http_endpoints'
 import { AppComponents } from '../types'
 
 export type ICommsModeComponent = {
