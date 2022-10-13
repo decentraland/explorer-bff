@@ -3,9 +3,9 @@ import { createAndAuthenticateIdentity, getModuleFuture, takeAsync } from '../he
 import { delay } from '../helpers/delay'
 import {
   CommsServiceDefinition,
-} from '../../src/protocol/bff/comms-service'
+} from '../../src/protocol/decentraland/bff/comms_service'
 import { saltedPrefix, peerPrefix } from '../../src/controllers/rpc/comms'
-import { PeerTopicSubscriptionResultElem, SystemTopicSubscriptionResultElem } from '../../src/protocol/bff/topics-service'
+import { PeerTopicSubscriptionResultElem, SystemTopicSubscriptionResultElem } from '../../src/protocol/decentraland/bff/topics_service'
 
 function saltSystemTopic(topic: string) {
   return `${saltedPrefix}${topic}`

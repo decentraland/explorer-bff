@@ -2,7 +2,7 @@ ifneq ($(CI), true)
 LOCAL_ARG = --local --verbose --diagnostics
 endif
 
-PROTO_DEPS := node_modules/@dcl/protocol/bff-services.proto package.json
+PROTO_DEPS := node_modules/@dcl/protocol/public/bff-services.proto package.json
 PROTO_FILE := src/protocol/bff-services.ts
 
 install:
@@ -22,8 +22,9 @@ ${PROTO_FILE}: ${PROTO_DEPS}
 		--ts_proto_opt=esModuleInterop=true,returnObservable=false,outputServices=generic-definitions \
 		--ts_proto_out="$(PWD)/src/protocol" \
 		-I="$(PWD)/node_modules/protobufjs" \
-		-I="$(PWD)/node_modules/@dcl/protocol" \
-		"$(PWD)/node_modules/@dcl/protocol/bff-services.proto"
+		-I="$(PWD)/node_modules/@dcl/protocol/proto" \
+		-I="$(PWD)/node_modules/@dcl/protocol/public" \
+		"$(PWD)/node_modules/@dcl/protocol/public/bff-services.proto"
 
 build: ${PROTO_FILE}
 	@rm -rf dist || true

@@ -1,5 +1,5 @@
 import { HandlerContextWithPath, DEFAULT_ETH_NETWORK } from '../../types'
-import { AboutResponse } from '../../protocol/bff/http-endpoints'
+import { AboutResponse } from '../../protocol/decentraland/bff/http_endpoints'
 import { protobufPackage } from '../../protocol/bff-services'
 
 const networkIds: Record<string, number> = {
