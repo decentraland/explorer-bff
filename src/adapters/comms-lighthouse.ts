@@ -1,4 +1,4 @@
-import { AboutResponse_CommsInfo } from '../protocol/decentraland/bff/http_endpoints'
+import { AboutResponse_CommsInfo } from '@dcl/protocol/out-ts/decentraland/bff/http_endpoints.gen'
 import { AppComponents } from '../types'
 import { ICommsModeComponent } from './comms-fixed-adapter'
 

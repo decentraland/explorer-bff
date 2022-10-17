@@ -6,7 +6,7 @@ import {
   PeerTopicSubscriptionResultElem,
   SystemTopicSubscriptionResultElem,
   TopicsServiceDefinition
-} from '../../src/protocol/decentraland/bff/topics_service'
+} from '@dcl/protocol/out-ts/decentraland/bff/topics_service.gen'
 
 function saltSystemTopic(topic: string) {
   return `${saltedPrefix}${topic}`

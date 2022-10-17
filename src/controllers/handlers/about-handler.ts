@@ -1,6 +1,6 @@
 import { HandlerContextWithPath, DEFAULT_ETH_NETWORK } from '../../types'
-import { AboutResponse } from '../../protocol/decentraland/bff/http_endpoints'
-import { protobufPackage } from '../../protocol/bff-services'
+import { AboutResponse } from '@dcl/protocol/out-ts/decentraland/bff/http_endpoints.gen'
+import { protobufPackage } from '@dcl/protocol/out-ts/bff-services.gen'
 
 const networkIds: Record<string, number> = {
   goerli: 5,

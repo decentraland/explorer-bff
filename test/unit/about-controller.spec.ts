@@ -1,6 +1,6 @@
 import { test } from '../components'
 import { Response } from 'node-fetch'
-import { AboutResponse } from '../../src/protocol/decentraland/bff/http_endpoints'
+import { AboutResponse } from '@dcl/protocol/out-ts/decentraland/bff/http_endpoints.gen'
 
 test('fixed adapter about response', ({ beforeStart, components, spyComponents }) => {
   beforeStart(() => {
