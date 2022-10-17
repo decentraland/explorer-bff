@@ -17,6 +17,7 @@ test-watch:
 
 ${PROTO_FILE}: ${PROTO_DEPS}
 	mkdir -p "$(PWD)/src/protocol" || true
+	rm ${PROTO_FILE} || true
 	node_modules/.bin/protoc \
 		--plugin=./node_modules/.bin/protoc-gen-ts_proto \
 		--ts_proto_opt=esModuleInterop=true,returnObservable=false,outputServices=generic-definitions \
