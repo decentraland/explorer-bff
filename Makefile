@@ -2,7 +2,6 @@ ifneq ($(CI), true)
 LOCAL_ARG = --local --verbose --diagnostics
 endif
 
-
 install:
 	npm ci
 
