@@ -1,40 +1,12 @@
-PROTOBUF_VERSION = 3.19.1
-UNAME := $(shell uname)
-
-PROTO_FILES := $(wildcard node_modules/@dcl/protocol/bff/*.proto)
-PBS_TS = $(PROTO_FILES:node_modules/@dcl/protocol/bff/%.proto=src/controllers/bff-proto/%.ts)
-
-export PATH := node_modules/.bin:/usr/local/include/:protoc3/bin:$(PATH)
-
 ifneq ($(CI), true)
 LOCAL_ARG = --local --verbose --diagnostics
 endif
 
-ifeq ($(UNAME),Darwin)
-PROTOBUF_ZIP = protoc-$(PROTOBUF_VERSION)-osx-x86_64.zip
-else
-PROTOBUF_ZIP = protoc-$(PROTOBUF_VERSION)-linux-x86_64.zip
-endif
+PROTO_DEPS := node_modules/@dcl/protocol/public/bff-services.proto package.json
+PROTO_FILE := src/protocol/bff-services.ts
 
-protoc3/bin/protoc:
-	@# remove local folder
-	rm -rf protoc3 || true
-
-	@# Make sure you grab the latest version
-	curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOBUF_VERSION)/$(PROTOBUF_ZIP)
-
-	@# Unzip
-	unzip $(PROTOBUF_ZIP) -d protoc3
-	@# delete the files
-	rm $(PROTOBUF_ZIP)
-
-	@# move protoc to /usr/local/bin/
-	chmod +x protoc3/bin/protoc
-
-install: protoc3/bin/protoc
+install:
 	npm ci
-	npm i -S google-protobuf@$(PROTOBUF_VERSION)
-	npm i -S @types/google-protobuf@latest
 
 test: build
 	touch .env
@@ -43,22 +15,33 @@ test: build
 test-watch:
 	node_modules/.bin/jest --detectOpenHandles --colors --runInBand --watch $(TESTARGS) --coverage
 
-src/controllers/bff-proto/%.ts: protoc3/bin/protoc node_modules/@dcl/protocol/bff/%.proto
-	protoc3/bin/protoc \
+${PROTO_FILE}: ${PROTO_DEPS}
+	mkdir -p "$(PWD)/src/protocol" || true
+	node_modules/.bin/protoc \
 		--plugin=./node_modules/.bin/protoc-gen-ts_proto \
 		--ts_proto_opt=esModuleInterop=true,returnObservable=false,outputServices=generic-definitions \
-		--ts_proto_out="$(PWD)/src/controllers/bff-proto" \
+		--ts_proto_out="$(PWD)/src/protocol" \
 		-I="$(PWD)/node_modules/protobufjs" \
-		-I="$(PWD)/node_modules/@dcl/protocol/bff" \
-		"$(PWD)/node_modules/@dcl/protocol/bff/$*.proto"
+		-I="$(PWD)/node_modules/@dcl/protocol/proto" \
+		-I="$(PWD)/node_modules/@dcl/protocol/public" \
+		"$(PWD)/node_modules/@dcl/protocol/public/bff-services.proto"
 
-build: ${PBS_TS}
+build: ${PROTO_FILE}
 	@rm -rf dist || true
 	@mkdir -p dist
 	@./node_modules/.bin/tsc -p tsconfig.json
 
 start: build
 	npm start
+
+start-org: build
+	DOT_ENV=.env.org npm start
+
+start-zone: build
+	DOT_ENV=.env.zone npm start
+
+start-fixed: build
+	DOT_ENV=.env.fixed npm start
 
 lint:
 	@node_modules/.bin/eslint . --ext .ts

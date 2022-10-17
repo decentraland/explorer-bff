@@ -1,7 +1,7 @@
 import { createRpcClient, RpcClient, RpcClientPort } from '@dcl/rpc'
 import { loadService, RpcServerModule } from '@dcl/rpc/dist/codegen'
 import { WebSocketTransport } from '@dcl/rpc/dist/transports/WebSocket'
-import { BffAuthenticationServiceDefinition } from '../../src/controllers/bff-proto/authentication-service'
+import { BffAuthenticationServiceDefinition } from '../../src/protocol/decentraland/bff/authentication_service'
 import { createEphemeralIdentity } from '../helpers/identity'
 import { TestComponents } from '../../src/types'
 import { WebSocket } from 'ws'
@@ -23,6 +23,7 @@ export function createAndAuthenticateIdentity(
     ws = createLocalWebSocket.createWs('/rpc')
     client = await createRpcClient(WebSocketTransport(ws))
     port = await client.createPort('my-port')
+    port.on('close', () => ws.close())
     const auth = loadService(port, BffAuthenticationServiceDefinition)
     const challenge = await auth.getChallenge({ address: identity.address })
     await auth.authenticate({
@@ -30,7 +31,10 @@ export function createAndAuthenticateIdentity(
     })
   })
 
-  afterAll(() => ws?.close())
+  afterAll(() => {
+    if (port) port.close()
+    else ws?.close()
+  })
 
   return {
     get client() {

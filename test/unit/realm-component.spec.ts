@@ -1,7 +1,7 @@
 import { createLogComponent } from '@well-known-components/logger'
 import { createConfigComponent } from '@well-known-components/env-config-provider'
 import { createTestFetchComponent, FetchTestResponse } from '../helpers/fetch'
-import { CATALYST_NAME_CONFIG_FILE, createRealmComponent } from '../../src/ports/realm'
+import { CATALYST_NAME_CONFIG_FILE, createRealmComponent } from '../../src/adapters/realm'
 import { BigNumber } from 'eth-connect'
 import * as fs from 'fs/promises'
 

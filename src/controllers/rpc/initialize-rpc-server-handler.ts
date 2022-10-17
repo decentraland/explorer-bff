@@ -4,13 +4,14 @@ import { EthAddress } from '@dcl/schemas'
 import { AuthChain, Authenticator } from '@dcl/crypto'
 import { normalizeAddress } from '../../logic/address'
 import { RpcContext, RpcSession, Channel } from '../../types'
-import { BffAuthenticationServiceDefinition } from '../bff-proto/authentication-service'
-import { commsModule, onPeerConnected, onPeerDisconnected } from './comms'
+import { BffAuthenticationServiceDefinition } from '../../protocol/decentraland/bff/authentication_service'
+import { commsModule, onPeerConnected, onPeerDisconnected, topicsModule } from './comms'
 import {
-  CommsServiceDefinition,
   PeerTopicSubscriptionResultElem,
-  SystemTopicSubscriptionResultElem
-} from '../bff-proto/comms-service'
+  SystemTopicSubscriptionResultElem,
+  TopicsServiceDefinition
+} from '../../protocol/decentraland/bff/topics_service'
+import { CommsServiceDefinition } from '../../protocol/decentraland/bff/comms_service'
 
 // TODO: use proper component-based loggers
 
@@ -59,10 +60,11 @@ export const rpcHandler: RpcServerHandler<RpcContext> = async (port, _transport,
       if (result.ok) {
         logger.debug(`Authentication successful`, { address })
 
-        await registerAuthenticatedConnectionModules(address, port, context)
+        const { availableModules } = await registerAuthenticatedConnectionModules(address, port, context)
 
         return {
-          peerId: address
+          peerId: address,
+          availableModules
         }
       } else {
         setImmediate(() => port.close())
@@ -77,7 +79,7 @@ async function registerAuthenticatedConnectionModules(
   _address: string,
   port: RpcServerPort<RpcContext>,
   context: RpcContext
-) {
+): Promise<{ availableModules: string[] }> {
   const address = normalizeAddress(_address)
 
   const peer: RpcSession = {
@@ -113,4 +115,9 @@ async function registerAuthenticatedConnectionModules(
 
   // register all the modules
   registerService(port, CommsServiceDefinition, async () => commsModule)
+  registerService(port, TopicsServiceDefinition, async () => topicsModule)
+
+  return {
+    availableModules: [CommsServiceDefinition.name, TopicsServiceDefinition.name]
+  }
 }

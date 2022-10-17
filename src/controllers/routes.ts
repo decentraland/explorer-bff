@@ -9,8 +9,11 @@ export async function setupRouter(_: GlobalContext): Promise<Router<GlobalContex
   const router = new Router<GlobalContext>()
 
   router.get('/status', statusHandler)
-  router.get('/rpc', websocketRpcHandler)
+
   router.get('/about', aboutHandler)
+  // both routes should be accepted
+  router.get('/rpc', websocketRpcHandler)
+  router.get('/bff/rpc', websocketRpcHandler)
 
   return router
 }

@@ -7,8 +7,9 @@
   },
   "devDependencies": {
     "@dcl/eslint-config": "^1.0.6",
+    "@protobuf-ts/protoc": "^2.8.1",
     "@types/node": "^18.0.4",
-    "@well-known-components/test-helpers": "^1.3.0",
+    "@well-known-components/test-helpers": "^1.3.1-20220909145425.commit-40ebfa8",
     "eth-crypto": "^2.3.0",
     "ethereum-cryptography": "^1.1.2",
     "fp-future": "^1.0.1",
@@ -21,24 +22,24 @@
     "trailingComma": "none",
     "tabWidth": 2
   },
+  "config": {
+    "protocVersion": "21.6"
+  },
   "dependencies": {
     "@dcl/catalyst-contracts": "^3.0.0",
-    "@dcl/crypto": "^3.1.3",
-    "@dcl/protocol": "^1.0.0-3015628754.commit-7713e2e",
-    "@dcl/rpc": "^1.0.2",
-    "@dcl/schemas": "^5.15.0",
-    "@types/google-protobuf": "^3.15.6",
+    "@dcl/crypto": "^3.2.0",
+    "@dcl/protocol": "^1.0.0-3239222053.commit-c9e426d",
+    "@dcl/rpc": "^1.0.3",
+    "@dcl/schemas": "^5.19.0",
     "@types/ws": "^8.5.3",
-    "@well-known-components/env-config-provider": "^1.1.1",
-    "@well-known-components/http-server": "^1.1.4",
+    "@well-known-components/env-config-provider": "^1.2.0",
+    "@well-known-components/http-server": "^1.1.5",
     "@well-known-components/interfaces": "^1.1.2",
     "@well-known-components/logger": "^3.0.0",
     "@well-known-components/metrics": "^2.0.1-20220909150423.commit-8f7e5bc",
     "@well-known-components/nats-component": "^2.0.0",
-    "@well-known-components/pushable-channel": "^1.0.1",
-    "google-protobuf": "^3.20.1",
+    "@well-known-components/pushable-channel": "^1.0.3",
     "mitt": "^3.0.0",
-    "protoc-gen-dcl": "^1.0.0-20220109214200.commit-f45e34a",
     "ts-proto": "^1.125.0",
     "ws": "^8.8.1"
   }
