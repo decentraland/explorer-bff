@@ -2,12 +2,12 @@ import { RpcServerModule } from '@dcl/rpc/dist/codegen'
 import { pushableChannel } from '@well-known-components/pushable-channel'
 import { NatsMsg } from '@well-known-components/nats-component/dist/types'
 import { RpcContext, Channel, BaseComponents } from '../../types'
-import { CommsServiceDefinition } from '@dcl/protocol/out-ts/decentraland/bff/comms_service.gen'
+import { CommsServiceDefinition } from '../../protocol/decentraland/bff/comms_service'
 import {
   PeerTopicSubscriptionResultElem,
   SystemTopicSubscriptionResultElem,
   TopicsServiceDefinition
-} from '@dcl/protocol/out-ts/decentraland/bff/topics_service.gen'
+} from '../../protocol/decentraland/bff/topics_service'
 
 export const topicRegex = /^[^\.]+(\.[^\.]+)*$/
 

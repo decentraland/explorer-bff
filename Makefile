@@ -2,6 +2,9 @@ ifneq ($(CI), true)
 LOCAL_ARG = --local --verbose --diagnostics
 endif
 
+PROTO_DEPS := node_modules/@dcl/protocol/public/bff-services.proto package.json
+PROTO_FILE := src/protocol/bff-services.ts
+
 install:
 	npm ci
 
@@ -12,7 +15,18 @@ test: build
 test-watch:
 	node_modules/.bin/jest --detectOpenHandles --colors --runInBand --watch $(TESTARGS) --coverage
 
-build:
+${PROTO_FILE}: ${PROTO_DEPS}
+	mkdir -p "$(PWD)/src/protocol" || true
+	node_modules/.bin/protoc \
+		--plugin=./node_modules/.bin/protoc-gen-ts_proto \
+		--ts_proto_opt=esModuleInterop=true,returnObservable=false,outputServices=generic-definitions \
+		--ts_proto_out="$(PWD)/src/protocol" \
+		-I="$(PWD)/node_modules/protobufjs" \
+		-I="$(PWD)/node_modules/@dcl/protocol/proto" \
+		-I="$(PWD)/node_modules/@dcl/protocol/public" \
+		"$(PWD)/node_modules/@dcl/protocol/public/bff-services.proto"
+
+build: ${PROTO_FILE}
 	@rm -rf dist || true
 	@mkdir -p dist
 	@./node_modules/.bin/tsc -p tsconfig.json

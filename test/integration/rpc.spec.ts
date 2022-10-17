@@ -4,7 +4,7 @@ import { WebSocketTransport } from '@dcl/rpc/dist/transports/WebSocket'
 import {
   BffAuthenticationServiceDefinition,
   WelcomePeerInformation
-} from '@dcl/protocol/out-ts/decentraland/bff/authentication_service.gen'
+} from '../../src/protocol/decentraland/bff/authentication_service'
 import { test } from '../components'
 import { RpcClientModule } from '@dcl/rpc/dist/codegen'
 import { createEphemeralIdentity } from '../helpers/identity'
