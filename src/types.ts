@@ -19,6 +19,7 @@ import {
   SystemTopicSubscriptionResultElem
 } from './protocol/decentraland/bff/topics_service'
 import { ICommsModeComponent } from './adapters/comms-fixed-adapter'
+import { PeerRoutingTable } from './protocol/decentraland/bff/routing_service'
 
 export const DEFAULT_ETH_NETWORK = 'goerli'
 
@@ -64,6 +65,7 @@ export type NatsMsg = {
 export type Channel<T> = {
   close: () => void
   [Symbol.asyncIterator]: () => AsyncGenerator<T>
+  push: (something: T, callback: any) => void
 }
 
 export type RpcSession = {
@@ -72,6 +74,7 @@ export type RpcSession = {
   subscriptionsIndex: number
   peerSubscriptions: Map<number, Channel<PeerTopicSubscriptionResultElem>>
   systemSubscriptions: Map<number, Channel<SystemTopicSubscriptionResultElem>>
+  routingTableSubscription?: Channel<PeerRoutingTable>
 }
 
 // components used in runtime

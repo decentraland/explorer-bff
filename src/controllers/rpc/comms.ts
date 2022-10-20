@@ -8,6 +8,15 @@ import {
   SystemTopicSubscriptionResultElem,
   TopicsServiceDefinition
 } from '../../protocol/decentraland/bff/topics_service'
+import {
+  PeerRoute,
+  PeerRoutingTable,
+  PeerStatus,
+  RoutingServiceDefinition
+} from '../../protocol/decentraland/bff/routing_service'
+import { ServerStreamingMethodResult } from '@dcl/rpc/dist/codegen-types'
+import { Empty } from '../../protocol/google/protobuf/empty'
+import { isContext } from 'vm'
 
 export const topicRegex = /^[^\.]+(\.[^\.]+)*$/
 
@@ -250,5 +259,161 @@ export const topicsModule: RpcServerModule<TopicsServiceDefinition, RpcContext> 
       const topic = message.subject.substring(saltedPrefix.length)
       return { payload: message.data, topic }
     })
+  }
+}
+
+type Route = string[] | 'server'
+type PeerRoutingTableHugo = Map<string, Route>
+type Mesh = Map<string, Set<string>>
+type Island = string
+
+/*  Example
+ *  a <-> b
+ *  a <-> c
+ *
+ *  Mesh = {
+ *    a: [b, c],
+ *    b: [a],
+ *    c: [a]
+ *  }
+ */
+
+function calculateRoutingTables(mesh: Mesh): Map<string, PeerRoutingTable> {
+  const routingTables = new Map<string, PeerRoutingTableHugo>()
+
+  const getOrCreateRoutingTable = (peerId: string) => {
+    let table = routingTables.get(peerId)
+    if (!table) {
+      table = new Map<string, Route>()
+      routingTables.set(peerId, table)
+    }
+    return table
+  }
+
+  function calculateRouteBetween(fromPeer: string, toPeer: string, _excluding: string[]): Route {
+    const excluding = new Set<string>(_excluding)
+
+    const calculatedRoutes = getOrCreateRoutingTable(fromPeer)
+
+    const calculatedRoute = calculatedRoutes.get(toPeer)
+    if (calculatedRoute) {
+      return calculatedRoute
+    }
+
+    let route: Route = 'server'
+
+    const fromPeerConnections = mesh.get(fromPeer)
+    if (!fromPeerConnections) {
+      route = 'server'
+    } else if (fromPeerConnections?.has(toPeer)) {
+      route = []
+    } else {
+      for (const p of fromPeerConnections) {
+        if (excluding.has(p)) {
+          continue
+        }
+        let relayedRoute = calculateRouteBetween(p, toPeer, [p, ..._excluding])
+        if (relayedRoute !== 'server') {
+          relayedRoute = [p, ...relayedRoute]
+          if (route === 'server' || route.length > relayedRoute.length) {
+            route = relayedRoute
+          }
+        }
+      }
+    }
+
+    calculatedRoutes.set(toPeer, route)
+
+    // NOTE: routes are bidirectional
+    getOrCreateRoutingTable(toPeer).set(fromPeer, route === 'server' ? route : Array.from(route).reverse())
+    return route
+  }
+
+  const peers = new Set<string>()
+
+  for (const [peer, connections] of mesh) {
+    peers.add(peer)
+    for (const connection of connections) {
+      peers.add(connection)
+    }
+  }
+
+  for (const peerFrom of peers) {
+    for (const peerTo of peers) {
+      if (peerFrom === peerTo) {
+        continue
+      }
+
+      calculateRouteBetween(peerFrom, peerTo, [])
+    }
+  }
+
+  const parsedRoutingTables = new Map<string, PeerRoutingTable>()
+
+  for (const [peer, table] of routingTables) {
+    const parsedTable: Record<string, PeerRoute> = {}
+    for (const [currentPeer, peerRoute] of table) {
+      if (peerRoute !== 'server') {
+        parsedTable[currentPeer] = { peers: peerRoute }
+      }
+    }
+    parsedRoutingTables.set(peer, { table: parsedTable })
+  }
+  return parsedRoutingTables
+}
+
+const allIslands: Map<Island, Mesh> = new Map()
+const islandsByPeer: Map<string, Island> = new Map()
+let isUpdating: boolean = false
+
+export const routingModule: RpcServerModule<RoutingServiceDefinition, RpcContext> = {
+  async updatePeerStatus(request: PeerStatus, context: RpcContext): Promise<Empty> {
+    if (!isUpdating) {
+      setInterval(() => updateEverything(context), 1 * 60 * 1000)
+      isUpdating = true
+    }
+    if (!context.peer) {
+      return {}
+    }
+    const currentIsland = allIslands.get(request.room)
+    if (!currentIsland) {
+      const mesh = new Map([[context.peer.address, new Set(request.connectedTo)]])
+      allIslands.set(request.room, mesh)
+    } else {
+      currentIsland.set(context.peer.address, new Set(request.connectedTo))
+    }
+    islandsByPeer.set(context.peer.address, request.room)
+    return {}
+  },
+  async *getRoutingTable(request: Empty, context: RpcContext): ServerStreamingMethodResult<PeerRoutingTable> {
+    if (!isUpdating) {
+      setInterval(() => updateEverything(context), 1 * 60 * 1000)
+      isUpdating = true
+    }
+    if (!context.peer) {
+      return
+    }
+
+    if (!context.peer.routingTableSubscription) {
+      context.peer.routingTableSubscription = pushableChannel<PeerRoutingTable>(() => {
+        // TODO: Remove current peer from all maps
+      })
+    }
+    context.components.rpcSessions.sessions
+    for await (const message of context.peer.routingTableSubscription) {
+      yield message
+    }
+  }
+}
+
+function updateEverything(context: RpcContext): void {
+  for (const [, mesh] of allIslands) {
+    const tables = calculateRoutingTables(mesh)
+    for (const [peer, peerRoutingTable] of tables) {
+      const peerContext = context.components.rpcSessions.sessions.get(peer)
+      if (!!peerContext && !!peerContext.routingTableSubscription) {
+        peerContext.routingTableSubscription.push(peerRoutingTable, () => {})
+      }
+    }
   }
 }

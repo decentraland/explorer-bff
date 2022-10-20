@@ -5,13 +5,14 @@ import { AuthChain, Authenticator } from '@dcl/crypto'
 import { normalizeAddress } from '../../logic/address'
 import { RpcContext, RpcSession, Channel } from '../../types'
 import { BffAuthenticationServiceDefinition } from '../../protocol/decentraland/bff/authentication_service'
-import { commsModule, onPeerConnected, onPeerDisconnected, topicsModule } from './comms'
+import { commsModule, onPeerConnected, onPeerDisconnected, routingModule, topicsModule } from './comms'
 import {
   PeerTopicSubscriptionResultElem,
   SystemTopicSubscriptionResultElem,
   TopicsServiceDefinition
 } from '../../protocol/decentraland/bff/topics_service'
 import { CommsServiceDefinition } from '../../protocol/decentraland/bff/comms_service'
+import { RoutingServiceDefinition } from '../../protocol/decentraland/bff/routing_service'
 
 // TODO: use proper component-based loggers
 
@@ -116,8 +117,9 @@ async function registerAuthenticatedConnectionModules(
   // register all the modules
   registerService(port, CommsServiceDefinition, async () => commsModule)
   registerService(port, TopicsServiceDefinition, async () => topicsModule)
+  registerService(port, RoutingServiceDefinition, async () => routingModule)
 
   return {
-    availableModules: [CommsServiceDefinition.name, TopicsServiceDefinition.name]
+    availableModules: [CommsServiceDefinition.name, TopicsServiceDefinition.name, RoutingServiceDefinition.name]
   }
 }
