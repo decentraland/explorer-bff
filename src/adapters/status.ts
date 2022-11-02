@@ -34,9 +34,18 @@ export async function createStatusComponent(
   const { fetch, logs, config } = components
 
   const logger = logs.getLogger('status-component')
-  const lambdasUrl = new URL(await config.requireString('LAMBDAS_URL'))
-  const contentUrl = new URL(await config.requireString('CONTENT_URL'))
-  const lighthouseUrl = new URL(await config.requireString('LIGHTHOUSE_URL'))
+  const lambdasUrl = {
+    public: new URL(await config.requireString('PUBLIC_LAMBDAS_URL')),
+    private: new URL(await config.requireString('PRIVATE_LAMBDAS_URL'))
+  }
+  const contentUrl = {
+    public: new URL(await config.requireString('PUBLIC_CONTENT_URL')),
+    private: new URL(await config.requireString('PRIVATE_CONTENT_URL'))
+  }
+  const lighthouseUrl = {
+    public: new URL(await config.requireString('PUBLIC_LIGHTHOUSE_URL')),
+    private: new URL(await config.requireString('PRIVATE_LIGHTHOUSE_URL'))
+  }
 
   const fetchJson = async (baseURL: URL, path: string) => {
     let url = baseURL.toString()
@@ -60,7 +69,7 @@ export async function createStatusComponent(
       comms: false
     }
     try {
-      const data = await fetchJson(lambdasUrl, 'health')
+      const data = await fetchJson(lambdasUrl.private, 'health')
 
       health.content = data['content'] === 'Healthy'
       health.lambdas = data['lambda'] === 'Healthy'
@@ -74,7 +83,7 @@ export async function createStatusComponent(
 
   const lastLambdasStatus: ServiceStatus = {
     time: 0,
-    publicUrl: lambdasUrl.toString()
+    publicUrl: lambdasUrl.public.toString()
   }
 
   async function getLambdasStatus() {
@@ -84,7 +93,7 @@ export async function createStatusComponent(
 
     lastLambdasStatus.time = Date.now()
     try {
-      const data = await fetchJson(lambdasUrl, 'status')
+      const data = await fetchJson(lambdasUrl.private, 'status')
       lastLambdasStatus.version = data.catalystVersion
       lastLambdasStatus.commitHash = data.commitHash
     } catch (err: any) {
@@ -96,7 +105,7 @@ export async function createStatusComponent(
 
   const lastContentStatus: ServiceStatus = {
     time: 0,
-    publicUrl: contentUrl.toString()
+    publicUrl: contentUrl.public.toString()
   }
   async function getContentStatus() {
     if (Date.now() - lastContentStatus.time < STATUS_EXPIRATION_TIME_MS) {
@@ -105,7 +114,7 @@ export async function createStatusComponent(
 
     lastContentStatus.time = Date.now()
     try {
-      const data = await fetchJson(contentUrl, 'status')
+      const data = await fetchJson(contentUrl.private, 'status')
       lastContentStatus.version = data.catalystVersion
       lastContentStatus.commitHash = data.commitHash
     } catch (err: any) {
@@ -118,7 +127,7 @@ export async function createStatusComponent(
   const lastLighthouseStatus: LighthouseStatus = {
     time: 0,
     usersCount: 0,
-    publicUrl: lighthouseUrl.toString()
+    publicUrl: lighthouseUrl.public.toString()
   }
 
   async function getLighthouseStatus() {
@@ -128,7 +137,7 @@ export async function createStatusComponent(
 
     lastLighthouseStatus.time = Date.now()
     try {
-      const data = await fetchJson(lighthouseUrl, 'status')
+      const data = await fetchJson(lighthouseUrl.private, 'status')
 
       lastLighthouseStatus.realmName = data.name
       lastLighthouseStatus.version = data.version
