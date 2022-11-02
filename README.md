@@ -8,6 +8,7 @@
 - [NATS](https://nats.io/) running instance.
    - `NATS_URL` environment variable must be set. Eg: `NATS_URL=localhost:4222`
 
+
 ### Installation
 
 Install Node dependencies:
