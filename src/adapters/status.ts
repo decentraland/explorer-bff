@@ -1,4 +1,4 @@
-import { IBaseComponent } from '@well-known-components/interfaces'
+import { IBaseComponent, IConfigComponent } from '@well-known-components/interfaces'
 import { BaseComponents } from '../types'
 
 export type HealthStatus = {
@@ -34,9 +34,7 @@ export async function createStatusComponent(
   const { fetch, logs, config } = components
 
   const logger = logs.getLogger('status-component')
-  const lambdasUrl = new URL(await config.requireString('LAMBDAS_URL'))
-  const contentUrl = new URL(await config.requireString('CONTENT_URL'))
-  const lighthouseUrl = new URL(await config.requireString('LIGHTHOUSE_URL'))
+  const { lambdasUrl, contentUrl, lighthouseUrl } = await loadServicesURLs(config)
 
   const fetchJson = async (baseURL: URL, path: string) => {
     let url = baseURL.toString()
@@ -60,7 +58,7 @@ export async function createStatusComponent(
       comms: false
     }
     try {
-      const data = await fetchJson(lambdasUrl, 'health')
+      const data = await fetchJson(lambdasUrl.healthcheck, 'health')
 
       health.content = data['content'] === 'Healthy'
       health.lambdas = data['lambda'] === 'Healthy'
@@ -74,7 +72,7 @@ export async function createStatusComponent(
 
   const lastLambdasStatus: ServiceStatus = {
     time: 0,
-    publicUrl: lambdasUrl.toString()
+    publicUrl: lambdasUrl.public.toString()
   }
 
   async function getLambdasStatus() {
@@ -84,7 +82,7 @@ export async function createStatusComponent(
 
     lastLambdasStatus.time = Date.now()
     try {
-      const data = await fetchJson(lambdasUrl, 'status')
+      const data = await fetchJson(lambdasUrl.healthcheck, 'status')
       lastLambdasStatus.version = data.catalystVersion
       lastLambdasStatus.commitHash = data.commitHash
     } catch (err: any) {
@@ -96,7 +94,7 @@ export async function createStatusComponent(
 
   const lastContentStatus: ServiceStatus = {
     time: 0,
-    publicUrl: contentUrl.toString()
+    publicUrl: contentUrl.public.toString()
   }
   async function getContentStatus() {
     if (Date.now() - lastContentStatus.time < STATUS_EXPIRATION_TIME_MS) {
@@ -105,7 +103,7 @@ export async function createStatusComponent(
 
     lastContentStatus.time = Date.now()
     try {
-      const data = await fetchJson(contentUrl, 'status')
+      const data = await fetchJson(contentUrl.healthcheck, 'status')
       lastContentStatus.version = data.catalystVersion
       lastContentStatus.commitHash = data.commitHash
     } catch (err: any) {
@@ -118,7 +116,7 @@ export async function createStatusComponent(
   const lastLighthouseStatus: LighthouseStatus = {
     time: 0,
     usersCount: 0,
-    publicUrl: lighthouseUrl.toString()
+    publicUrl: lighthouseUrl.public.toString()
   }
 
   async function getLighthouseStatus() {
@@ -128,7 +126,7 @@ export async function createStatusComponent(
 
     lastLighthouseStatus.time = Date.now()
     try {
-      const data = await fetchJson(lighthouseUrl, 'status')
+      const data = await fetchJson(lighthouseUrl.healthcheck, 'status')
 
       lastLighthouseStatus.realmName = data.name
       lastLighthouseStatus.version = data.version
@@ -147,4 +145,26 @@ export async function createStatusComponent(
     getContentStatus,
     getLighthouseStatus
   }
+}
+
+async function loadServicesURLs(config: IConfigComponent) {
+  const publicLambdasUrl = new URL(await config.requireString('LAMBDAS_URL'))
+  const healthCheckLambdasUrl = await config.getString('HEALTHCHECK_LAMBDAS_URL')
+  const lambdasUrl = {
+    public: publicLambdasUrl,
+    healthcheck: healthCheckLambdasUrl ? new URL(healthCheckLambdasUrl) : publicLambdasUrl
+  }
+  const publicContentUrl = new URL(await config.requireString('CONTENT_URL'))
+  const healthCheckContentUrl = await config.getString('HEALTHCHECK_CONTENT_URL')
+  const contentUrl = {
+    public: publicContentUrl,
+    healthcheck: healthCheckContentUrl ? new URL(healthCheckContentUrl) : publicContentUrl
+  }
+  const publicLighthouseUrl = new URL(await config.requireString('LIGHTHOUSE_URL'))
+  const healthCheckLighthouseUrl = await config.getString('HEALTHCHECK_LIGHTHOUSE_URL')
+  const lighthouseUrl = {
+    public: publicLighthouseUrl,
+    healthcheck: healthCheckLighthouseUrl ? new URL(healthCheckLighthouseUrl) : publicLighthouseUrl
+  }
+  return { lambdasUrl, contentUrl, lighthouseUrl }
 }
