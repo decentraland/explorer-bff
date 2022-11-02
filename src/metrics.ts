@@ -13,6 +13,10 @@ export const metricDeclarations = {
   explorer_bff_connected_users: {
     help: 'Explorer BFF current connected users.',
     type: IMetricsComponent.GaugeType
+  },
+  messaging_service_fallback: {
+    help: 'Messages sent using fallback.',
+    type: IMetricsComponent.GaugeType
   }
 }
 

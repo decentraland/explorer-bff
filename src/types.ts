@@ -20,6 +20,7 @@ import {
 } from './protocol/decentraland/bff/topics_service'
 import { ICommsModeComponent } from './adapters/comms-fixed-adapter'
 import { PeerRoutingTable } from './protocol/decentraland/bff/routing_service'
+import { Packet } from './protocol/decentraland/bff/messaging_service'
 
 export const DEFAULT_ETH_NETWORK = 'goerli'
 
@@ -75,6 +76,7 @@ export type RpcSession = {
   peerSubscriptions: Map<number, Channel<PeerTopicSubscriptionResultElem>>
   systemSubscriptions: Map<number, Channel<SystemTopicSubscriptionResultElem>>
   routingTableSubscription?: Channel<PeerRoutingTable>
+  messagesSubscription?: Channel<Packet>
 }
 
 // components used in runtime

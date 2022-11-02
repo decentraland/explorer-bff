@@ -9,14 +9,14 @@ import {
   TopicsServiceDefinition
 } from '../../protocol/decentraland/bff/topics_service'
 import {
-  PeerRoute,
+  Path,
   PeerRoutingTable,
   PeerStatus,
   RoutingServiceDefinition
 } from '../../protocol/decentraland/bff/routing_service'
 import { ServerStreamingMethodResult } from '@dcl/rpc/dist/codegen-types'
 import { Empty } from '../../protocol/google/protobuf/empty'
-import { isContext } from 'vm'
+import { MessagingServiceDefinition, Request, Packet } from '../../protocol/decentraland/bff/messaging_service'
 
 export const topicRegex = /^[^\.]+(\.[^\.]+)*$/
 
@@ -350,15 +350,16 @@ function calculateRoutingTables(mesh: Mesh): Map<string, PeerRoutingTable> {
 
   const parsedRoutingTables = new Map<string, PeerRoutingTable>()
 
-  for (const [peer, table] of routingTables) {
-    const parsedTable: Record<string, PeerRoute> = {}
-    for (const [currentPeer, peerRoute] of table) {
-      if (peerRoute !== 'server') {
-        parsedTable[currentPeer] = { peers: peerRoute }
-      }
-    }
-    parsedRoutingTables.set(peer, { table: parsedTable })
-  }
+  // TODO
+  // for (const [peer, table] of routingTables) {
+  //   const parsedTable: Record<string, Path> = {}
+  //   for (const [currentPeer, peerRoute] of table) {
+  //     if (peerRoute !== 'server') {
+  //       parsedTable[currentPeer] = { peers: peerRoute }
+  //     }
+  //   }
+  //   parsedRoutingTables.set(peer, { paths })
+  // }
   return parsedRoutingTables
 }
 
@@ -373,7 +374,7 @@ export const routingModule: RpcServerModule<RoutingServiceDefinition, RpcContext
       isUpdating = true
     }
     if (!context.peer) {
-      return {}
+      throw new Error('Peer is not authenticated')
     }
     const currentIsland = allIslands.get(request.room)
     if (!currentIsland) {
@@ -391,7 +392,7 @@ export const routingModule: RpcServerModule<RoutingServiceDefinition, RpcContext
       isUpdating = true
     }
     if (!context.peer) {
-      return
+      throw new Error('Peer is not authenticated')
     }
 
     if (!context.peer.routingTableSubscription) {
@@ -399,7 +400,6 @@ export const routingModule: RpcServerModule<RoutingServiceDefinition, RpcContext
         // TODO: Remove current peer from all maps
       })
     }
-    context.components.rpcSessions.sessions
     for await (const message of context.peer.routingTableSubscription) {
       yield message
     }
@@ -414,6 +414,35 @@ function updateEverything(context: RpcContext): void {
       if (!!peerContext && !!peerContext.routingTableSubscription) {
         peerContext.routingTableSubscription.push(peerRoutingTable, () => {})
       }
+    }
+  }
+}
+
+export const messagingModule: RpcServerModule<MessagingServiceDefinition, RpcContext> = {
+  async publish(request: Request, context: RpcContext): Promise<Empty> {
+    const { metrics, rpcSessions } = context.components
+    metrics.increment('messaging_service_fallback', { reason: request.reason })
+    for (const peerId of request.peers) {
+      const peer = rpcSessions.sessions.get(peerId)
+      if (peer && peer.messagesSubscription && request.packet) {
+        peer.messagesSubscription.push(request.packet, (err: any) => {
+          console.error(err)
+        })
+      }
+    }
+    return {}
+  },
+  async *read(_request: Empty, context: RpcContext): ServerStreamingMethodResult<Packet> {
+    if (!context.peer) {
+      throw new Error('Peer is not authenticated')
+    }
+
+    if (!context.peer.messagesSubscription) {
+      context.peer.messagesSubscription = pushableChannel<Packet>(() => {})
+    }
+
+    for await (const message of context.peer.messagesSubscription) {
+      yield message
     }
   }
 }
