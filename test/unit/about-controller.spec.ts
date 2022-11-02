@@ -47,7 +47,7 @@ test('lighthouse adapter about response', ({ beforeStart, components, spyCompone
     Object.assign(process.env, {
       COMMS_MODE: 'lighthouse',
       PUBLIC_LIGHTHOUSE_URL: 'http://0.0.0.0:3000',
-      PRIVATE_LIGHTHOUSE_URL: 'http://0.0.0.0:3000'
+      HEALTHCHECK_LIGHTHOUSE_URL: 'http://0.0.0.0:3000'
     })
   })
 
