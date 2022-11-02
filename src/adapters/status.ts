@@ -148,19 +148,19 @@ export async function createStatusComponent(
 }
 
 async function loadServicesURLs(config: IConfigComponent) {
-  const publicLambdasUrl = new URL(await config.requireString('PUBLIC_LAMBDAS_URL'))
+  const publicLambdasUrl = new URL(await config.requireString('LAMBDAS_URL'))
   const healthCheckLambdasUrl = await config.getString('HEALTHCHECK_LAMBDAS_URL')
   const lambdasUrl = {
     public: publicLambdasUrl,
     healthcheck: healthCheckLambdasUrl ? new URL(healthCheckLambdasUrl) : publicLambdasUrl
   }
-  const publicContentUrl = new URL(await config.requireString('PUBLIC_CONTENT_URL'))
+  const publicContentUrl = new URL(await config.requireString('CONTENT_URL'))
   const healthCheckContentUrl = await config.getString('HEALTHCHECK_CONTENT_URL')
   const contentUrl = {
     public: publicContentUrl,
     healthcheck: healthCheckContentUrl ? new URL(healthCheckContentUrl) : publicContentUrl
   }
-  const publicLighthouseUrl = new URL(await config.requireString('PUBLIC_LIGHTHOUSE_URL'))
+  const publicLighthouseUrl = new URL(await config.requireString('LIGHTHOUSE_URL'))
   const healthCheckLighthouseUrl = await config.getString('HEALTHCHECK_LIGHTHOUSE_URL')
   const lighthouseUrl = {
     public: publicLighthouseUrl,
