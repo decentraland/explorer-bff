@@ -61,7 +61,7 @@ export async function aboutHandler(
       commitHash: await config.getString('COMMIT_HASH'),
       userCount: rpcSessions.sessions.size,
       protocolVersion: protobufPackage.replace('_', '.').replace(/^v/, ''),
-      publicUrl: (await config.getString('BFF_URL')) || '/'
+      publicUrl: (await config.getString('BFF_PUBLIC_URL')) || '/'
     }
   }
 
