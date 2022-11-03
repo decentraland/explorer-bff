@@ -9,3 +9,5 @@ protoc3
 .catalyst-name
 
 src/protocol
+
+graph*

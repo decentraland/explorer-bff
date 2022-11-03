@@ -43,6 +43,10 @@ start-zone: build
 start-fixed: build
 	DOT_ENV=.env.fixed npm start
 
+test-graph: build
+	node dist/controllers/test.js 
+	dot graph.dot -Tsvg > graph.svg
+
 lint:
 	@node_modules/.bin/eslint . --ext .ts
 
