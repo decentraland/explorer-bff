@@ -33,7 +33,7 @@
     "@dcl/schemas": "^5.21.1",
     "@types/ws": "^8.5.3",
     "@well-known-components/env-config-provider": "^1.2.0",
-    "@well-known-components/http-server": "^1.1.6",
+    "@well-known-components/http-server": "^1.1.7-20221111193549.commit-fb3caad",
     "@well-known-components/interfaces": "^1.1.2",
     "@well-known-components/logger": "^3.0.0",
     "@well-known-components/metrics": "^2.0.1",
@@ -41,6 +41,7 @@
     "@well-known-components/pushable-channel": "^1.0.3",
     "mitt": "^3.0.0",
     "ts-proto": "^1.125.0",
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.10.0",
     "ws": "^8.8.1"
   }
 }
