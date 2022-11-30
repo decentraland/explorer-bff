@@ -17,6 +17,7 @@ export async function aboutHandler(
   const { realm, config, status, rpcSessions } = context.components
 
   const ethNetwork = (await config.getString('ETH_NETWORK')) ?? DEFAULT_ETH_NETWORK
+  const maxUsers = await config.getNumber('MAX_USERS')
   const networkId = networkIds[ethNetwork]
 
   const comms = await context.components.comms.getStatus()
@@ -35,6 +36,9 @@ export async function aboutHandler(
     realmName = await realm.getName()
   }
 
+  const healthy = lambdasHealth.lambdas && lambdasHealth.content && comms.healthy
+  const userCount = rpcSessions.sessions.size
+  const acceptingUsers = healthy && (!maxUsers || userCount < maxUsers)
   const result: AboutResponse = {
     healthy: lambdasHealth.lambdas && lambdasHealth.content && comms.healthy,
     content: {
@@ -59,10 +63,11 @@ export async function aboutHandler(
     bff: {
       healthy: true,
       commitHash: await config.getString('COMMIT_HASH'),
-      userCount: rpcSessions.sessions.size,
+      userCount,
       protocolVersion: protobufPackage.replace('_', '.').replace(/^v/, ''),
       publicUrl: (await config.getString('BFF_PUBLIC_URL')) || '/'
-    }
+    },
+    acceptingUsers
   }
 
   return {
