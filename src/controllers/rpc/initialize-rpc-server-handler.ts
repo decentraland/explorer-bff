@@ -106,7 +106,12 @@ async function registerAuthenticatedConnectionModules(
   await onPeerConnected(context)
   // Remove the port from the rpcSessions if present.
   // TODO: write a test for this
+  let portClosed = false
   port.on('close', async () => {
+    if (portClosed) {
+      return
+    }
+    portClosed = true
     if (context.components.rpcSessions.sessions.get(address)?.port === port) {
       context.components.rpcSessions.sessions.delete(address)
     }
