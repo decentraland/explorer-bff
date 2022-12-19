@@ -75,6 +75,11 @@ export const rpcHandler: RpcServerHandler<RpcContext> = async (port, _transport,
   }))
 }
 
+function observeConnectedPeers(context: RpcContext) {
+  const connected = context.components.rpcSessions.sessions.size
+  context.components.metrics.observe('explorer_bff_connected_users', {}, connected)
+}
+
 async function registerAuthenticatedConnectionModules(
   _address: string,
   port: RpcServerPort<RpcContext>,
@@ -103,6 +108,7 @@ async function registerAuthenticatedConnectionModules(
 
   context.components.rpcSessions.sessions.set(address, peer)
 
+  observeConnectedPeers(context)
   await onPeerConnected(context)
   // Remove the port from the rpcSessions if present.
   // TODO: write a test for this
@@ -116,6 +122,7 @@ async function registerAuthenticatedConnectionModules(
       context.components.rpcSessions.sessions.delete(address)
     }
     await onPeerDisconnected(context)
+    observeConnectedPeers(context)
   })
 
   // register all the modules
