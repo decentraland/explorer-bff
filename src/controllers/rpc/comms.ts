@@ -54,7 +54,6 @@ export async function onPeerConnected({ components, peer }: RpcContext) {
     throw new Error('onPeerConnected for a non registered peer')
   }
   components.nats.publish(`peer.${peer.address}.connect`)
-  components.metrics.increment('explorer_bff_connected_users', {})
 }
 
 export async function onPeerDisconnected({ components, peer }: RpcContext) {
@@ -74,7 +73,6 @@ export async function onPeerDisconnected({ components, peer }: RpcContext) {
   peer.systemSubscriptions.clear()
 
   components.nats.publish(`peer.${peer.address}.disconnect`)
-  components.metrics.decrement('explorer_bff_connected_users', {})
 }
 
 export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = {
