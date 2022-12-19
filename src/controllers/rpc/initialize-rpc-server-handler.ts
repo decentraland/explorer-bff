@@ -119,9 +119,9 @@ async function registerAuthenticatedConnectionModules(
     }
     portClosed = true
     if (context.components.rpcSessions.sessions.get(address)?.port === port) {
-      await onPeerDisconnected(context)
       context.components.rpcSessions.sessions.delete(address)
     }
+    await onPeerDisconnected(context)
     observeConnectedPeers(context)
   })
 
