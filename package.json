@@ -26,7 +26,7 @@
     "protocVersion": "21.6"
   },
   "dependencies": {
-    "@dcl/catalyst-contracts": "^3.0.0",
+    "@dcl/catalyst-contracts": "^3.1.0",
     "@dcl/crypto": "^3.2.3",
     "@dcl/protocol": "^1.0.0-3583035976.commit-35d616d",
     "@dcl/rpc": "^1.0.3",
