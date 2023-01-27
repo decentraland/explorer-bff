@@ -17,7 +17,7 @@ import { IStatusComponent } from './adapters/status'
 import {
   PeerTopicSubscriptionResultElem,
   SystemTopicSubscriptionResultElem
-} from './protocol/decentraland/bff/topics_service'
+} from '@dcl/protocol/out-js/decentraland/bff/topics_service.gen'
 import { ICommsModeComponent } from './adapters/comms-fixed-adapter'
 
 export const DEFAULT_ETH_NETWORK = 'goerli'

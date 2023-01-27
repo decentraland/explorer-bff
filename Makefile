@@ -2,11 +2,8 @@ ifneq ($(CI), true)
 LOCAL_ARG = --local --verbose --diagnostics
 endif
 
-PROTO_DEPS := node_modules/@dcl/protocol/public/bff-services.proto package.json
-PROTO_FILE := src/protocol/bff-services.ts
-
 install:
-	npm ci
+	yarn install --frozen-lockfile
 
 test: build
 	touch .env
@@ -15,33 +12,22 @@ test: build
 test-watch:
 	node_modules/.bin/jest --detectOpenHandles --colors --runInBand --watch $(TESTARGS) --coverage
 
-${PROTO_FILE}: ${PROTO_DEPS}
-	mkdir -p "$(PWD)/src/protocol" || true
-	node_modules/.bin/protoc \
-		--plugin=./node_modules/.bin/protoc-gen-ts_proto \
-		--ts_proto_opt=esModuleInterop=true,returnObservable=false,outputServices=generic-definitions \
-		--ts_proto_out="$(PWD)/src/protocol" \
-		-I="$(PWD)/node_modules/protobufjs" \
-		-I="$(PWD)/node_modules/@dcl/protocol/proto" \
-		-I="$(PWD)/node_modules/@dcl/protocol/public" \
-		"$(PWD)/node_modules/@dcl/protocol/public/bff-services.proto"
-
-build: ${PROTO_FILE}
+build: 
 	@rm -rf dist || true
 	@mkdir -p dist
-	@./node_modules/.bin/tsc -p tsconfig.json
+	@yarn build
 
 start: build
-	npm start
+	yarn start
 
 start-org: build
-	DOT_ENV=.env.org npm start
+	DOT_ENV=.env.org yarn start
 
 start-zone: build
-	DOT_ENV=.env.zone npm start
+	DOT_ENV=.env.zone yarn start
 
 start-fixed: build
-	DOT_ENV=.env.fixed npm start
+	DOT_ENV=.env.fixed yarn start
 
 lint:
 	@node_modules/.bin/eslint . --ext .ts

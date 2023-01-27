@@ -1,6 +1,6 @@
 import { HandlerContextWithPath, DEFAULT_ETH_NETWORK } from '../../types'
-import { AboutResponse } from '../../protocol/decentraland/bff/http_endpoints'
-import { protobufPackage } from '../../protocol/bff-services'
+import { AboutResponse } from '@dcl/protocol/out-js/decentraland/bff/http_endpoints.gen'
+import { protobufPackage } from '@dcl/protocol/out-js/bff-services.gen'
 
 const networkIds: Record<string, number> = {
   goerli: 5,
@@ -40,7 +40,7 @@ export async function aboutHandler(
   const userCount = rpcSessions.sessions.size
   const acceptingUsers = healthy && (!maxUsers || userCount < maxUsers)
   const result: AboutResponse = {
-    healthy: lambdasHealth.lambdas && lambdasHealth.content && comms.healthy,
+    healthy: healthy,
     content: {
       healthy: lambdasHealth.content,
       version: contentStatus.version,
