@@ -1,7 +1,7 @@
 import { createRpcClient, RpcClient, RpcClientPort } from '@dcl/rpc'
-import { loadService, RpcServerModule } from '@dcl/rpc/dist/codegen'
+import { loadService, RpcClientModule, RpcServerModule } from '@dcl/rpc/dist/codegen'
 import { WebSocketTransport } from '@dcl/rpc/dist/transports/WebSocket'
-import { BffAuthenticationServiceDefinition } from '../../src/protocol/decentraland/bff/authentication_service'
+import { BffAuthenticationServiceDefinition } from '@dcl/protocol/out-js/decentraland/bff/authentication_service.gen'
 import { createEphemeralIdentity } from '../helpers/identity'
 import { TestComponents } from '../../src/types'
 import { WebSocket } from 'ws'
@@ -51,7 +51,7 @@ export async function getModuleFuture<Service extends TsProtoServiceDefinition>(
   rpc: ReturnType<typeof createAndAuthenticateIdentity>,
   moduleDefinition: Service
 ) {
-  const fut = future<RpcServerModule<Service, void>>()
+  const fut = future<RpcClientModule<Service, {}>>()
 
   it('load module ' + moduleDefinition.fullName + ' for ' + rpc.identity.address, async () => {
     fut.resolve(await loadService(rpc.port, moduleDefinition))

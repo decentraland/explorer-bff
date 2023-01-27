@@ -4,14 +4,14 @@ import { EthAddress } from '@dcl/schemas'
 import { AuthChain, Authenticator } from '@dcl/crypto'
 import { normalizeAddress } from '../../logic/address'
 import { RpcContext, RpcSession, Channel } from '../../types'
-import { BffAuthenticationServiceDefinition } from '../../protocol/decentraland/bff/authentication_service'
-import { commsModule, onPeerConnected, onPeerDisconnected, topicsModule } from './comms'
+import { BffAuthenticationServiceDefinition } from '@dcl/protocol/out-js/decentraland/bff/authentication_service.gen'
 import {
   PeerTopicSubscriptionResultElem,
   SystemTopicSubscriptionResultElem,
   TopicsServiceDefinition
-} from '../../protocol/decentraland/bff/topics_service'
-import { CommsServiceDefinition } from '../../protocol/decentraland/bff/comms_service'
+} from '@dcl/protocol/out-js/decentraland/bff/topics_service.gen'
+import { commsModule, onPeerConnected, onPeerDisconnected, topicsModule } from './comms'
+import { CommsServiceDefinition } from '@dcl/protocol/out-js/decentraland/bff/comms_service.gen'
 
 // TODO: use proper component-based loggers
 
