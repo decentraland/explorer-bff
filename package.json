@@ -2,6 +2,8 @@
   "name": "@dcl/explorer-bff",
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "lint:check": "eslint '**/*.{js,ts}'",
+    "lint:fix": "eslint '**/*.{js,ts}' --fix",
     "start": "node --trace-warnings --abort-on-uncaught-exception --unhandled-rejections=strict dist/index.js",
     "test": "jest --forceExit --detectOpenHandles --coverage --verbose"
   },
@@ -22,9 +24,6 @@
     "singleQuote": true,
     "trailingComma": "none",
     "tabWidth": 2
-  },
-  "config": {
-    "protocVersion": "21.6"
   },
   "dependencies": {
     "@dcl/catalyst-contracts": "^3.1.3",

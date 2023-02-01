@@ -14,9 +14,9 @@ jobs:
           node-version: 16.x
           cache: npm
       - name: install
-        run: make install
+        run: yarn install --frozen-lockfile
       - name: build
-        run: make build
+        run: yarn build
 
   validations:
     runs-on: ubuntu-latest
@@ -28,9 +28,9 @@ jobs:
           node-version: 16.x
           cache: npm
       - name: install
-        run: make install
+        run: yarn install --frozen-lockfile
       - name: lint
-        run: make lint
+        run: yarn lint:check
 
   test:
     runs-on: ubuntu-latest
@@ -42,8 +42,8 @@ jobs:
           node-version: 16.x
           cache: npm
       - name: install
-        run: make install
+        run: yarn install --frozen-lockfile
       - name: build
-        run: make build
+        run: yarn build
       - name: test
-        run: make test
+        run: yarn test
