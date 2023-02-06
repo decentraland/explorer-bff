@@ -9,7 +9,7 @@
   },
   "license": "Apache-2.0",
   "devDependencies": {
-    "@dcl/eslint-config": "^1.0.6",
+    "@dcl/eslint-config": "^1.1.0",
     "@protobuf-ts/protoc": "^2.8.1",
     "@types/node": "^18.0.4",
     "@well-known-components/test-helpers": "^1.4.0",
