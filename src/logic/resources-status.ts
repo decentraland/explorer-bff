@@ -9,19 +9,18 @@ function isAboveNinetyPercent(measure: number) {
   return measure > 90
 }
 
-const getResourcersUsage = async (): Promise<{ cpuLoad: number; memLoad: number }> => {
-  const cpu = await os.cpu.usage()
-  const mem = await os.mem.used()
+const getResourcesLoad = async (): Promise<{ cpuLoad: number; memLoad: number }> => {
+  const [cpu, mem] = await Promise.all([os.cpu.usage(), os.mem.used()])
 
   return { cpuLoad: cpu, memLoad: (mem.usedMemMb * 100) / mem.totalMemMb }
 }
 
 export function createResourcesStatusComponent(components: Pick<AppComponents, 'logs'>): IResourcesStatusComponent {
+  const logger = components.logs.getLogger('status-checker')
   async function areResourcesOverloaded(): Promise<boolean> {
-    const logger = components.logs.getLogger('status-checker')
     let resourcesAreOverloaded = false
 
-    const { cpuLoad, memLoad } = await getResourcersUsage()
+    const { cpuLoad, memLoad } = await getResourcesLoad()
 
     if (isAboveNinetyPercent(cpuLoad)) {
       resourcesAreOverloaded = true
