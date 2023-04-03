@@ -1,4 +1,4 @@
-import { RpcServerHandler, RpcServerPort } from '@dcl/rpc'
+import { RpcServerHandler, RpcServerPort, Transport } from '@dcl/rpc'
 import { registerService } from '@dcl/rpc/dist/codegen'
 import { EthAddress } from '@dcl/schemas'
 import { AuthChain, Authenticator } from '@dcl/crypto'
@@ -21,7 +21,7 @@ import { CommsServiceDefinition } from '@dcl/protocol/out-js/decentraland/bff/co
  * Upon successful authentication, the sessions (connections) are enabled the rest
  * of the available modules.
  */
-export const rpcHandler: RpcServerHandler<RpcContext> = async (port, _transport, context) => {
+export const rpcHandler: RpcServerHandler<RpcContext> = async (port, transport, context) => {
   const challenge = 'dcl-' + Math.random().toString(36)
 
   const logger = context.components.logs.getLogger('rpc-auth-handler')
@@ -60,7 +60,7 @@ export const rpcHandler: RpcServerHandler<RpcContext> = async (port, _transport,
       if (result.ok) {
         logger.debug(`Authentication successful`, { address })
 
-        const { availableModules } = await registerAuthenticatedConnectionModules(address, port, context)
+        const { availableModules } = await registerAuthenticatedConnectionModules(address, port, transport, context)
 
         return {
           peerId: address,
@@ -83,6 +83,7 @@ function observeConnectedPeers(context: RpcContext) {
 async function registerAuthenticatedConnectionModules(
   _address: string,
   port: RpcServerPort<RpcContext>,
+  transport: Transport,
   context: RpcContext
 ): Promise<{ availableModules: string[] }> {
   const address = normalizeAddress(_address)
@@ -90,6 +91,7 @@ async function registerAuthenticatedConnectionModules(
   const peer: RpcSession = {
     address,
     port,
+    transport,
     subscriptionsIndex: 0,
     peerSubscriptions: new Map<number, Channel<PeerTopicSubscriptionResultElem>>(),
     systemSubscriptions: new Map<number, Channel<SystemTopicSubscriptionResultElem>>()
@@ -104,6 +106,7 @@ async function registerAuthenticatedConnectionModules(
   if (previousSession) {
     // TODO: prior to closing the port, we should send a notification
     previousSession.port.close()
+    previousSession.transport.close()
   }
 
   context.components.rpcSessions.sessions.set(address, peer)

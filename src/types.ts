@@ -9,7 +9,7 @@ import type {
 import { metricDeclarations } from './metrics'
 import { INatsComponent } from '@well-known-components/nats-component/dist/types'
 import { WebSocket } from 'ws'
-import { RpcServer, RpcServerPort } from '@dcl/rpc'
+import { RpcServer, RpcServerPort, Transport } from '@dcl/rpc'
 import { IServiceDiscoveryComponent } from './adapters/service-discovery'
 import { IRealmComponent } from './adapters/realm'
 import { CatalystContract } from '@dcl/catalyst-contracts'
@@ -67,6 +67,7 @@ export type Channel<T> = {
 }
 
 export type RpcSession = {
+  transport: Transport
   port: RpcServerPort<RpcContext>
   address: string
   subscriptionsIndex: number
