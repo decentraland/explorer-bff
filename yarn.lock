@@ -1310,6 +1310,11 @@
     "@types/node" "*"
     form-data "^3.0.0"
 
+"@types/node-os-utils@^1.3.1":
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/@types/node-os-utils/-/node-os-utils-1.3.1.tgz#d1ea627775295f1fbf496ab4c1de75294923cafb"
+  integrity sha512-gokG1AaQo78X3f1KXOPAfwbhERX95XL0nhosOhwFck0hZ3BG52Mfch3oj3gAhXuUsou3lwi+ewZWjDo0wshKwQ==
+
 "@types/node@*", "@types/node@>=13.7.0", "@types/node@^18.0.4":
   version "18.11.18"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-18.11.18.tgz#8dfb97f0da23c2293e554c5a50d61ef134d7697f"
@@ -4473,6 +4478,11 @@ node-int64@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/node-int64/-/node-int64-0.4.0.tgz#87a9065cdb355d3182d8f94ce11188b825c68a3b"
   integrity sha512-O5lz91xSOeoXP6DulyHfllpq+Eg00MWitZIbtPfoSEvqIHdl5gfcY6hYzDWnj0qD5tz52PI08u9qUvSVeUBeHw==
+
+node-os-utils@^1.3.7:
+  version "1.3.7"
+  resolved "https://registry.yarnpkg.com/node-os-utils/-/node-os-utils-1.3.7.tgz#77cc341ae39584e12d3aadf6046fe420ff4c9340"
+  integrity sha512-fvnX9tZbR7WfCG5BAy3yO/nCLyjVWD6MghEq0z5FDfN+ZXpLWNITBdbifxQkQ25ebr16G0N7eRWJisOcMEHG3Q==
 
 node-releases@^2.0.6:
   version "2.0.8"

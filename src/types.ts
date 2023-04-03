@@ -19,6 +19,7 @@ import {
   SystemTopicSubscriptionResultElem
 } from '@dcl/protocol/out-js/decentraland/bff/topics_service.gen'
 import { ICommsModeComponent } from './adapters/comms-fixed-adapter'
+import { IResourcesStatusComponent } from './logic/resources-status'
 
 export const DEFAULT_ETH_NETWORK = 'goerli'
 
@@ -46,7 +47,7 @@ export type BaseComponents = {
   ethereumProvider: any
   contract: CatalystContract
   status: IStatusComponent
-
+  resourcesStatusCheck: IResourcesStatusComponent
   rpcServer: RpcServer<RpcContext>
 
   comms: ICommsModeComponent

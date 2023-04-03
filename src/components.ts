@@ -18,6 +18,7 @@ import { observeBuildInfo } from './logic/build-info'
 import { commsFixedAdapter, ICommsModeComponent } from './adapters/comms-fixed-adapter'
 import { commsArchipelago } from './adapters/comms-archipelago'
 import { commsLighthouse } from './adapters/comms-lighthouse'
+import { createResourcesStatusComponent } from './logic/resources-status'
 
 // Initialize all the components of the app
 export async function initComponents(): Promise<AppComponents> {
@@ -43,8 +44,8 @@ export async function initComponents(): Promise<AppComponents> {
     logger: rpcLogger
   })
   const statusChecks = await createStatusCheckComponent({ server, config })
+  const resourcesStatusCheck = createResourcesStatusComponent({ logs })
   const fetch = await createFetchComponent()
-
   const hasNats = await config.getString('NATS_URL')
 
   const nats = hasNats ? await createNatsComponent({ config, logs }) : await createLocalNatsComponent()
@@ -83,6 +84,7 @@ export async function initComponents(): Promise<AppComponents> {
     logs,
     server,
     statusChecks,
+    resourcesStatusCheck,
     fetch,
     metrics,
     ws,

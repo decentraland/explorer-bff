@@ -10,11 +10,14 @@ const networkIds: Record<string, number> = {
 // handlers arguments only type what they need, to make unit testing easier
 export async function aboutHandler(
   context: Pick<
-    HandlerContextWithPath<'status' | 'realm' | 'config' | 'rpcSessions' | 'metrics' | 'comms', '/about'>,
+    HandlerContextWithPath<
+      'status' | 'resourcesStatusCheck' | 'realm' | 'config' | 'rpcSessions' | 'metrics' | 'comms',
+      '/about'
+    >,
     'url' | 'components'
   >
 ) {
-  const { realm, config, status, rpcSessions } = context.components
+  const { realm, config, status, resourcesStatusCheck, rpcSessions } = context.components
 
   const ethNetwork = (await config.getString('ETH_NETWORK')) ?? DEFAULT_ETH_NETWORK
   const maxUsers = await config.getNumber('MAX_USERS')
@@ -22,10 +25,11 @@ export async function aboutHandler(
 
   const comms = await context.components.comms.getStatus()
 
-  const [lambdasHealth, contentStatus, lambdasStatus] = await Promise.all([
+  const [lambdasHealth, contentStatus, lambdasStatus, resourcesOverload] = await Promise.all([
     status.getLambdasHealth(),
     status.getContentStatus(),
-    status.getLambdasStatus()
+    status.getLambdasStatus(),
+    resourcesStatusCheck.areResourcesOverloaded()
   ])
 
   let realmName: string | undefined
@@ -38,7 +42,8 @@ export async function aboutHandler(
 
   const healthy = lambdasHealth.lambdas && lambdasHealth.content && comms.healthy
   const userCount = rpcSessions.sessions.size
-  const acceptingUsers = healthy && (!maxUsers || userCount < maxUsers)
+  const acceptingUsers = healthy && !resourcesOverload && (!maxUsers || userCount < maxUsers)
+
   const result: AboutResponse = {
     healthy: healthy,
     content: {
