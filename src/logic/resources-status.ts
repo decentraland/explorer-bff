@@ -1,5 +1,5 @@
 import { AppComponents } from '../types'
-import os from 'node-os-utils'
+import os from 'os'
 
 export type IResourcesStatusComponent = {
   areResourcesOverloaded: () => Promise<boolean>
@@ -10,9 +10,16 @@ function isAboveNinetyPercent(measure: number) {
 }
 
 const getResourcesLoad = async (): Promise<{ cpuLoad: number; memLoad: number }> => {
-  const [cpu, mem] = await Promise.all([os.cpu.usage(), os.mem.used()])
+  const cpuAvgLoad = os.loadavg()
+  const coresQuantity = os.cpus().length
+  const cpuLoad = (cpuAvgLoad[0] * 100) / coresQuantity
 
-  return { cpuLoad: cpu, memLoad: (mem.usedMemMb * 100) / mem.totalMemMb }
+  const totalMem = os.totalmem()
+  const freeMem = os.freemem()
+  const usedMem = totalMem - freeMem
+  const memLoad = (usedMem * 100) / totalMem
+
+  return { cpuLoad, memLoad }
 }
 
 export function createResourcesStatusComponent(components: Pick<AppComponents, 'logs'>): IResourcesStatusComponent {
@@ -21,6 +28,7 @@ export function createResourcesStatusComponent(components: Pick<AppComponents, '
     let resourcesAreOverloaded = false
 
     const { cpuLoad, memLoad } = await getResourcesLoad()
+    logger.info('System load', { cpuLoad, memLoad })
 
     if (isAboveNinetyPercent(cpuLoad)) {
       resourcesAreOverloaded = true
