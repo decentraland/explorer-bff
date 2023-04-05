@@ -62,7 +62,7 @@ describe('realm-controller-unit', () => {
 
     const responses = {
       'https://catalyst-1/about': { configurations: { realmName: 'catalyst-1' } },
-      'https://catalyst-3/comms/status': { name: 'catalyst-3' }
+      'https://catalyst-3/about': { configurations: { realmName: 'catalyst-3' } }
     }
     const handler = (url: string): FetchTestResponse => {
       const r = responses[url]
