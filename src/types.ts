@@ -19,6 +19,8 @@ import {
   SystemTopicSubscriptionResultElem
 } from '@dcl/protocol/out-js/decentraland/bff/topics_service.gen'
 import { ICommsModeComponent } from './adapters/comms-fixed-adapter'
+import { IFuture } from 'fp-future'
+import { DisconnectionMessage } from '@dcl/protocol/out-js/decentraland/bff/authentication_service.gen'
 
 export const DEFAULT_ETH_NETWORK = 'goerli'
 
@@ -68,6 +70,7 @@ export type Channel<T> = {
 
 export type RpcSession = {
   transport: Transport
+  disconnectionFuture: IFuture<DisconnectionMessage>
   port: RpcServerPort<RpcContext>
   address: string
   subscriptionsIndex: number

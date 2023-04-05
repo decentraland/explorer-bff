@@ -1,10 +1,14 @@
-import { RpcServerHandler, RpcServerPort, Transport } from '@dcl/rpc'
+import { RpcServerHandler } from '@dcl/rpc'
 import { registerService } from '@dcl/rpc/dist/codegen'
 import { EthAddress } from '@dcl/schemas'
 import { AuthChain, Authenticator } from '@dcl/crypto'
 import { normalizeAddress } from '../../logic/address'
 import { RpcContext, RpcSession, Channel } from '../../types'
-import { BffAuthenticationServiceDefinition } from '@dcl/protocol/out-js/decentraland/bff/authentication_service.gen'
+import {
+  BffAuthenticationServiceDefinition,
+  DisconnectionMessage,
+  DisconnectionReason
+} from '@dcl/protocol/out-js/decentraland/bff/authentication_service.gen'
 import {
   PeerTopicSubscriptionResultElem,
   SystemTopicSubscriptionResultElem,
@@ -12,6 +16,7 @@ import {
 } from '@dcl/protocol/out-js/decentraland/bff/topics_service.gen'
 import { commsModule, onPeerConnected, onPeerDisconnected, topicsModule } from './comms'
 import { CommsServiceDefinition } from '@dcl/protocol/out-js/decentraland/bff/comms_service.gen'
+import { future } from 'fp-future'
 
 // TODO: use proper component-based loggers
 
@@ -42,6 +47,20 @@ export const rpcHandler: RpcServerHandler<RpcContext> = async (port, transport, 
         challengeToSign: challenge
       }
     },
+    async getDisconnectionMessage(_req, { peer }) {
+      if (!peer) {
+        throw new Error('no peer found')
+      }
+
+      const disconnectMessage = await peer.disconnectionFuture
+
+      // NOTE: we set a timeout to close the transport in case the client is not properly handling this message
+      setTimeout(() => {
+        peer.transport.close()
+      }, 10 * 1000)
+
+      return disconnectMessage
+    },
     async authenticate(req) {
       const payload = JSON.parse(req.authChainJson) as AuthChain
 
@@ -60,11 +79,54 @@ export const rpcHandler: RpcServerHandler<RpcContext> = async (port, transport, 
       if (result.ok) {
         logger.debug(`Authentication successful`, { address })
 
-        const { availableModules } = await registerAuthenticatedConnectionModules(address, port, transport, context)
+        const peer: RpcSession = {
+          address,
+          port,
+          transport,
+          disconnectionFuture: future<DisconnectionMessage>(),
+          subscriptionsIndex: 0,
+          peerSubscriptions: new Map<number, Channel<PeerTopicSubscriptionResultElem>>(),
+          systemSubscriptions: new Map<number, Channel<SystemTopicSubscriptionResultElem>>()
+        }
+
+        // hydrate the context with the session
+        context.peer = peer
+
+        const previousSession = context.components.rpcSessions.sessions.get(address)
+
+        // disconnect previous session if it was already present
+        if (previousSession) {
+          previousSession.disconnectionFuture.resolve({
+            reason: DisconnectionReason.DR_KICKED
+          })
+        }
+
+        context.components.rpcSessions.sessions.set(address, peer)
+
+        observeConnectedPeers(context)
+        await onPeerConnected(context)
+        // Remove the port from the rpcSessions if present.
+        // TODO: write a test for this
+        let portClosed = false
+        port.on('close', async () => {
+          if (portClosed) {
+            return
+          }
+          portClosed = true
+          if (context.components.rpcSessions.sessions.get(address)?.port === port) {
+            context.components.rpcSessions.sessions.delete(address)
+          }
+          await onPeerDisconnected(context)
+          observeConnectedPeers(context)
+        })
+
+        // register all the modules
+        registerService(port, CommsServiceDefinition, async () => commsModule)
+        registerService(port, TopicsServiceDefinition, async () => topicsModule)
 
         return {
           peerId: address,
-          availableModules
+          availableModules: [CommsServiceDefinition.name, TopicsServiceDefinition.name]
         }
       } else {
         setImmediate(() => port.close())
@@ -78,61 +140,4 @@ export const rpcHandler: RpcServerHandler<RpcContext> = async (port, transport, 
 function observeConnectedPeers(context: RpcContext) {
   const connected = context.components.rpcSessions.sessions.size
   context.components.metrics.observe('explorer_bff_connected_users', {}, connected)
-}
-
-async function registerAuthenticatedConnectionModules(
-  _address: string,
-  port: RpcServerPort<RpcContext>,
-  transport: Transport,
-  context: RpcContext
-): Promise<{ availableModules: string[] }> {
-  const address = normalizeAddress(_address)
-
-  const peer: RpcSession = {
-    address,
-    port,
-    transport,
-    subscriptionsIndex: 0,
-    peerSubscriptions: new Map<number, Channel<PeerTopicSubscriptionResultElem>>(),
-    systemSubscriptions: new Map<number, Channel<SystemTopicSubscriptionResultElem>>()
-  }
-
-  // hydrate the context with the session
-  context.peer = peer
-
-  const previousSession = context.components.rpcSessions.sessions.get(address)
-
-  // disconnect previous session if it was already present
-  if (previousSession) {
-    // TODO: prior to closing the port, we should send a notification
-    previousSession.port.close()
-    previousSession.transport.close()
-  }
-
-  context.components.rpcSessions.sessions.set(address, peer)
-
-  observeConnectedPeers(context)
-  await onPeerConnected(context)
-  // Remove the port from the rpcSessions if present.
-  // TODO: write a test for this
-  let portClosed = false
-  port.on('close', async () => {
-    if (portClosed) {
-      return
-    }
-    portClosed = true
-    if (context.components.rpcSessions.sessions.get(address)?.port === port) {
-      context.components.rpcSessions.sessions.delete(address)
-    }
-    await onPeerDisconnected(context)
-    observeConnectedPeers(context)
-  })
-
-  // register all the modules
-  registerService(port, CommsServiceDefinition, async () => commsModule)
-  registerService(port, TopicsServiceDefinition, async () => topicsModule)
-
-  return {
-    availableModules: [CommsServiceDefinition.name, TopicsServiceDefinition.name]
-  }
 }

@@ -332,10 +332,15 @@
     eslint-plugin-prettier "^4.0.0"
     prettier "^2.4.1"
 
-"@dcl/protocol@^1.0.0-4009547712.commit-472ea24":
-  version "1.0.0-4009547712.commit-472ea24"
-  resolved "https://registry.yarnpkg.com/@dcl/protocol/-/protocol-1.0.0-4009547712.commit-472ea24.tgz#933c6f0e39f5cbdfe156c37ae6c4c4130fa65e22"
-  integrity sha512-sKYR8SdY49VTR8yhPuPmvZrCNqV3JSkKgjkGGnEnc2n64SXtkTkoCJHwgZogwBCZVzshW9Jf0Urxr8zZGHJhFw==
+"@dcl/protocol@https://sdk-team-cdn.decentraland.org/@dcl/protocol/branch//dcl-protocol-1.0.0-4599807123.commit-31e8e4d.tgz":
+  version "1.0.0-4599807123.commit-31e8e4d"
+  resolved "https://sdk-team-cdn.decentraland.org/@dcl/protocol/branch//dcl-protocol-1.0.0-4599807123.commit-31e8e4d.tgz#b60db1df371305c8af9f0481bc039ed181f55be2"
+  dependencies:
+    ts-proto "^1.126.1"
+
+"@dcl/protocol@https://sdk-team-cdn.decentraland.org/@dcl/protocol/branch//dcl-protocol-1.0.0-4619165401.commit-d249175.tgz":
+  version "1.0.0-4619165401.commit-d249175"
+  resolved "https://sdk-team-cdn.decentraland.org/@dcl/protocol/branch//dcl-protocol-1.0.0-4619165401.commit-d249175.tgz#d24db7aeee958c4191dd0ba15bcede9839fd8716"
   dependencies:
     ts-proto "^1.126.1"
 
