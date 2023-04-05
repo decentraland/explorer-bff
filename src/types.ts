@@ -21,6 +21,7 @@ import {
 import { ICommsModeComponent } from './adapters/comms-fixed-adapter'
 import { IFuture } from 'fp-future'
 import { DisconnectionMessage } from '@dcl/protocol/out-js/decentraland/bff/authentication_service.gen'
+import { IResourcesStatusComponent } from './logic/resources-status'
 
 export const DEFAULT_ETH_NETWORK = 'goerli'
 
@@ -48,7 +49,7 @@ export type BaseComponents = {
   ethereumProvider: any
   contract: CatalystContract
   status: IStatusComponent
-
+  resourcesStatusCheck: IResourcesStatusComponent
   rpcServer: RpcServer<RpcContext>
 
   comms: ICommsModeComponent
