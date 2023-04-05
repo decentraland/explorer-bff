@@ -16,7 +16,7 @@ export const CATALYST_NAME_CONFIG_FILE = '.catalyst-name'
 
   1. If there is a file .catalyst-name, just use the name there
   2. If the local lighthouse has a name, pick it, store it in .catalyst-name for next time
-  3. If there is no name, pick one from the list in the env var `REALM_NAMES` (or use `defaultNames` if the var is not provided),  and ask every catalyst in the DAO if the name is already taken, if it's available, store it in .catalyst-name, otherwise repeat 
+  3. If there is no name, pick one from the list in the env var `REALM_NAMES` (or use `defaultNames` if the var is not provided),  and ask every catalyst in the DAO if the name is already taken, if it's available, store it in .catalyst-name, otherwise repeat
 */
 
 export async function createRealmComponent(
@@ -76,15 +76,6 @@ export async function createRealmComponent(
       }
     } catch (e: any) {
       logger.warn(`Error while getting the name (/about) of ${baseUrl}, id: ${id}: ${e.toString()}`)
-    }
-
-    try {
-      const statusResponse = await fetch.fetch(`${baseUrl}/comms/status`)
-      const data = await statusResponse.json()
-
-      return data.name
-    } catch (e: any) {
-      logger.warn(`Error while getting the name (/comms/status) of ${baseUrl}, id: ${id}: ${e.toString()}`)
     }
 
     return

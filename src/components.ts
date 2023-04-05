@@ -17,7 +17,6 @@ import { createStatusComponent } from './adapters/status'
 import { observeBuildInfo } from './logic/build-info'
 import { commsFixedAdapter, ICommsModeComponent } from './adapters/comms-fixed-adapter'
 import { commsArchipelago } from './adapters/comms-archipelago'
-import { commsLighthouse } from './adapters/comms-lighthouse'
 import { createResourcesStatusComponent } from './logic/resources-status'
 
 // Initialize all the components of the app
@@ -70,9 +69,6 @@ export async function initComponents(): Promise<AppComponents> {
       break
     case 'fixed-adapter':
       comms = await commsFixedAdapter({ config })
-      break
-    case 'lighthouse':
-      comms = await commsLighthouse({ status })
       break
     default:
       throw new Error('unknown COMMS_MODE')

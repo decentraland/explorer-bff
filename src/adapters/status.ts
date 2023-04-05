@@ -14,16 +14,10 @@ export type ServiceStatus = {
   publicUrl: string
 }
 
-export type LighthouseStatus = ServiceStatus & {
-  realmName?: string
-  usersCount: number
-}
-
 export type IStatusComponent = IBaseComponent & {
   getLambdasHealth(): Promise<HealthStatus>
   getLambdasStatus(): Promise<ServiceStatus>
   getContentStatus(): Promise<ServiceStatus>
-  getLighthouseStatus(): Promise<LighthouseStatus>
 }
 
 const STATUS_EXPIRATION_TIME_MS = 1000 * 60 * 5 // 5mins
@@ -34,7 +28,7 @@ export async function createStatusComponent(
   const { fetch, logs, config } = components
 
   const logger = logs.getLogger('status-component')
-  const { lambdasUrl, contentUrl, lighthouseUrl } = await loadServicesURLs(config)
+  const { lambdasUrl, contentUrl } = await loadServicesURLs(config)
 
   const fetchJson = async (baseURL: URL, path: string) => {
     let url = baseURL.toString()
@@ -113,37 +107,10 @@ export async function createStatusComponent(
     return lastContentStatus
   }
 
-  const lastLighthouseStatus: LighthouseStatus = {
-    time: 0,
-    usersCount: 0,
-    publicUrl: lighthouseUrl.public.toString()
-  }
-
-  async function getLighthouseStatus() {
-    if (Date.now() - lastLighthouseStatus.time < STATUS_EXPIRATION_TIME_MS) {
-      return lastLighthouseStatus
-    }
-
-    lastLighthouseStatus.time = Date.now()
-    try {
-      const data = await fetchJson(lighthouseUrl.healthcheck, 'status')
-
-      lastLighthouseStatus.realmName = data.name
-      lastLighthouseStatus.version = data.version
-      lastLighthouseStatus.commitHash = data.env.commitHash
-      lastLighthouseStatus.usersCount = data.usersCount
-    } catch (e: any) {
-      logger.warn(`Error fetching lighthouse status: ${e.toString()}`)
-    }
-
-    return lastLighthouseStatus
-  }
-
   return {
     getLambdasHealth,
     getLambdasStatus,
-    getContentStatus,
-    getLighthouseStatus
+    getContentStatus
   }
 }
 
@@ -160,11 +127,5 @@ async function loadServicesURLs(config: IConfigComponent) {
     public: publicContentUrl,
     healthcheck: healthCheckContentUrl ? new URL(healthCheckContentUrl) : publicContentUrl
   }
-  const publicLighthouseUrl = new URL(await config.requireString('LIGHTHOUSE_URL'))
-  const healthCheckLighthouseUrl = await config.getString('HEALTHCHECK_LIGHTHOUSE_URL')
-  const lighthouseUrl = {
-    public: publicLighthouseUrl,
-    healthcheck: healthCheckLighthouseUrl ? new URL(healthCheckLighthouseUrl) : publicLighthouseUrl
-  }
-  return { lambdasUrl, contentUrl, lighthouseUrl }
+  return { lambdasUrl, contentUrl }
 }

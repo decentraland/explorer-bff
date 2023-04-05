@@ -32,13 +32,7 @@ export async function aboutHandler(
     resourcesStatusCheck.areResourcesOverloaded()
   ])
 
-  let realmName: string | undefined
-  if (comms.protocol === 'v2') {
-    const lighthouseStatus = await status.getLighthouseStatus()
-    realmName = await realm.getName(lighthouseStatus?.realmName)
-  } else {
-    realmName = await realm.getName()
-  }
+  const realmName = await realm.getName()
 
   const healthy = lambdasHealth.lambdas && lambdasHealth.content && comms.healthy
   const userCount = rpcSessions.sessions.size

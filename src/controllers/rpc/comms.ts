@@ -72,7 +72,9 @@ export async function onPeerDisconnected({ components, peer }: RpcContext) {
   peer.peerSubscriptions.clear()
   peer.systemSubscriptions.clear()
 
-  components.nats.publish(`peer.${peer.address}.disconnect`)
+  if (!components.rpcSessions.sessions.has(peer.address)) {
+    components.nats.publish(`peer.${peer.address}.disconnect`)
+  }
 }
 
 export const commsModule: RpcServerModule<CommsServiceDefinition, RpcContext> = {
