@@ -11,6 +11,7 @@ jobs:
     with:
       service-name: explorer-bff
       docker-tag: latest ${{ github.event.release.tag_name }}
+      build-args: CURRENT_VERSION=${{ github.event.release.tag_name }}
     secrets:
       QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
       QUAY_TOKEN: ${{ secrets.QUAY_TOKEN }}

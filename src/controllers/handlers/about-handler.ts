@@ -67,6 +67,7 @@ export async function aboutHandler(
     comms,
     bff: {
       healthy: true,
+      version: await config.getString('CURRENT_VERSION'),
       commitHash: await config.getString('COMMIT_HASH'),
       userCount,
       protocolVersion: protobufPackage.replace('_', '.').replace(/^v/, ''),
