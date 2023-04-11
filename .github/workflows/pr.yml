@@ -2,15 +2,10 @@ name: CI/CD on PR
 
 on:
   pull_request:
-    branches:
-      - '!dependabot/**'
 
 jobs:
-  cd-dev:
-    uses: decentraland/actions/.github/workflows/build-quay-main.yml@main
+  pr:
+    uses: decentraland/platform-actions/.github/workflows/apps-pr.yml@main
     with:
       service-name: explorer-bff
-      docker-tag: '${{ github.sha }}'
-    secrets:
-      QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
-      QUAY_TOKEN: ${{ secrets.QUAY_TOKEN }}
+    secrets: inherit
