@@ -28,7 +28,7 @@ export function createResourcesStatusComponent(components: Pick<AppComponents, '
     let resourcesAreOverloaded = false
 
     const { cpuLoad, memLoad } = await getResourcesLoad()
-    logger.info('System load', { cpuLoad, memLoad })
+    logger.info('System load', { cpuLoad: `${cpuLoad.toFixed(2)}%`, memLoad: `${memLoad.toFixed(2)}%` })
 
     if (isAboveNinetyPercent(cpuLoad)) {
       resourcesAreOverloaded = true
