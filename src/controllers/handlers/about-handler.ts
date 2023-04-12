@@ -33,7 +33,7 @@ export async function aboutHandler(
   ])
 
   const healthy = lambdasHealth.lambdas && lambdasHealth.content && comms.healthy
-  const userCount = rpcSessions.sessions.size
+  const userCount = rpcSessions.sessions.size + (comms.usersCount || 0)
   const acceptingUsers = healthy && !resourcesOverload && (!maxUsers || userCount < maxUsers)
 
   const result: AboutResponse = {
