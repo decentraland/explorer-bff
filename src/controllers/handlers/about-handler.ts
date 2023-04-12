@@ -32,8 +32,6 @@ export async function aboutHandler(
     realm.getName()
   ])
 
-  console.log(comms)
-
   const healthy = lambdasHealth.lambdas && lambdasHealth.content && comms.healthy
   const userCount = rpcSessions.sessions.size
   const acceptingUsers = healthy && !resourcesOverload && (!maxUsers || userCount < maxUsers)
