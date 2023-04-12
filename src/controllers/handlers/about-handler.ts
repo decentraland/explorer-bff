@@ -36,7 +36,7 @@ export async function aboutHandler(
 
   const healthy = lambdasHealth.lambdas && lambdasHealth.content && comms.healthy
   const userCount = rpcSessions.sessions.size
-  const acceptingUsers = healthy && !resourcesOverload && (!maxUsers || userCount < maxUsers)
+  // const acceptingUsers = healthy && !resourcesOverload && (!maxUsers || userCount < maxUsers)
 
   const result: AboutResponse = {
     healthy: healthy,
@@ -67,7 +67,7 @@ export async function aboutHandler(
       protocolVersion: protobufPackage.replace('_', '.').replace(/^v/, ''),
       publicUrl: (await config.getString('BFF_PUBLIC_URL')) || '/'
     },
-    acceptingUsers
+    acceptingUsers: false
   }
 
   return {
