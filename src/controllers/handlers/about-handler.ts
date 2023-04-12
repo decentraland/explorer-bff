@@ -20,7 +20,7 @@ export async function aboutHandler(
   const { realm, config, status, resourcesStatusCheck, rpcSessions } = context.components
 
   const ethNetwork = (await config.getString('ETH_NETWORK')) ?? DEFAULT_ETH_NETWORK
-  const maxUsers = await config.getNumber('MAX_USERS')
+  // const maxUsers = await config.getNumber('MAX_USERS')
   const networkId = networkIds[ethNetwork]
 
   const comms = await context.components.comms.getStatus()
