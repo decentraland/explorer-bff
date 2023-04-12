@@ -23,16 +23,16 @@ export async function aboutHandler(
   const maxUsers = await config.getNumber('MAX_USERS')
   const networkId = networkIds[ethNetwork]
 
-  const comms = await context.components.comms.getStatus()
-
-  const [lambdasHealth, contentStatus, lambdasStatus, resourcesOverload] = await Promise.all([
+  const [lambdasHealth, contentStatus, lambdasStatus, resourcesOverload, comms, realmName] = await Promise.all([
     status.getLambdasHealth(),
     status.getContentStatus(),
     status.getLambdasStatus(),
-    resourcesStatusCheck.areResourcesOverloaded()
+    resourcesStatusCheck.areResourcesOverloaded(),
+    context.components.comms.getStatus(),
+    realm.getName()
   ])
 
-  const realmName = await realm.getName()
+  console.log(comms)
 
   const healthy = lambdasHealth.lambdas && lambdasHealth.content && comms.healthy
   const userCount = rpcSessions.sessions.size
