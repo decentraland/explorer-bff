@@ -17,6 +17,7 @@ export async function commsArchipelago(
       if (clusterStatus.archipelago) {
         comms.healthy = true
         comms.commitHash = clusterStatus.archipelago.commitHash
+        comms.usersCount = clusterStatus.archipelago.userCount
       }
       return comms
     }

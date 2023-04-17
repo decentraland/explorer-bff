@@ -332,12 +332,12 @@
     eslint-plugin-prettier "^4.2.1"
     prettier "^2.8.3"
 
-"@dcl/protocol@^1.0.0-4640552468.commit-8851f19":
-  version "1.0.0-4640552468.commit-8851f19"
-  resolved "https://registry.yarnpkg.com/@dcl/protocol/-/protocol-1.0.0-4640552468.commit-8851f19.tgz#319e4c82498438e4d811f1b26217631cc1eb93e5"
-  integrity sha512-UaRUhpFtZZnV9C52UkW6fbcIRdYGznxVCDs+t2mT4iENXSKupF69wP2Qcpg22ZsDohJ3MX+pWijZuARzBkCn3w==
+"@dcl/protocol@^1.0.0-4721150054.commit-85597a5":
+  version "1.0.0-4721150054.commit-85597a5"
+  resolved "https://registry.yarnpkg.com/@dcl/protocol/-/protocol-1.0.0-4721150054.commit-85597a5.tgz#f1044e8da68409d29ccfb232faf4a4b6f47a910c"
+  integrity sha512-BL+oY6+vkRVw+9jN3ygT3jvz61rDRnBKV3sTeRuDTSmGrzNgZ92wsEpz0fcVuBN+LC/43uVUhyoOJDWkKJ6Aow==
   dependencies:
-    ts-proto "^1.126.1"
+    ts-proto "^1.146.0"
 
 "@dcl/rpc@^1.0.3":
   version "1.1.1"
@@ -5452,7 +5452,7 @@ ts-proto-descriptors@1.8.0:
     long "^4.0.0"
     protobufjs "^6.8.8"
 
-ts-proto@^1.125.0, ts-proto@^1.126.1:
+ts-proto@^1.125.0, ts-proto@^1.126.1, ts-proto@^1.146.0:
   version "1.146.0"
   resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.146.0.tgz#4017c700976d3657009c4e7e741377a4272ffc27"
   integrity sha512-OyBZRjmqqw+aatLEUbRooWO6VKTtOLJQyaQFMciigEZPNgTsWtApqHpQDtqDMQFWEXhIARqEV+B7ZJx8cljhZA==
