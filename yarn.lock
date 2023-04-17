@@ -339,13 +339,13 @@
   dependencies:
     ts-proto "^1.146.0"
 
-"@dcl/rpc@^1.0.3":
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/@dcl/rpc/-/rpc-1.1.1.tgz#01819b91129e12a11231acd36a3fb953b6db70b2"
-  integrity sha512-0oXExHh1EQ03bBh9UdhR+//vtNFt1TuQs4OjctxVD4mkUN9XiSoItgePc7L4JKBB6AMHziko4qza65FjaUPSOg==
+"@dcl/rpc@^1.1.2":
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/@dcl/rpc/-/rpc-1.1.2.tgz#789f4f24c8d432a48df3e786b77d017883dda11a"
+  integrity sha512-HgZe9umoD48ZQRaiKTss+vj/War/HjH/DBnb6pzd5fx2OMInaB1YYso3OZ4dCT/OC0AtNny8Tkb3CUJdYAvj/w==
   dependencies:
     mitt "^3.0.0"
-    ts-proto "^1.126.1"
+    ts-proto "^1.146.0"
 
 "@dcl/schemas@^6.16.0", "@dcl/schemas@^6.4.2":
   version "6.16.0"
@@ -5452,7 +5452,7 @@ ts-proto-descriptors@1.8.0:
     long "^4.0.0"
     protobufjs "^6.8.8"
 
-ts-proto@^1.125.0, ts-proto@^1.126.1, ts-proto@^1.146.0:
+ts-proto@^1.125.0, ts-proto@^1.146.0:
   version "1.146.0"
   resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.146.0.tgz#4017c700976d3657009c4e7e741377a4272ffc27"
   integrity sha512-OyBZRjmqqw+aatLEUbRooWO6VKTtOLJQyaQFMciigEZPNgTsWtApqHpQDtqDMQFWEXhIARqEV+B7ZJx8cljhZA==
