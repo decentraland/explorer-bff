@@ -30,7 +30,7 @@
     "@dcl/crypto": "^3.4.0",
     "@dcl/protocol": "^1.0.0-4721150054.commit-85597a5",
     "@dcl/rpc": "^1.1.2",
-    "@dcl/schemas": "^6.16.0",
+    "@dcl/schemas": "^6.17.0",
     "@types/ws": "^8.5.3",
     "@well-known-components/env-config-provider": "^1.2.0",
     "@well-known-components/http-server": "^1.1.7-20221111193549.commit-fb3caad",
