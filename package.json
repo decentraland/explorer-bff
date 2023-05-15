@@ -28,7 +28,7 @@
   "dependencies": {
     "@dcl/catalyst-contracts": "^3.1.4",
     "@dcl/crypto": "^3.4.0",
-    "@dcl/protocol": "^1.0.0-4810686946.commit-7c034e3",
+    "@dcl/protocol": "^1.0.0-4959770633.commit-e249449",
     "@dcl/rpc": "^1.1.2",
     "@dcl/schemas": "^6.17.0",
     "@types/ws": "^8.5.3",
