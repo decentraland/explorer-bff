@@ -347,10 +347,19 @@
     mitt "^3.0.0"
     ts-proto "^1.146.0"
 
-"@dcl/schemas@^6.17.0", "@dcl/schemas@^6.4.2":
+"@dcl/schemas@^6.4.2":
   version "6.17.0"
   resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-6.17.0.tgz#61a54deda7e739abe3b08964adf4b5d92d79aaaa"
   integrity sha512-03mUwh8GmaU3wueVM64JF86acS4NvELKY2aZFBATWq/wUZ/KpaMedY7XFiB1eUmusWBVHmVRnsbbOZ1cw3CCFw==
+  dependencies:
+    ajv "^8.11.0"
+    ajv-errors "^3.0.0"
+    ajv-keywords "^5.1.0"
+
+"@dcl/schemas@^7.1.0":
+  version "7.1.0"
+  resolved "https://registry.yarnpkg.com/@dcl/schemas/-/schemas-7.1.0.tgz#9db8513011d642cd0be995336862e6497dd701f1"
+  integrity sha512-wc/r/h32VV9RElrAN+E0t1bfc4qOhXGElzyKkPW5MLKqcv37ECcDD2HeaHovIv8ZtPqTTZBkuMEGa2bMryVA+g==
   dependencies:
     ajv "^8.11.0"
     ajv-errors "^3.0.0"
